@@ -10,8 +10,8 @@ export const RegisterMerchantSchema = z.object({
   phone: z.string().min(8, 'Numéro invalide').max(20),
   shopName: z.string().min(2, 'Nom de boutique trop court').max(100),
   shopSlug: z.string().min(2).max(50).regex(/^[a-z0-9-]+$/, 'Slug invalide (minuscules, chiffres, tirets)'),
+  whatsapp: z.string().min(8, 'Numéro WhatsApp invalide').max(20), // ← ajoute cette ligne
 })
-
 export const LoginSchema = z.object({
   email: z.string().email('Email invalide'),
   password: z.string().min(1, 'Mot de passe requis'),
