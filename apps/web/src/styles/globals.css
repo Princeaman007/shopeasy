@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+@layer base {
+  * {
+    @apply border-border box-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-bg text-text font-inter antialiased;
+  }
+
+  /* Scrollbar personnalisée */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-surface;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-elevated rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted;
+  }
+}
+
+@layer components {
+  /* ── Boutons ─────────────────────────────────────────────── */
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-hover text-white font-semibold
+           px-6 py-3 rounded-xl transition-all duration-200
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-elevated hover:bg-surface text-text font-semibold
+           px-6 py-3 rounded-xl border border-border
+           transition-all duration-200 active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-elevated text-muted hover:text-text font-medium
+           px-4 py-2 rounded-lg transition-all duration-200;
+  }
+
+  /* ── Inputs ──────────────────────────────────────────────── */
+  .input {
+    @apply bg-elevated border border-border text-text placeholder-muted
+           px-4 py-3 rounded-xl w-full
+           focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary
+           transition-all duration-200;
+  }
+
+  /* ── Cards ───────────────────────────────────────────────── */
+  .card {
+    @apply bg-surface border border-border rounded-2xl p-6;
+  }
+
+  .card-elevated {
+    @apply bg-elevated border border-border rounded-2xl p-6
+           shadow-surface;
+  }
+
+  /* ── Badge ───────────────────────────────────────────────── */
+  .badge-primary {
+    @apply bg-primary/10 text-primary text-xs font-semibold
+           px-2 py-1 rounded-full;
+  }
+
+  .badge-muted {
+    @apply bg-elevated text-muted text-xs font-medium
+           px-2 py-1 rounded-full;
+  }
+}
