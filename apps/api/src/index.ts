@@ -1,43 +1,52 @@
-import express from 'express'
-import cors from 'cors'
-import helmet from 'helmet'
-import compression from 'compression'
-import cookieParser from 'cookie-parser'
-import morgan from 'morgan'
-import { env } from './config/env'
+import dotenv from 'dotenv';
+import path from 'path';
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-const app = express()
+import express from 'express';
+import cors from 'cors';
+import { connectDB } from './config/db';
+import { connectRedis } from './config/redis';
+import { syncIndexes } from './config/indexes';
+import { env } from './config/env';
 
-// ── Sécurité & parsing ──────────────────────────────────────────
-app.use(helmet())
+const app = express();
+
+// Middlewares globaux
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors({
   origin: env.FRONTEND_URL,
   credentials: true,
-}))
-app.use(compression())
-app.use(express.json({ limit: '10mb' }))
-app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
+}));
 
-// ── Logs en développement ───────────────────────────────────────
-if (env.NODE_ENV === 'development') {
-  app.use(morgan('dev'))
-}
-
-// ── Route de santé ──────────────────────────────────────────────
+// Route de santé
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
-    app: 'ShopEasy CI API',
     env: env.NODE_ENV,
     timestamp: new Date().toISOString(),
-  })
-})
+  });
+});
 
-// ── Démarrage serveur ───────────────────────────────────────────
-app.listen(env.PORT, () => {
-  console.log(`🚀 API ShopEasy CI démarrée sur le port ${env.PORT}`)
-  console.log(`📍 Environnement : ${env.NODE_ENV}`)
-})
+// Démarrage du serveur
+const start = async (): Promise<void> => {
+  // 1. Connexion MongoDB
+  await connectDB();
 
-export default app
+  // 2. Synchronisation des index
+  await syncIndexes();
+
+  // 3. Connexion Redis
+  connectRedis();
+
+  // 4. Démarrage serveur
+  app.listen(Number(env.PORT), () => {
+    console.log(`🚀 API ShopEasy CI démarrée sur le port ${env.PORT}`);
+    console.log(`📍 Health check : http://localhost:${env.PORT}/health`);
+  });
+};
+
+start().catch((err) => {
+  console.error('❌ Erreur démarrage API :', err);
+  process.exit(1);
+});
