@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { Lead } from '../models/Lead';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { sendLeadNotificationEmail } from '../services/Email';
 
 const router = Router();
 
@@ -15,6 +16,8 @@ const leadSchema = z.object({
 });
 
 // ─── POST /leads — Créer un lead (appelé par Koffi) ──────────────────────────
+
+
 
 router.post('/', async (req: Request, res: Response) => {
   try {
@@ -33,7 +36,6 @@ router.post('/', async (req: Request, res: Response) => {
     // Vérifie si le lead existe déjà (même téléphone)
     const existing = await Lead.findOne({ phone });
     if (existing) {
-      // Met à jour les infos si déjà existant
       existing.name    = name;
       if (email)   existing.email   = email;
       if (message) existing.message = message;
@@ -53,6 +55,16 @@ router.post('/', async (req: Request, res: Response) => {
       email:   email   ?? '',
       message: message ?? '',
       status:  'new',
+    });
+
+    // Notifie l'admin par email (non bloquant)
+    sendLeadNotificationEmail({
+      name:    lead.name,
+      phone:   lead.phone,
+      email:   lead.email,
+      message: lead.message,
+    }).catch((err) => {
+      console.error('Erreur notification email lead :', err);
     });
 
     res.status(201).json({

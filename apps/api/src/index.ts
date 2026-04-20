@@ -1,6 +1,4 @@
-import dotenv from 'dotenv';
-import path from 'path';
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
 
 
 import express from 'express';
@@ -29,7 +27,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-  origin: env.FRONTEND_URL,
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ],
   credentials: true,
 }));
 

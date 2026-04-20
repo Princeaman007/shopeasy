@@ -2,64 +2,50 @@ import type { Config } from 'tailwindcss'
 
 const config: Config = {
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
-      // ── Couleurs ShopEasy CI ──────────────────────────────────
       colors: {
         primary: {
           DEFAULT: '#06C167',
-          hover: '#05a558',
+          hover:   '#05a558',
         },
-        bg: '#000000',
-        surface: '#141414',
+        bg:       '#000000',
+        surface:  '#141414',
         elevated: '#1a1a1a',
-        border: '#2a2a2a',
-        text: '#FFFFFF',
-        muted: '#888888',
+        border:   '#2a2a2a',
+        text:     '#FFFFFF',
+        muted:    '#888888',
       },
-
-      // ── Typographie ───────────────────────────────────────────
       fontFamily: {
         inter: ['Inter', 'sans-serif'],
       },
-
-      // ── Animations ────────────────────────────────────────────
       keyframes: {
         fadeIn: {
-          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '0%':   { opacity: '0', transform: 'translateY(10px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
         slideIn: {
-          '0%': { transform: 'translateX(-100%)' },
+          '0%':   { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
-        },
-        pulse: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.5' },
         },
       },
       animation: {
-        fadeIn: 'fadeIn 0.3s ease-out',
+        fadeIn:  'fadeIn 0.3s ease-out',
         slideIn: 'slideIn 0.3s ease-out',
-        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
-
-      // ── Bordures ──────────────────────────────────────────────
       borderRadius: {
-        xl: '1rem',
+        xl:   '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
       },
-
-      // ── Ombres ────────────────────────────────────────────────
       boxShadow: {
         'glow-primary': '0 0 20px rgba(6, 193, 103, 0.3)',
-        'glow-sm': '0 0 10px rgba(6, 193, 103, 0.2)',
-        'surface': '0 4px 24px rgba(0, 0, 0, 0.4)',
+        'glow-sm':      '0 0 10px rgba(6, 193, 103, 0.2)',
+        'surface':      '0 4px 24px rgba(0, 0, 0, 0.4)',
       },
     },
   },
