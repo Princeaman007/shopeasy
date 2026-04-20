@@ -184,7 +184,6 @@ export const optionalAuth = async (
     const token =
       req.cookies?.token ||
       req.headers.authorization?.replace('Bearer ', '');
-
     if (token) {
       const payload = verifyToken(token);
       req.user = payload;

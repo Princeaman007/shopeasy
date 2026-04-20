@@ -71,7 +71,7 @@ const ProductSchema = new Schema<IProduct>(
     categoryId: {
       type: Schema.Types.ObjectId,
       ref: 'Category',
-      required: true,
+      required: false, default: null,
     },
     name: {
       type: String,

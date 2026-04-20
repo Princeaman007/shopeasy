@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { User } from '../models/User';
 import { Shop } from '../models/Shop';
 import { Category, PREDEFINED_CATEGORIES } from '../models/Category';
-import { signToken } from '../config/jwt';
 import { RegisterMerchantSchema, LoginSchema, RegisterClientSchema } from '@shopeasy/types';
 import { signToken, signRefreshToken, verifyToken, verifyRefreshToken, IJwtPayload } from '../config/jwt';
 import crypto from 'crypto';

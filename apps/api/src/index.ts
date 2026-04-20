@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
+
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
@@ -10,7 +11,15 @@ import { syncIndexes } from './config/indexes';
 import { env } from './config/env';
 import authRoutes from './routes/auth';
 import { generalLimiter, authLimiter } from './middleware/rateLimit';
-
+import shopRoutes    from './routes/shops';
+import categoryRoutes from './routes/categories';
+import productRoutes from './routes/products';
+import orderRoutes from './routes/orders';
+import promoRoutes from './routes/promos';
+import analyticsRoutes from './routes/analytics';
+import leadRoutes from './routes/leads';
+import adminRoutes from './routes/admin';
+import uploadRoutes from './routes/uploads';
 const app = express();
 
 app.use(express.json());
@@ -28,6 +37,17 @@ app.use(generalLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/shops', shopRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/promos', promoRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/leads', leadRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/uploads', uploadRoutes);
+
+
 // Route de santé
 app.get('/health', (_req, res) => {
   res.json({
