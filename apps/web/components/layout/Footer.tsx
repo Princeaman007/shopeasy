@@ -1,0 +1,53 @@
+import Link from 'next/link';
+import { ShoppingBag } from 'lucide-react';
+
+export default function Footer() {
+  return (
+    <footer className="bg-surface border-t border-border mt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+          <div className="md:col-span-2">
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+                <ShoppingBag size={18} className="text-black" />
+              </div>
+              <span className="text-white font-bold text-lg">
+                Shop<span className="text-primary">Easy</span> CI
+              </span>
+            </Link>
+            <p className="text-muted text-sm leading-relaxed max-w-xs">
+              La plateforme e-commerce pensée pour les vendeurs ivoiriens.
+              Transformez votre activité Instagram, TikTok et Facebook en boutique professionnelle.
+            </p>
+          </div>
+
+          <div>
+            <h3 className="text-white font-semibold text-sm mb-4">Produit</h3>
+            <ul className="space-y-2">
+              <li><Link href="/tarifs" className="text-muted hover:text-white transition-colors text-sm">Tarifs</Link></li>
+              <li><Link href="/themes" className="text-muted hover:text-white transition-colors text-sm">Thèmes</Link></li>
+              <li><Link href="/inscription" className="text-muted hover:text-white transition-colors text-sm">Créer une boutique</Link></li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-white font-semibold text-sm mb-4">Support</h3>
+            <ul className="space-y-2">
+              <li><Link href="#faq" className="text-muted hover:text-white transition-colors text-sm">FAQ</Link></li>
+              <li><a href="https://wa.me/2250000000000" target="_blank" rel="noopener noreferrer" className="text-muted hover:text-white transition-colors text-sm">WhatsApp</a></li>
+              <li><a href="mailto:info@shopeasyci.ci" className="text-muted hover:text-white transition-colors text-sm">Contact</a></li>
+            </ul>
+          </div>
+
+        </div>
+
+        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-muted text-sm">© {new Date().getFullYear()} ShopEasy CI — Tous droits réservés</p>
+          <p className="text-muted text-sm">Fait avec ❤️ en <span className="text-primary font-medium">Côte d'Ivoire 🇨🇮</span></p>
+        </div>
+
+      </div>
+    </footer>
+  );
+}
