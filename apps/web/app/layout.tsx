@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { AuthProvider } from '@/contexts/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -10,16 +11,16 @@ export const metadata: Metadata = {
     template: '%s | ShopEasy CI',
   },
   description:
-    'Créez votre boutique en ligne professionnelle en quelques minutes. Solution e-commerce pensée pour les vendeurs Instagram, TikTok et Facebook en Côte d\'Ivoire.',
+    "Créez votre boutique en ligne professionnelle en quelques minutes. Solution e-commerce pensée pour les vendeurs Instagram, TikTok et Facebook en Côte d'Ivoire.",
   keywords: [
-    'boutique en ligne Côte d\'Ivoire',
+    "boutique en ligne Côte d'Ivoire",
     'e-commerce Abidjan',
     'vendre en ligne CI',
     'ShopEasy CI',
   ],
   openGraph: {
     title:       'ShopEasy CI — Votre boutique en ligne',
-    description: 'Transformez votre activité Instagram en boutique professionnelle.',
+    description: "Transformez votre activité Instagram en boutique professionnelle.",
     locale:      'fr_CI',
     type:        'website',
   },
@@ -33,7 +34,9 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${inter.className} bg-bg text-white antialiased`}>
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );
