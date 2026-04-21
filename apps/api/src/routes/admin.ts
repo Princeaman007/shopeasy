@@ -668,5 +668,37 @@ router.patch('/config', authenticate, requireAdmin, async (req, res) => {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
+// GET /admin/orders/:id — Détail d'une commande
+router.get('/orders/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).lean();
+    if (!order) {
+      res.status(404).json({ success: false, message: 'Commande introuvable' });
+      return;
+    }
+    res.json({ success: true, data: order });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// PATCH /admin/orders/:id/status — Changer le statut
+router.patch('/orders/:id/status', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const order = await Order.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    if (!order) {
+      res.status(404).json({ success: false, message: 'Commande introuvable' });
+      return;
+    }
+    res.json({ success: true, data: order, message: `Statut → ${status}` });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
 
 export default router;

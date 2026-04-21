@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import Link                    from 'next/link';
 import {
   Search, X, Loader2, RefreshCw,
-  ShoppingBag, Clock, CheckCircle,
-  Truck, XCircle, Eye,
+  ShoppingBag, CheckCircle, Truck, XCircle, Eye,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -21,11 +20,21 @@ const formatDate = (d: string) =>
   });
 
 const STATUTS = {
-  new:       { label: 'Nouvelle',    icone: <ShoppingBag size={13} />, classe: 'bg-blue-500/10 text-blue-400 border-blue-500/30'     },
-  confirmed: { label: 'Confirmée',   icone: <CheckCircle size={13} />, classe: 'bg-amber-500/10 text-amber-400 border-amber-500/30'  },
-  shipping:  { label: 'En livraison',icone: <Truck       size={13} />, classe: 'bg-purple-500/10 text-purple-400 border-purple-500/30'},
-  delivered: { label: 'Livrée',      icone: <CheckCircle size={13} />, classe: 'bg-primary/10 text-primary border-primary/30'        },
-  cancelled: { label: 'Annulée',     icone: <XCircle     size={13} />, classe: 'bg-red-500/10 text-red-400 border-red-500/30'        },
+  new:       { label: 'Nouvelle',     icone: <ShoppingBag size={13} />, classe: 'bg-blue-500/10 text-blue-400 border-blue-500/30'      },
+  confirmed: { label: 'Confirmée',    icone: <CheckCircle size={13} />, classe: 'bg-amber-500/10 text-amber-400 border-amber-500/30'   },
+  shipping:  { label: 'En livraison', icone: <Truck       size={13} />, classe: 'bg-purple-500/10 text-purple-400 border-purple-500/30' },
+  delivered: { label: 'Livrée',       icone: <CheckCircle size={13} />, classe: 'bg-primary/10 text-primary border-primary/30'         },
+  cancelled: { label: 'Annulée',      icone: <XCircle     size={13} />, classe: 'bg-red-500/10 text-red-400 border-red-500/30'         },
+};
+
+// -- Helper fetch avec credentials --
+const authFetch = (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers, credentials: 'include' });
 };
 
 // ---------------------------------------------------------------------------
@@ -56,16 +65,13 @@ export default function PageCommandesAdmin() {
   const charger = async () => {
     setChargement(true);
     try {
-      const token  = localStorage.getItem('token');
       const params = new URLSearchParams({
         page:  String(page),
         limit: '20',
         ...(filtreStatut && { status: filtreStatut }),
       });
 
-      const res  = await fetch(`${API}/admin/orders?${params}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res  = await authFetch(`${API}/admin/orders?${params}`);
       const data = await res.json();
 
       if (data.success) {
@@ -85,7 +91,7 @@ export default function PageCommandesAdmin() {
     if (!recherche) return true;
     const q = recherche.toLowerCase();
     return (
-      c.orderNumber.toLowerCase().includes(q)  ||
+      c.orderNumber.toLowerCase().includes(q) ||
       (c.nomClient ?? c.customer?.name ?? '').toLowerCase().includes(q) ||
       (c.telephone ?? c.customer?.phone ?? '').includes(q)
     );
@@ -204,34 +210,29 @@ export default function PageCommandesAdmin() {
                     <tr key={c._id}
                         className="hover:bg-elevated/50 transition-colors">
 
-                      {/* N° commande */}
                       <td className="px-5 py-4">
                         <p className="text-white text-sm font-mono font-medium">
                           {c.orderNumber}
                         </p>
                       </td>
 
-                      {/* Client */}
                       <td className="px-5 py-4">
                         <p className="text-white text-sm">{client}</p>
                         <p className="text-muted text-xs">{tel}</p>
                       </td>
 
-                      {/* Articles */}
                       <td className="px-5 py-4">
                         <p className="text-muted text-sm">
                           {c.items?.length ?? 0} article{(c.items?.length ?? 0) > 1 ? 's' : ''}
                         </p>
                       </td>
 
-                      {/* Total */}
                       <td className="px-5 py-4">
                         <p className="text-white font-semibold text-sm">
                           {formatFcfa(c.total)}
                         </p>
                       </td>
 
-                      {/* Statut */}
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center gap-1.5 text-xs
                                          font-semibold px-2.5 py-1 rounded-full border
@@ -241,14 +242,10 @@ export default function PageCommandesAdmin() {
                         </span>
                       </td>
 
-                      {/* Date */}
                       <td className="px-5 py-4">
-                        <p className="text-muted text-xs">
-                          {formatDate(c.createdAt)}
-                        </p>
+                        <p className="text-muted text-xs">{formatDate(c.createdAt)}</p>
                       </td>
 
-                      {/* Action */}
                       <td className="px-5 py-4">
                         <Link
                           href={`/admin/commandes/${c._id}`}
@@ -278,9 +275,7 @@ export default function PageCommandesAdmin() {
           >
             ← Précédent
           </button>
-          <span className="text-muted text-sm">
-            Page {page} / {totalPages}
-          </span>
+          <span className="text-muted text-sm">Page {page} / {totalPages}</span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}

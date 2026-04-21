@@ -20,6 +20,16 @@ const formatDate = (d: string) =>
     day: '2-digit', month: 'short', year: 'numeric',
   });
 
+// -- Helper fetch avec credentials --
+const authFetch = (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers, credentials: 'include' });
+};
+
 // ---------------------------------------------------------------------------
 interface Produit {
   _id:        string;
@@ -52,16 +62,14 @@ export default function PageProduitsAdmin() {
   const charger = async () => {
     setChargement(true);
     try {
-      const token   = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
-      const params  = new URLSearchParams({
+      const params = new URLSearchParams({
         page:  String(page),
         limit: '20',
         ...(filtreStatut && { status: filtreStatut }),
         ...(recherche    && { search: recherche    }),
       });
 
-      const res  = await fetch(`${API}/admin/products?${params}`, { headers });
+      const res  = await authFetch(`${API}/admin/products?${params}`);
       const data = await res.json();
 
       if (data.success) {
@@ -87,11 +95,7 @@ export default function PageProduitsAdmin() {
     if (!confirm('Supprimer ce produit ?')) return;
     setActionId(id);
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API}/admin/products/${id}`, {
-        method:  'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await authFetch(`${API}/admin/products/${id}`, { method: 'DELETE' });
       charger();
     } finally {
       setActionId(null);
@@ -102,14 +106,10 @@ export default function PageProduitsAdmin() {
   const changerStatut = async (id: string, status: string) => {
     setActionId(id);
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API}/admin/products/${id}/status`, {
+      await authFetch(`${API}/admin/products/${id}/status`, {
         method:  'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${token}`,
-        },
-        body: JSON.stringify({ status }),
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ status }),
       });
       charger();
     } finally {
@@ -143,9 +143,9 @@ export default function PageProduitsAdmin() {
       {/* ── Stats rapides ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total',      valeur: stats.total,   couleur: '#06C167', filtre: ''            },
-          { label: 'Actifs',     valeur: stats.actifs,  couleur: '#3b82f6', filtre: 'active'      },
-          { label: 'Brouillons', valeur: stats.draft,   couleur: '#f59e0b', filtre: 'draft'       },
+          { label: 'Total',      valeur: stats.total,   couleur: '#06C167', filtre: ''             },
+          { label: 'Actifs',     valeur: stats.actifs,  couleur: '#3b82f6', filtre: 'active'       },
+          { label: 'Brouillons', valeur: stats.draft,   couleur: '#f59e0b', filtre: 'draft'        },
           { label: 'Rupture',    valeur: stats.rupture, couleur: '#ef4444', filtre: 'out_of_stock' },
         ].map(s => (
           <button
@@ -160,8 +160,7 @@ export default function PageProduitsAdmin() {
                           : 'bg-surface border-border hover:border-primary/30'}`}
           >
             <p className="text-muted text-xs">{s.label}</p>
-            <p className="text-white font-bold text-2xl mt-1"
-               style={{ color: s.couleur }}>
+            <p className="font-bold text-2xl mt-1" style={{ color: s.couleur }}>
               {s.valeur}
             </p>
           </button>
@@ -216,10 +215,7 @@ export default function PageProduitsAdmin() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  {[
-                    'Produit', 'Boutique', 'Prix',
-                    'Stock', 'Statut', 'Créé le', 'Actions',
-                  ].map(h => (
+                  {['Produit', 'Boutique', 'Prix', 'Stock', 'Statut', 'Créé le', 'Actions'].map(h => (
                     <th key={h}
                         className="text-left px-5 py-3.5 text-xs font-semibold
                                    text-muted uppercase tracking-wide">
@@ -232,17 +228,13 @@ export default function PageProduitsAdmin() {
                 {produits.map(p => {
                   const loading = actionId === p._id;
                   return (
-                    <tr key={p._id}
-                        className="hover:bg-elevated/50 transition-colors">
+                    <tr key={p._id} className="hover:bg-elevated/50 transition-colors">
 
                       {/* Produit */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 rounded-xl overflow-hidden
-                                       flex-shrink-0 relative"
-                            style={{ backgroundColor: 'var(--color-elevated)' }}
-                          >
+                          <div className="w-10 h-10 rounded-xl overflow-hidden
+                                          flex-shrink-0 relative bg-elevated">
                             {p.images?.[0]
                               ? <Image src={p.images[0]} alt={p.name}
                                        fill className="object-cover" />
@@ -250,24 +242,18 @@ export default function PageProduitsAdmin() {
                                                 justify-center text-lg">🛍️</div>
                             }
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-white text-sm font-medium truncate
-                                          max-w-[180px]">
-                              {p.name}
-                            </p>
-                          </div>
+                          <p className="text-white text-sm font-medium truncate max-w-[180px]">
+                            {p.name}
+                          </p>
                         </div>
                       </td>
 
                       {/* Boutique */}
                       <td className="px-5 py-4">
                         {p.shopSlug ? (
-                          <Link
-                            href={`/${p.shopSlug}`}
-                            target="_blank"
-                            className="flex items-center gap-1 text-primary text-sm
-                                       hover:underline"
-                          >
+                          <Link href={`/${p.shopSlug}`} target="_blank"
+                                className="flex items-center gap-1 text-primary
+                                           text-sm hover:underline">
                             {p.shopName ?? p.shopId}
                             <ExternalLink size={11} />
                           </Link>
@@ -286,15 +272,12 @@ export default function PageProduitsAdmin() {
                       {/* Stock */}
                       <td className="px-5 py-4">
                         <p className={`text-sm font-medium
-                                      ${p.totalStock === 0
-                                        ? 'text-red-400'
-                                        : p.totalStock <= 5
-                                          ? 'text-amber-400'
-                                          : 'text-white'}`}>
+                                      ${p.totalStock === 0   ? 'text-red-400'   :
+                                        p.totalStock <= 5    ? 'text-amber-400' :
+                                        'text-white'}`}>
                           {p.totalStock}
                           {p.totalStock <= 5 && p.totalStock > 0 && (
-                            <AlertTriangle size={12}
-                                           className="inline ml-1 text-amber-400" />
+                            <AlertTriangle size={12} className="inline ml-1 text-amber-400" />
                           )}
                         </p>
                       </td>
@@ -307,19 +290,15 @@ export default function PageProduitsAdmin() {
                                            ? 'bg-primary/10 text-primary border-primary/30'
                                            : p.status === 'draft'
                                              ? 'bg-muted/10 text-muted border-border'
-                                             : 'bg-red-500/10 text-red-400 border-red-500/30'
-                                         }`}>
-                          {p.status === 'active'      ? 'Actif'    :
-                           p.status === 'draft'       ? 'Brouillon':
-                           'Rupture'}
+                                             : 'bg-red-500/10 text-red-400 border-red-500/30'}`}>
+                          {p.status === 'active' ? 'Actif' :
+                           p.status === 'draft'  ? 'Brouillon' : 'Rupture'}
                         </span>
                       </td>
 
                       {/* Date */}
                       <td className="px-5 py-4">
-                        <p className="text-muted text-xs">
-                          {formatDate(p.createdAt)}
-                        </p>
+                        <p className="text-muted text-xs">{formatDate(p.createdAt)}</p>
                       </td>
 
                       {/* Actions */}
@@ -329,20 +308,15 @@ export default function PageProduitsAdmin() {
                             <Loader2 size={15} className="animate-spin text-muted" />
                           ) : (
                             <>
-                              {/* Voir sur le storefront */}
                               {p.shopSlug && (
-                                <Link
-                                  href={`/${p.shopSlug}/produits/${p._id}`}
-                                  target="_blank"
-                                  className="p-1.5 rounded-lg text-muted hover:text-white
-                                             hover:bg-elevated transition-colors"
-                                  title="Voir le produit"
-                                >
+                                <Link href={`/${p.shopSlug}/produits/${p._id}`}
+                                      target="_blank"
+                                      className="p-1.5 rounded-lg text-muted hover:text-white
+                                                 hover:bg-elevated transition-colors"
+                                      title="Voir le produit">
                                   <Eye size={15} />
                                 </Link>
                               )}
-
-                              {/* Activer */}
                               {p.status !== 'active' && (
                                 <button
                                   onClick={() => changerStatut(p._id, 'active')}
@@ -353,8 +327,6 @@ export default function PageProduitsAdmin() {
                                   <CheckCircle size={15} />
                                 </button>
                               )}
-
-                              {/* Supprimer */}
                               <button
                                 onClick={() => supprimer(p._id)}
                                 className="p-1.5 rounded-lg text-muted hover:text-red-400
@@ -387,9 +359,7 @@ export default function PageProduitsAdmin() {
           >
             ← Précédent
           </button>
-          <span className="text-muted text-sm">
-            Page {page} / {totalPages}
-          </span>
+          <span className="text-muted text-sm">Page {page} / {totalPages}</span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}

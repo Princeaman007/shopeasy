@@ -27,56 +27,45 @@ const STATUTS = {
   suspended: { label: 'Suspendu', classe: 'bg-orange-500/10 text-orange-400 border-orange-500/30' },
 };
 
+// -- Helper fetch avec credentials --
+const authFetch = (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers, credentials: 'include' });
+};
+
 // ---------------------------------------------------------------------------
 export default function PageDetailMarchand({
   params,
 }: {
   params: { id: string };
 }) {
-  const [boutique,    setBoutique]    = useState<any>(null);
-  const [produits,    setProduits]    = useState<any[]>([]);
-  const [commandes,   setCommandes]   = useState<any[]>([]);
-  const [chargement,  setChargement]  = useState(true);
-  const [actionLoad,  setActionLoad]  = useState(false);
-  const [succes,      setSucces]      = useState('');
+  const [boutique,   setBoutique]   = useState<any>(null);
+  const [produits,   setProduits]   = useState<any[]>([]);
+  const [chargement, setChargement] = useState(true);
+  const [actionLoad, setActionLoad] = useState(false);
+  const [succes,     setSucces]     = useState('');
 
   // -- Chargement --
   const charger = async () => {
     setChargement(true);
     try {
-      const token   = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
+      // Récupère la boutique directement par ID
+      const boutiqueRes  = await authFetch(`${API}/admin/shops/${params.id}`);
+      const boutiqueData = await boutiqueRes.json();
 
-      // Récupère la boutique
-      const boutiqueRes = await fetch(
-        `${API}/admin/shops?search=${params.id}`, { headers }
-      );
-
-      // Récupère directement par ID via la route shops
-      const res  = await fetch(`${API}/admin/shops?limit=1`, { headers });
-      const data = await res.json();
-
-      // Cherche parmi toutes les boutiques celle avec cet ID
-      const allRes  = await fetch(
-        `${API}/admin/shops?limit=100`, { headers }
-      );
-      const allData = await allRes.json();
-      const shop    = allData.data?.find((s: any) => s._id === params.id);
-
-      if (shop) {
-        setBoutique(shop);
+      if (boutiqueData.success) {
+        setBoutique(boutiqueData.data);
 
         // Produits de la boutique
-        const prodRes  = await fetch(
-          `${API}/products/shop/${shop._id}?limit=5`, { headers }
+        const prodRes  = await authFetch(
+          `${API}/products/shop/${boutiqueData.data._id}?limit=5`
         );
         const prodData = await prodRes.json();
         if (prodData.success) setProduits(prodData.data);
-
-        // Commandes de la boutique
-        const cmdRes  = await fetch(
-          `${API}/orders/shop/me`, { headers }
-        );
       }
     } finally {
       setChargement(false);
@@ -90,14 +79,10 @@ export default function PageDetailMarchand({
     setActionLoad(true);
     setSucces('');
     try {
-      const token = localStorage.getItem('token');
-      await fetch(url, {
+      await authFetch(url, {
         method:  'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${token}`,
-        },
-        body: body ? JSON.stringify(body) : undefined,
+        headers: { 'Content-Type': 'application/json' },
+        body:    body ? JSON.stringify(body) : undefined,
       });
       setSucces('Action effectuée avec succès');
       charger();
@@ -130,8 +115,7 @@ export default function PageDetailMarchand({
       <div className="text-center py-20 space-y-3">
         <AlertTriangle size={40} className="text-red-400 mx-auto" />
         <p className="text-white font-semibold">Boutique introuvable</p>
-        <Link href="/admin/marchands"
-              className="text-primary text-sm hover:underline">
+        <Link href="/admin/marchands" className="text-primary text-sm hover:underline">
           ← Retour aux marchands
         </Link>
       </div>
@@ -145,11 +129,9 @@ export default function PageDetailMarchand({
 
       {/* En-tête */}
       <div className="flex items-center gap-4">
-        <Link
-          href="/admin/marchands"
-          className="p-2 rounded-xl border border-border text-muted
-                     hover:text-white transition-colors"
-        >
+        <Link href="/admin/marchands"
+              className="p-2 rounded-xl border border-border text-muted
+                         hover:text-white transition-colors">
           <ChevronLeft size={18} />
         </Link>
         <div className="flex-1">
@@ -161,13 +143,10 @@ export default function PageDetailMarchand({
           </div>
           <p className="text-muted text-sm">{boutique.slug}.shopeasyci.ci</p>
         </div>
-        <Link
-          href={`/${boutique.slug}`}
-          target="_blank"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border
-                     border-border text-muted hover:text-white text-sm
-                     transition-colors"
-        >
+        <Link href={`/${boutique.slug}`} target="_blank"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border
+                         border-border text-muted hover:text-white text-sm
+                         transition-colors">
           <ExternalLink size={15} />
           Voir la boutique
         </Link>
@@ -222,10 +201,9 @@ export default function PageDetailMarchand({
             {/* Stats rapides */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: 'Produits',   valeur: produits.length, icone: <Package   size={16} /> },
-                { label: 'Commandes',  valeur: commandes.length, icone: <ShoppingBag size={16} /> },
-                { label: 'Thème',      valeur: boutique.selectedTheme ?? 'vitrine-moderne',
-                  icone: <span>🎨</span> },
+                { label: 'Produits',  valeur: produits.length,                          icone: <Package     size={16} /> },
+                { label: 'Commandes', valeur: 0,                                         icone: <ShoppingBag size={16} /> },
+                { label: 'Thème',     valeur: boutique.selectedTheme ?? 'vitrine-moderne', icone: <span>🎨</span>         },
               ].map(s => (
                 <div key={s.label}
                      className="bg-elevated rounded-xl p-3 border border-border">
@@ -238,7 +216,6 @@ export default function PageDetailMarchand({
               ))}
             </div>
 
-            {/* Description */}
             {boutique.about?.description && (
               <div className="p-3 bg-elevated rounded-xl border border-border">
                 <p className="text-muted text-xs leading-relaxed">
@@ -295,12 +272,8 @@ export default function PageDetailMarchand({
                       }
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-white text-sm font-medium truncate">
-                        {p.name}
-                      </p>
-                      <p className="text-muted text-xs">
-                        {formatFcfa(p.price)}
-                      </p>
+                      <p className="text-white text-sm font-medium truncate">{p.name}</p>
+                      <p className="text-muted text-xs">{formatFcfa(p.price)}</p>
                     </div>
                     <span className={`text-xs px-2 py-0.5 rounded-full border
                                      ${p.status === 'active'
@@ -317,8 +290,6 @@ export default function PageDetailMarchand({
 
         {/* ── Colonne droite — Abonnement ── */}
         <div className="space-y-6">
-
-          {/* Statut abonnement */}
           <div className="bg-surface border border-border rounded-2xl p-6 space-y-5">
             <h2 className="text-white font-semibold">Abonnement</h2>
 
@@ -329,17 +300,14 @@ export default function PageDetailMarchand({
                               : 'bg-elevated border-border'}`}>
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center
                               ${boutique.planType === 'premium'
-                                ? 'bg-amber-500/20'
-                                : 'bg-primary/10'}`}>
+                                ? 'bg-amber-500/20' : 'bg-primary/10'}`}>
                 {boutique.planType === 'premium'
                   ? <Crown size={20} className="text-amber-400" />
                   : <Zap   size={20} className="text-primary"  />
                 }
               </div>
               <div>
-                <p className="text-white font-bold capitalize">
-                  {boutique.planType}
-                </p>
+                <p className="text-white font-bold capitalize">{boutique.planType}</p>
                 <p className="text-muted text-xs">
                   {boutique.planType === 'premium' ? '30 000 FCFA/mois' : '15 000 FCFA/mois'}
                 </p>
@@ -360,15 +328,10 @@ export default function PageDetailMarchand({
                 <div className="flex items-center justify-between">
                   <span className="text-muted text-sm flex items-center gap-1">
                     <Clock size={12} />
-                    {boutique.subscriptionStatus === 'trial'
-                      ? 'Fin essai'
-                      : 'Expiration'
-                    }
+                    {boutique.subscriptionStatus === 'trial' ? 'Fin essai' : 'Expiration'}
                   </span>
                   <span className="text-white text-sm">
-                    {formatDate(
-                      boutique.subscriptionExpiresAt ?? boutique.trialEndsAt
-                    )}
+                    {formatDate(boutique.subscriptionExpiresAt ?? boutique.trialEndsAt)}
                   </span>
                 </div>
               )}
@@ -379,9 +342,7 @@ export default function PageDetailMarchand({
                   Vérifiée
                 </span>
                 <span className={`text-sm font-medium
-                                 ${boutique.isVerified
-                                   ? 'text-primary'
-                                   : 'text-muted'}`}>
+                                 ${boutique.isVerified ? 'text-primary' : 'text-muted'}`}>
                   {boutique.isVerified ? 'Oui ✓' : 'Non'}
                 </span>
               </div>
@@ -390,13 +351,10 @@ export default function PageDetailMarchand({
             {/* Actions */}
             <div className="space-y-2 pt-2">
               {!boutique.isVerified && (
-                <button
-                  onClick={verifier}
-                  disabled={actionLoad}
-                  className="w-full py-2.5 rounded-xl bg-primary/10 text-primary
-                             hover:bg-primary/20 text-sm font-semibold transition-colors
-                             disabled:opacity-50 flex items-center justify-center gap-2"
-                >
+                <button onClick={verifier} disabled={actionLoad}
+                        className="w-full py-2.5 rounded-xl bg-primary/10 text-primary
+                                   hover:bg-primary/20 text-sm font-semibold transition-colors
+                                   disabled:opacity-50 flex items-center justify-center gap-2">
                   {actionLoad
                     ? <Loader2 size={15} className="animate-spin" />
                     : <CheckCircle size={15} />
@@ -406,74 +364,58 @@ export default function PageDetailMarchand({
               )}
 
               {boutique.subscriptionStatus !== 'active' && (
-                <button
-                  onClick={() => modifierAbonnement('active')}
-                  disabled={actionLoad}
-                  className="w-full py-2.5 rounded-xl bg-primary text-white
-                             hover:bg-primary-hover text-sm font-semibold
-                             transition-colors disabled:opacity-50"
-                >
+                <button onClick={() => modifierAbonnement('active')} disabled={actionLoad}
+                        className="w-full py-2.5 rounded-xl bg-primary text-white
+                                   hover:bg-primary-hover text-sm font-semibold
+                                   transition-colors disabled:opacity-50">
                   Activer l'abonnement
                 </button>
               )}
 
               {boutique.planType === 'basic' && (
-                <button
-                  onClick={() => modifierAbonnement('active', 'premium')}
-                  disabled={actionLoad}
-                  className="w-full py-2.5 rounded-xl bg-amber-500/10 text-amber-400
-                             hover:bg-amber-500/20 text-sm font-semibold transition-colors
-                             disabled:opacity-50"
-                >
+                <button onClick={() => modifierAbonnement('active', 'premium')}
+                        disabled={actionLoad}
+                        className="w-full py-2.5 rounded-xl bg-amber-500/10 text-amber-400
+                                   hover:bg-amber-500/20 text-sm font-semibold transition-colors
+                                   disabled:opacity-50">
                   Passer en Premium
                 </button>
               )}
 
               {boutique.planType === 'premium' && (
-                <button
-                  onClick={() => modifierAbonnement('active', 'basic')}
-                  disabled={actionLoad}
-                  className="w-full py-2.5 rounded-xl bg-elevated text-muted
-                             hover:text-white border border-border text-sm
-                             font-semibold transition-colors disabled:opacity-50"
-                >
+                <button onClick={() => modifierAbonnement('active', 'basic')}
+                        disabled={actionLoad}
+                        className="w-full py-2.5 rounded-xl bg-elevated text-muted
+                                   hover:text-white border border-border text-sm
+                                   font-semibold transition-colors disabled:opacity-50">
                   Rétrograder en Basic
                 </button>
               )}
 
               {boutique.subscriptionStatus === 'active' && (
-                <button
-                  onClick={() => modifierAbonnement('suspended')}
-                  disabled={actionLoad}
-                  className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-400
-                             hover:bg-red-500/20 text-sm font-semibold transition-colors
-                             disabled:opacity-50"
-                >
+                <button onClick={() => modifierAbonnement('suspended')} disabled={actionLoad}
+                        className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-400
+                                   hover:bg-red-500/20 text-sm font-semibold transition-colors
+                                   disabled:opacity-50">
                   Suspendre
                 </button>
               )}
 
               {boutique.subscriptionStatus === 'suspended' && (
-                <button
-                  onClick={() => modifierAbonnement('active')}
-                  disabled={actionLoad}
-                  className="w-full py-2.5 rounded-xl bg-primary text-white
-                             hover:bg-primary-hover text-sm font-semibold
-                             transition-colors disabled:opacity-50"
-                >
+                <button onClick={() => modifierAbonnement('active')} disabled={actionLoad}
+                        className="w-full py-2.5 rounded-xl bg-primary text-white
+                                   hover:bg-primary-hover text-sm font-semibold
+                                   transition-colors disabled:opacity-50">
                   Réactiver
                 </button>
               )}
             </div>
           </div>
 
-          {/* Bouton actualiser */}
-          <button
-            onClick={charger}
-            className="w-full flex items-center justify-center gap-2 py-2.5
-                       rounded-xl border border-border text-muted hover:text-white
-                       text-sm transition-colors"
-          >
+          <button onClick={charger}
+                  className="w-full flex items-center justify-center gap-2 py-2.5
+                             rounded-xl border border-border text-muted hover:text-white
+                             text-sm transition-colors">
             <RefreshCw size={15} />
             Actualiser
           </button>

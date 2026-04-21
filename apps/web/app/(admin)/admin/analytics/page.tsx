@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   Loader2, TrendingUp, Users, ShoppingBag,
-  CreditCard, BarChart3, Calendar,
+  CreditCard, BarChart3,
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, XAxis, YAxis,
@@ -17,6 +17,16 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
+// -- Helper fetch avec credentials --
+const authFetch = (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers, credentials: 'include' });
+};
+
 // ---------------------------------------------------------------------------
 function TooltipCustom({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -25,10 +35,7 @@ function TooltipCustom({ active, payload, label }: any) {
       <p className="text-muted text-xs mb-2">{label}</p>
       {payload.map((p: any, i: number) => (
         <p key={i} className="text-sm font-medium" style={{ color: p.color }}>
-          {p.name} : {p.name === 'Revenus'
-            ? formatFcfa(p.value)
-            : p.value
-          }
+          {p.name} : {p.name === 'Revenus' ? formatFcfa(p.value) : p.value}
         </p>
       ))}
     </div>
@@ -37,21 +44,18 @@ function TooltipCustom({ active, payload, label }: any) {
 
 // ---------------------------------------------------------------------------
 export default function PageAnalyticsAdmin() {
-  const [stats,       setStats]       = useState<any>(null);
-  const [evolution,   setEvolution]   = useState<any[]>([]);
-  const [chargement,  setChargement]  = useState(true);
-  const [periode,     setPeriode]     = useState<'7j' | '30j' | '90j'>('30j');
+  const [stats,      setStats]      = useState<any>(null);
+  const [evolution,  setEvolution]  = useState<any[]>([]);
+  const [chargement, setChargement] = useState(true);
+  const [periode,    setPeriode]    = useState<'7j' | '30j' | '90j'>('30j');
 
   useEffect(() => {
     const charger = async () => {
       setChargement(true);
       try {
-        const token   = localStorage.getItem('token');
-        const headers = { Authorization: `Bearer ${token}` };
-
         const [statsRes, evolutionRes] = await Promise.all([
-          fetch(`${API}/admin/stats`, { headers }),
-          fetch(`${API}/admin/analytics?periode=${periode}`, { headers }),
+          authFetch(`${API}/admin/stats`),
+          authFetch(`${API}/admin/analytics?periode=${periode}`),
         ]);
 
         const statsData     = await statsRes.json();
@@ -66,7 +70,6 @@ export default function PageAnalyticsAdmin() {
     charger();
   }, [periode]);
 
-  // -- Données pour le pie chart plans --
   const dataPlan = stats ? [
     { name: 'Premium', value: stats.abonnements?.premium_count ?? 0, color: '#f59e0b' },
     { name: 'Basic',   value: stats.abonnements?.basic_count   ?? 0, color: '#06C167' },
@@ -74,7 +77,6 @@ export default function PageAnalyticsAdmin() {
     { name: 'Expiré',  value: stats.abonnements?.expires_count ?? 0, color: '#ef4444' },
   ] : [];
 
-  // ---------------------------------------------------------------------------
   if (chargement) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -90,12 +92,8 @@ export default function PageAnalyticsAdmin() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-white text-2xl font-bold">Analytics plateforme</h1>
-          <p className="text-muted text-sm mt-1">
-            Vue globale de ShopEasy CI
-          </p>
+          <p className="text-muted text-sm mt-1">Vue globale de ShopEasy CI</p>
         </div>
-
-        {/* Sélecteur période */}
         <div className="flex bg-elevated border border-border rounded-xl p-1 gap-1">
           {(['7j', '30j', '90j'] as const).map(p => (
             <button
@@ -119,28 +117,28 @@ export default function PageAnalyticsAdmin() {
             label:   'Total boutiques',
             valeur:  stats?.boutiques?.total ?? 0,
             sous:    `${stats?.boutiques?.nouvellesCeMois ?? 0} ce mois`,
-            icone:   <BarChart3 size={18} />,
+            icone:   <BarChart3    size={18} />,
             couleur: '#06C167',
           },
           {
             label:   'Marchands actifs',
             valeur:  stats?.boutiques?.actives ?? 0,
             sous:    `${stats?.boutiques?.trial ?? 0} en essai`,
-            icone:   <Users size={18} />,
+            icone:   <Users        size={18} />,
             couleur: '#3b82f6',
           },
           {
             label:   'Commandes totales',
             valeur:  stats?.commandes?.total ?? 0,
             sous:    `${stats?.commandes?.nouvelles ?? 0} nouvelles`,
-            icone:   <ShoppingBag size={18} />,
+            icone:   <ShoppingBag  size={18} />,
             couleur: '#f59e0b',
           },
           {
             label:   'MRR',
             valeur:  formatFcfa(stats?.mrr ?? 0),
             sous:    `${stats?.abonnements?.premium_count ?? 0} Premium actifs`,
-            icone:   <CreditCard size={18} />,
+            icone:   <CreditCard   size={18} />,
             couleur: '#8b5cf6',
           },
         ].map(kpi => (
@@ -167,35 +165,22 @@ export default function PageAnalyticsAdmin() {
           <TrendingUp size={18} className="text-primary" />
           Évolution de la plateforme
         </h2>
-
         {evolution.length === 0 ? (
           <div className="text-center py-16 text-muted">
-            <p>Pas encore de données pour cette période</p>
+            Pas encore de données pour cette période
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={280}>
             <LineChart data={evolution}>
               <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
-              <XAxis dataKey="date"  stroke="#888" tick={{ fontSize: 12 }} />
-              <YAxis                 stroke="#888" tick={{ fontSize: 12 }} />
+              <XAxis dataKey="date" stroke="#888" tick={{ fontSize: 12 }} />
+              <YAxis                stroke="#888" tick={{ fontSize: 12 }} />
               <Tooltip content={<TooltipCustom />} />
               <Legend />
-              <Line
-                type="monotone"
-                dataKey="boutiques"
-                name="Nouvelles boutiques"
-                stroke="#06C167"
-                strokeWidth={2}
-                dot={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="commandes"
-                name="Commandes"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={false}
-              />
+              <Line type="monotone" dataKey="boutiques" name="Nouvelles boutiques"
+                    stroke="#06C167" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="commandes" name="Commandes"
+                    stroke="#3b82f6" strokeWidth={2} dot={false} />
             </LineChart>
           </ResponsiveContainer>
         )}
@@ -205,9 +190,7 @@ export default function PageAnalyticsAdmin() {
 
         {/* ── Revenus ── */}
         <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
-          <h2 className="text-white font-semibold">
-            Revenus (FCFA)
-          </h2>
+          <h2 className="text-white font-semibold">Revenus (FCFA)</h2>
           {evolution.length === 0 ? (
             <p className="text-muted text-sm text-center py-10">
               Pas encore de données
@@ -216,15 +199,11 @@ export default function PageAnalyticsAdmin() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={evolution}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2a2a" />
-                <XAxis dataKey="date"    stroke="#888" tick={{ fontSize: 11 }} />
-                <YAxis                   stroke="#888" tick={{ fontSize: 11 }} />
+                <XAxis dataKey="date" stroke="#888" tick={{ fontSize: 11 }} />
+                <YAxis               stroke="#888" tick={{ fontSize: 11 }} />
                 <Tooltip content={<TooltipCustom />} />
-                <Bar
-                  dataKey="revenus"
-                  name="Revenus"
-                  fill="#8b5cf6"
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="revenus" name="Revenus" fill="#8b5cf6"
+                     radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -232,31 +211,19 @@ export default function PageAnalyticsAdmin() {
 
         {/* ── Répartition plans ── */}
         <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
-          <h2 className="text-white font-semibold">
-            Répartition des plans
-          </h2>
-
+          <h2 className="text-white font-semibold">Répartition des plans</h2>
           <div className="flex items-center gap-6">
-            {/* Pie chart */}
             <ResponsiveContainer width={160} height={160}>
               <PieChart>
-                <Pie
-                  data={dataPlan}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={45}
-                  outerRadius={70}
-                  paddingAngle={3}
-                  dataKey="value"
-                >
+                <Pie data={dataPlan} cx="50%" cy="50%"
+                     innerRadius={45} outerRadius={70}
+                     paddingAngle={3} dataKey="value">
                   {dataPlan.map((entry, i) => (
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-
-            {/* Légende */}
             <div className="flex-1 space-y-3">
               {dataPlan.map(d => {
                 const total = dataPlan.reduce((s, x) => s + x.value, 0);
@@ -265,10 +232,8 @@ export default function PageAnalyticsAdmin() {
                   <div key={d.name} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: d.color }}
-                        />
+                        <div className="w-3 h-3 rounded-full"
+                             style={{ backgroundColor: d.color }} />
                         <span className="text-muted">{d.name}</span>
                       </div>
                       <span className="text-white font-medium">
@@ -276,10 +241,8 @@ export default function PageAnalyticsAdmin() {
                       </span>
                     </div>
                     <div className="h-1.5 bg-elevated rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{ width: `${pct}%`, backgroundColor: d.color }}
-                      />
+                      <div className="h-full rounded-full"
+                           style={{ width: `${pct}%`, backgroundColor: d.color }} />
                     </div>
                   </div>
                 );
@@ -294,34 +257,15 @@ export default function PageAnalyticsAdmin() {
         <h2 className="text-white font-semibold">Résumé utilisateurs</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            {
-              label:   'Marchands',
-              valeur:  stats?.utilisateurs?.marchands ?? 0,
-              couleur: '#06C167',
-            },
-            {
-              label:   'Clients',
-              valeur:  stats?.utilisateurs?.clients   ?? 0,
-              couleur: '#3b82f6',
-            },
-            {
-              label:   'Leads',
-              valeur:  stats?.leads?.total            ?? 0,
-              couleur: '#f59e0b',
-            },
-            {
-              label:   'Nouveaux leads',
-              valeur:  stats?.leads?.nouveaux         ?? 0,
-              couleur: '#8b5cf6',
-            },
+            { label: 'Marchands',     valeur: stats?.utilisateurs?.marchands ?? 0, couleur: '#06C167' },
+            { label: 'Clients',       valeur: stats?.utilisateurs?.clients   ?? 0, couleur: '#3b82f6' },
+            { label: 'Leads',         valeur: stats?.leads?.total            ?? 0, couleur: '#f59e0b' },
+            { label: 'Nouveaux leads',valeur: stats?.leads?.nouveaux         ?? 0, couleur: '#8b5cf6' },
           ].map(u => (
             <div key={u.label}
                  className="bg-elevated rounded-xl p-4 border border-border">
               <p className="text-muted text-xs mb-1">{u.label}</p>
-              <p
-                className="text-2xl font-bold"
-                style={{ color: u.couleur }}
-              >
+              <p className="text-2xl font-bold" style={{ color: u.couleur }}>
                 {u.valeur.toLocaleString('fr-FR')}
               </p>
             </div>

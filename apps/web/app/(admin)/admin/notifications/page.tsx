@@ -15,6 +15,16 @@ const formatDate = (d: string) =>
     hour: '2-digit', minute: '2-digit',
   });
 
+// -- Helper fetch avec credentials --
+const authFetch = (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers, credentials: 'include' });
+};
+
 // ---------------------------------------------------------------------------
 interface Notification {
   _id:       string;
@@ -45,10 +55,7 @@ export default function PageNotificationsAdmin() {
   const charger = async () => {
     setChargement(true);
     try {
-      const token = localStorage.getItem('token');
-      const res   = await fetch(`${API}/admin/notifications`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res  = await authFetch(`${API}/admin/notifications`);
       const data = await res.json();
       if (data.success) setNotifications(data.data);
     } finally {
@@ -67,14 +74,10 @@ export default function PageNotificationsAdmin() {
     setEnvoi(true);
     setErreur('');
     try {
-      const token = localStorage.getItem('token');
-      const res   = await fetch(`${API}/admin/notifications`, {
+      const res  = await authFetch(`${API}/admin/notifications`, {
         method:  'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${token}`,
-        },
-        body: JSON.stringify(form),
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
@@ -93,19 +96,15 @@ export default function PageNotificationsAdmin() {
 
   // -- Supprimer --
   const supprimer = async (id: string) => {
-    const token = localStorage.getItem('token');
-    await fetch(`${API}/admin/notifications/${id}`, {
-      method:  'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await authFetch(`${API}/admin/notifications/${id}`, { method: 'DELETE' });
     charger();
   };
 
   const CIBLES = {
-    tous:      { label: 'Tous les marchands',   icone: <Users  size={14} />, couleur: '#06C167' },
-    marchands: { label: 'Marchands actifs',     icone: <Store  size={14} />, couleur: '#3b82f6' },
-    premium:   { label: 'Marchands Premium',    icone: <Bell   size={14} />, couleur: '#f59e0b' },
-    expires:   { label: 'Abonnements expirés',  icone: <Bell   size={14} />, couleur: '#ef4444' },
+    tous:      { label: 'Tous les marchands',  icone: <Users size={14} />, couleur: '#06C167' },
+    marchands: { label: 'Marchands actifs',    icone: <Store size={14} />, couleur: '#3b82f6' },
+    premium:   { label: 'Marchands Premium',   icone: <Bell  size={14} />, couleur: '#f59e0b' },
+    expires:   { label: 'Abonnements expirés', icone: <Bell  size={14} />, couleur: '#ef4444' },
   };
 
   // ---------------------------------------------------------------------------
@@ -163,8 +162,7 @@ export default function PageNotificationsAdmin() {
                        rounded-2xl hover:border-primary/30 transition-colors text-left"
           >
             <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center
-                         flex-shrink-0"
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
               style={{ backgroundColor: `${val.couleur}20`, color: val.couleur }}
             >
               {val.icone}
@@ -179,9 +177,7 @@ export default function PageNotificationsAdmin() {
 
       {/* ── Historique ── */}
       <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
-        <h2 className="text-white font-semibold">
-          Historique des notifications
-        </h2>
+        <h2 className="text-white font-semibold">Historique des notifications</h2>
 
         {chargement ? (
           <div className="flex items-center justify-center py-10">
@@ -197,15 +193,10 @@ export default function PageNotificationsAdmin() {
             {notifications.map(n => {
               const cible = CIBLES[n.cible as keyof typeof CIBLES];
               return (
-                <div
-                  key={n._id}
-                  className="flex gap-4 p-4 bg-elevated border border-border
-                             rounded-xl"
-                >
-                  {/* Icône cible */}
+                <div key={n._id}
+                     className="flex gap-4 p-4 bg-elevated border border-border rounded-xl">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center
-                               flex-shrink-0"
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{
                       backgroundColor: `${cible?.couleur ?? '#888'}20`,
                       color:           cible?.couleur ?? '#888',
@@ -213,13 +204,9 @@ export default function PageNotificationsAdmin() {
                   >
                     <Bell size={18} />
                   </div>
-
-                  {/* Contenu */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-white font-semibold text-sm">
-                        {n.titre}
-                      </p>
+                      <p className="text-white font-semibold text-sm">{n.titre}</p>
                       <span
                         className="text-xs px-2 py-0.5 rounded-full border"
                         style={{
@@ -231,20 +218,14 @@ export default function PageNotificationsAdmin() {
                         {cible?.label ?? n.cible}
                       </span>
                     </div>
-                    <p className="text-muted text-sm mt-1 line-clamp-2">
-                      {n.message}
-                    </p>
+                    <p className="text-muted text-sm mt-1 line-clamp-2">{n.message}</p>
                     <div className="flex items-center gap-3 mt-2">
-                      <p className="text-muted text-xs">
-                        {formatDate(n.createdAt)}
-                      </p>
+                      <p className="text-muted text-xs">{formatDate(n.createdAt)}</p>
                       <span className="text-xs text-primary">
                         {n.envoye} destinataire{n.envoye > 1 ? 's' : ''}
                       </span>
                     </div>
                   </div>
-
-                  {/* Supprimer */}
                   <button
                     onClick={() => supprimer(n._id)}
                     className="p-1.5 rounded-lg text-muted hover:text-red-400
@@ -265,7 +246,6 @@ export default function PageNotificationsAdmin() {
                         bg-black/70 px-4">
           <div className="bg-surface border border-border rounded-2xl w-full
                           max-w-lg p-6 space-y-5">
-
             <div className="flex items-center justify-between">
               <h2 className="text-white font-semibold text-lg">
                 Nouvelle notification
@@ -286,9 +266,7 @@ export default function PageNotificationsAdmin() {
                 {(Object.entries(CIBLES) as [string, any][]).map(([key, val]) => (
                   <button
                     key={key}
-                    onClick={() => setForm(prev => ({
-                      ...prev, cible: key as any,
-                    }))}
+                    onClick={() => setForm(prev => ({ ...prev, cible: key as any }))}
                     className={`flex items-center gap-2 p-3 rounded-xl border
                                 text-left text-sm transition-all
                                 ${form.cible === key
@@ -307,9 +285,7 @@ export default function PageNotificationsAdmin() {
               <label className="text-muted text-sm">Titre *</label>
               <input
                 value={form.titre}
-                onChange={e => setForm(prev => ({
-                  ...prev, titre: e.target.value,
-                }))}
+                onChange={e => setForm(prev => ({ ...prev, titre: e.target.value }))}
                 placeholder="Ex : Nouveau thème disponible !"
                 maxLength={100}
                 className="w-full bg-elevated border border-border rounded-xl
@@ -323,9 +299,7 @@ export default function PageNotificationsAdmin() {
               <label className="text-muted text-sm">Message *</label>
               <textarea
                 value={form.message}
-                onChange={e => setForm(prev => ({
-                  ...prev, message: e.target.value,
-                }))}
+                onChange={e => setForm(prev => ({ ...prev, message: e.target.value }))}
                 placeholder="Contenu de la notification..."
                 rows={4}
                 maxLength={500}
@@ -338,11 +312,8 @@ export default function PageNotificationsAdmin() {
               </p>
             </div>
 
-            {erreur && (
-              <p className="text-red-400 text-sm">{erreur}</p>
-            )}
+            {erreur && <p className="text-red-400 text-sm">{erreur}</p>}
 
-            {/* Actions */}
             <div className="flex gap-3 pt-2">
               <button
                 onClick={() => { setModalOuvert(false); setErreur(''); }}

@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Crown, Zap, Clock, CheckCircle, XCircle,
-  Search, X, Loader2, RefreshCw,
-  TrendingUp, CreditCard, AlertTriangle,
+  Crown, Zap, Clock, Loader2, RefreshCw,
+  Search, X, AlertTriangle, CreditCard,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -21,6 +20,16 @@ const formatDate = (d: string) =>
 const joursRestants = (date: string): number => {
   const diff = new Date(date).getTime() - Date.now();
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+};
+
+// -- Helper fetch avec credentials --
+const authFetch = (url: string, options: RequestInit = {}) => {
+  const token = localStorage.getItem('token');
+  const headers: Record<string, string> = {
+    ...(options.headers as Record<string, string> ?? {}),
+  };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return fetch(url, { ...options, headers, credentials: 'include' });
 };
 
 // ---------------------------------------------------------------------------
@@ -58,8 +67,6 @@ export default function PageAbonnementsAdmin() {
   const charger = async () => {
     setChargement(true);
     try {
-      const token  = localStorage.getItem('token');
-      const headers = { Authorization: `Bearer ${token}` };
       const params = new URLSearchParams({
         page:  String(page),
         limit: '15',
@@ -69,8 +76,8 @@ export default function PageAbonnementsAdmin() {
       });
 
       const [shopsRes, statsRes] = await Promise.all([
-        fetch(`${API}/admin/shops?${params}`, { headers }),
-        fetch(`${API}/admin/stats`,            { headers }),
+        authFetch(`${API}/admin/shops?${params}`),
+        authFetch(`${API}/admin/stats`),
       ]);
 
       const shopsData = await shopsRes.json();
@@ -95,24 +102,13 @@ export default function PageAbonnementsAdmin() {
   }, [recherche]);
 
   // -- Modifier abonnement --
-  const modifierAbonnement = async (
-    id: string,
-    status: string,
-    planType?: string
-  ) => {
+  const modifierAbonnement = async (id: string, status: string, planType?: string) => {
     setActionId(id);
     try {
-      const token = localStorage.getItem('token');
-      await fetch(`${API}/admin/shops/${id}/subscription`, {
+      await authFetch(`${API}/admin/shops/${id}/subscription`, {
         method:  'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization:  `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          status,
-          ...(planType && { planType }),
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ status, ...(planType && { planType }) }),
       });
       charger();
     } finally {
@@ -140,9 +136,7 @@ export default function PageAbonnementsAdmin() {
               <span className="text-muted text-xs">MRR</span>
               <CreditCard size={16} className="text-primary" />
             </div>
-            <p className="text-white text-xl font-bold">
-              {formatFcfa(stats.mrr)}
-            </p>
+            <p className="text-white text-xl font-bold">{formatFcfa(stats.mrr)}</p>
             <p className="text-muted text-xs">Revenus mensuels récurrents</p>
           </div>
 
@@ -231,8 +225,7 @@ export default function PageAbonnementsAdmin() {
         <button
           onClick={charger}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl border
-                     border-border text-muted hover:text-white text-sm
-                     transition-colors"
+                     border-border text-muted hover:text-white text-sm transition-colors"
         >
           <RefreshCw size={15} />
         </button>
@@ -253,10 +246,8 @@ export default function PageAbonnementsAdmin() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  {[
-                    'Boutique', 'Marchand', 'Plan',
-                    'Statut', 'Expiration', 'Jours restants', 'Actions',
-                  ].map(h => (
+                  {['Boutique', 'Marchand', 'Plan', 'Statut',
+                    'Expiration', 'Jours restants', 'Actions'].map(h => (
                     <th key={h}
                         className="text-left px-5 py-3.5 text-xs font-semibold
                                    text-muted uppercase tracking-wide">
@@ -267,24 +258,21 @@ export default function PageAbonnementsAdmin() {
               </thead>
               <tbody className="divide-y divide-border">
                 {boutiques.map(b => {
-                  const loading    = actionId === b._id;
-                  const dateRef    = b.subscriptionExpiresAt ?? b.trialEndsAt;
-                  const jours      = dateRef ? joursRestants(dateRef) : null;
-                  const urgence    = jours !== null && jours <= 3;
-                  const attention  = jours !== null && jours <= 7 && jours > 3;
+                  const loading   = actionId === b._id;
+                  const dateRef   = b.subscriptionExpiresAt ?? b.trialEndsAt;
+                  const jours     = dateRef ? joursRestants(dateRef) : null;
+                  const urgence   = jours !== null && jours <= 3;
+                  const attention = jours !== null && jours <= 7 && jours > 3;
 
                   return (
                     <tr key={b._id}
                         className={`hover:bg-elevated/50 transition-colors
                                    ${b.subscriptionStatus === 'expired'
-                                     ? 'bg-red-500/5'
-                                     : ''}`}>
+                                     ? 'bg-red-500/5' : ''}`}>
 
                       {/* Boutique */}
                       <td className="px-5 py-4">
-                        <p className="text-white text-sm font-medium">
-                          {b.name}
-                        </p>
+                        <p className="text-white text-sm font-medium">{b.name}</p>
                         <p className="text-muted text-xs">{b.slug}</p>
                       </td>
 
@@ -303,8 +291,7 @@ export default function PageAbonnementsAdmin() {
                           }
                           <span className={`text-xs font-semibold capitalize
                                           ${b.planType === 'premium'
-                                            ? 'text-amber-400'
-                                            : 'text-primary'}`}>
+                                            ? 'text-amber-400' : 'text-primary'}`}>
                             {b.planType}
                           </span>
                         </div>
@@ -322,9 +309,9 @@ export default function PageAbonnementsAdmin() {
                                                ? 'bg-red-500/10 text-red-400 border-red-500/30'
                                                : 'bg-orange-500/10 text-orange-400 border-orange-500/30'
                                          }`}>
-                          {b.subscriptionStatus === 'active'    ? 'Actif'    :
-                           b.subscriptionStatus === 'trial'     ? 'Essai'    :
-                           b.subscriptionStatus === 'expired'   ? 'Expiré'   :
+                          {b.subscriptionStatus === 'active'  ? 'Actif'    :
+                           b.subscriptionStatus === 'trial'   ? 'Essai'    :
+                           b.subscriptionStatus === 'expired' ? 'Expiré'   :
                            'Suspendu'}
                         </span>
                       </td>
@@ -343,7 +330,7 @@ export default function PageAbonnementsAdmin() {
                       <td className="px-5 py-4">
                         {jours !== null ? (
                           <div className="flex items-center gap-1.5">
-                            {urgence   && <AlertTriangle size={13} className="text-red-400" />}
+                            {urgence   && <AlertTriangle size={13} className="text-red-400"   />}
                             {attention && <Clock         size={13} className="text-amber-400" />}
                             <span className={`text-sm font-semibold
                                             ${urgence   ? 'text-red-400'   :
@@ -364,7 +351,6 @@ export default function PageAbonnementsAdmin() {
                             <Loader2 size={15} className="animate-spin text-muted" />
                           ) : (
                             <>
-                              {/* Renouveler / Activer */}
                               {b.subscriptionStatus !== 'active' && (
                                 <button
                                   onClick={() => modifierAbonnement(b._id, 'active')}
@@ -376,7 +362,6 @@ export default function PageAbonnementsAdmin() {
                                 </button>
                               )}
 
-                              {/* Renouveler (déjà actif) */}
                               {b.subscriptionStatus === 'active' && (
                                 <button
                                   onClick={() => modifierAbonnement(b._id, 'active')}
@@ -388,7 +373,6 @@ export default function PageAbonnementsAdmin() {
                                 </button>
                               )}
 
-                              {/* Upgrade Premium */}
                               {b.planType === 'basic' && (
                                 <button
                                   onClick={() => modifierAbonnement(b._id, 'active', 'premium')}
@@ -400,7 +384,6 @@ export default function PageAbonnementsAdmin() {
                                 </button>
                               )}
 
-                              {/* Downgrade Basic */}
                               {b.planType === 'premium' && (
                                 <button
                                   onClick={() => modifierAbonnement(b._id, 'active', 'basic')}
@@ -412,7 +395,6 @@ export default function PageAbonnementsAdmin() {
                                 </button>
                               )}
 
-                              {/* Suspendre */}
                               {b.subscriptionStatus === 'active' && (
                                 <button
                                   onClick={() => modifierAbonnement(b._id, 'suspended')}
@@ -447,9 +429,7 @@ export default function PageAbonnementsAdmin() {
           >
             ← Précédent
           </button>
-          <span className="text-muted text-sm">
-            Page {page} / {totalPages}
-          </span>
+          <span className="text-muted text-sm">Page {page} / {totalPages}</span>
           <button
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
