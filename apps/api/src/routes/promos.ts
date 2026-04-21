@@ -1,44 +1,47 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { PromoCode } from '../models/PromoCode';
+import { Shop } from '../models/Shop';
 import { authenticate, requireMerchant } from '../middleware/auth';
 
 const router = Router();
 
-// ─── Schéma de validation ────────────────────────────────────────────────────
-
+// ─── Schéma ──────────────────────────────────────────────────────────────────
 const promoSchema = z.object({
-  code:      z.string().min(3).max(20).toUpperCase(),
+  code:      z.string().min(3).max(20),
   type:      z.enum(['percent', 'fixed']),
   value:     z.number().min(1),
   minOrder:  z.number().optional(),
   maxUses:   z.number().int().optional(),
-  expiresAt: z.string().datetime().optional(),
+  expiresAt: z.string().optional(),
   isActive:  z.boolean().optional(),
 });
 
-// ─── Middleware Premium ───────────────────────────────────────────────────────
+// ─── Helper — récupère la boutique du marchand connecté ──────────────────────
+const getShop = async (userId: string) =>
+  Shop.findOne({ ownerId: userId });
 
-/**
- * Vérifie que le marchand est sur le plan Premium
- */
-const requirePremium = (req: Request, res: Response, next: Function) => {
-  if (req.shop!.planType !== 'premium') {
+// ─── Middleware Premium ───────────────────────────────────────────────────────
+const requirePremium = async (req: Request, res: Response, next: Function) => {
+  const shop = await getShop(req.user!.userId);
+  if (!shop || shop.planType !== 'premium') {
     res.status(403).json({
       success: false,
       message: 'Les codes promo sont réservés au plan Premium',
-      code: 'PREMIUM_REQUIRED',
+      code:    'PREMIUM_REQUIRED',
     });
     return;
   }
   next();
 };
 
-// ─── GET /promos — Liste des codes promo du marchand ─────────────────────────
-
+// ─── GET /promos ──────────────────────────────────────────────────────────────
 router.get('/', authenticate, requireMerchant, requirePremium, async (req: Request, res: Response) => {
   try {
-    const promos = await PromoCode.find({ shopId: req.shop!.id })
+    const shop = await getShop(req.user!.userId);
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+
+    const promos = await PromoCode.find({ shopId: shop._id })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -49,8 +52,7 @@ router.get('/', authenticate, requireMerchant, requirePremium, async (req: Reque
   }
 });
 
-// ─── POST /promos — Créer un code promo ──────────────────────────────────────
-
+// ─── POST /promos ─────────────────────────────────────────────────────────────
 router.post('/', authenticate, requireMerchant, requirePremium, async (req: Request, res: Response) => {
   try {
     const parsed = promoSchema.safeParse(req.body);
@@ -58,39 +60,31 @@ router.post('/', authenticate, requireMerchant, requirePremium, async (req: Requ
       res.status(400).json({
         success: false,
         message: 'Données invalides',
-        errors: parsed.error.flatten().fieldErrors,
+        errors:  parsed.error.flatten().fieldErrors,
       });
       return;
     }
+
+    const shop = await getShop(req.user!.userId);
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
     const { code, type, value, minOrder, maxUses, expiresAt, isActive } = parsed.data;
 
-    // Vérifie la validation du pourcentage
     if (type === 'percent' && value > 100) {
-      res.status(400).json({
-        success: false,
-        message: 'Le pourcentage ne peut pas dépasser 100%',
-      });
+      res.status(400).json({ success: false, message: 'Le pourcentage ne peut pas dépasser 100%' });
       return;
     }
 
-    // Vérifie que le code n'existe pas déjà pour cette boutique
-    const existing = await PromoCode.findOne({
-      shopId: req.shop!.id,
-      code:   code.toUpperCase(),
-    });
-
+    const codeUpper = code.toUpperCase();
+    const existing  = await PromoCode.findOne({ shopId: shop._id, code: codeUpper });
     if (existing) {
-      res.status(409).json({
-        success: false,
-        message: `Le code "${code}" existe déjà`,
-      });
+      res.status(409).json({ success: false, message: `Le code "${codeUpper}" existe déjà` });
       return;
     }
 
     const promo = await PromoCode.create({
-      shopId:    req.shop!.id,
-      code:      code.toUpperCase(),
+      shopId:    shop._id,
+      code:      codeUpper,
       type,
       value,
       minOrder:  minOrder  ?? null,
@@ -100,19 +94,14 @@ router.post('/', authenticate, requireMerchant, requirePremium, async (req: Requ
       usedCount: 0,
     });
 
-    res.status(201).json({
-      success: true,
-      data:    promo,
-      message: 'Code promo créé',
-    });
+    res.status(201).json({ success: true, data: promo, message: 'Code promo créé' });
   } catch (error) {
     console.error('Erreur POST /promos :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-// ─── PATCH /promos/:id — Modifier un code promo ──────────────────────────────
-
+// ─── PATCH /promos/:id ────────────────────────────────────────────────────────
 router.patch('/:id', authenticate, requireMerchant, requirePremium, async (req: Request, res: Response) => {
   try {
     const parsed = promoSchema.partial().safeParse(req.body);
@@ -120,35 +109,27 @@ router.patch('/:id', authenticate, requireMerchant, requirePremium, async (req: 
       res.status(400).json({
         success: false,
         message: 'Données invalides',
-        errors: parsed.error.flatten().fieldErrors,
+        errors:  parsed.error.flatten().fieldErrors,
       });
       return;
     }
 
-    const promo = await PromoCode.findOne({
-      _id:    req.params.id,
-      shopId: req.shop!.id,
-    });
+    const shop = await getShop(req.user!.userId);
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
-    if (!promo) {
-      res.status(404).json({ success: false, message: 'Code promo introuvable' });
-      return;
-    }
+    const promo = await PromoCode.findOne({ _id: req.params.id, shopId: shop._id });
+    if (!promo) { res.status(404).json({ success: false, message: 'Code promo introuvable' }); return; }
 
     const { code, type, value, minOrder, maxUses, expiresAt, isActive } = parsed.data;
 
-    // Vérifie l'unicité du nouveau code
-    if (code && code !== promo.code) {
+    if (code && code.toUpperCase() !== promo.code) {
       const existing = await PromoCode.findOne({
-        shopId: req.shop!.id,
+        shopId: shop._id,
         code:   code.toUpperCase(),
         _id:    { $ne: promo._id },
       });
       if (existing) {
-        res.status(409).json({
-          success: false,
-          message: `Le code "${code}" existe déjà`,
-        });
+        res.status(409).json({ success: false, message: `Le code "${code}" existe déjà` });
         return;
       }
       promo.code = code.toUpperCase();
@@ -162,7 +143,6 @@ router.patch('/:id', authenticate, requireMerchant, requirePremium, async (req: 
     if (isActive  !== undefined) promo.isActive  = isActive;
 
     await promo.save();
-
     res.json({ success: true, data: promo, message: 'Code promo mis à jour' });
   } catch (error) {
     console.error('Erreur PATCH /promos/:id :', error);
@@ -170,19 +150,14 @@ router.patch('/:id', authenticate, requireMerchant, requirePremium, async (req: 
   }
 });
 
-// ─── DELETE /promos/:id — Supprimer un code promo ────────────────────────────
-
+// ─── DELETE /promos/:id ───────────────────────────────────────────────────────
 router.delete('/:id', authenticate, requireMerchant, requirePremium, async (req: Request, res: Response) => {
   try {
-    const promo = await PromoCode.findOneAndDelete({
-      _id:    req.params.id,
-      shopId: req.shop!.id,
-    });
+    const shop = await getShop(req.user!.userId);
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
-    if (!promo) {
-      res.status(404).json({ success: false, message: 'Code promo introuvable' });
-      return;
-    }
+    const promo = await PromoCode.findOneAndDelete({ _id: req.params.id, shopId: shop._id });
+    if (!promo) { res.status(404).json({ success: false, message: 'Code promo introuvable' }); return; }
 
     res.json({ success: true, message: 'Code promo supprimé' });
   } catch (error) {
@@ -191,17 +166,13 @@ router.delete('/:id', authenticate, requireMerchant, requirePremium, async (req:
   }
 });
 
-// ─── POST /promos/verify — Vérifier un code promo (public) ───────────────────
-
+// ─── POST /promos/verify — Vérifier un code (public, storefront) ─────────────
 router.post('/verify', async (req: Request, res: Response) => {
   try {
     const { code, shopId, subtotal } = req.body;
 
     if (!code || !shopId) {
-      res.status(400).json({
-        success: false,
-        message: 'Code et shopId obligatoires',
-      });
+      res.status(400).json({ success: false, message: 'Code et shopId obligatoires' });
       return;
     }
 
@@ -211,55 +182,28 @@ router.post('/verify', async (req: Request, res: Response) => {
       isActive: true,
     });
 
-    if (!promo) {
-      res.status(404).json({
-        success: false,
-        message: 'Code promo invalide',
-      });
-      return;
-    }
+    if (!promo) { res.status(404).json({ success: false, message: 'Code promo invalide' }); return; }
 
-    // Vérifie expiration
     if (promo.expiresAt && promo.expiresAt < new Date()) {
-      res.status(400).json({
-        success: false,
-        message: 'Ce code promo a expiré',
-      });
+      res.status(400).json({ success: false, message: 'Ce code promo a expiré' });
       return;
     }
 
-    // Vérifie le nombre d'utilisations
     if (promo.maxUses && promo.usedCount >= promo.maxUses) {
-      res.status(400).json({
-        success: false,
-        message: 'Ce code promo a atteint sa limite d\'utilisation',
-      });
+      res.status(400).json({ success: false, message: "Ce code promo a atteint sa limite d'utilisation" });
       return;
     }
 
-    // Vérifie le montant minimum
     if (promo.minOrder && subtotal < promo.minOrder) {
-      res.status(400).json({
-        success: false,
-        message: `Montant minimum requis : ${promo.minOrder} FCFA`,
-      });
+      res.status(400).json({ success: false, message: `Montant minimum requis : ${promo.minOrder} FCFA` });
       return;
     }
 
-    // Calcule la réduction
     const discount = promo.type === 'percent'
       ? Math.round((subtotal ?? 0) * promo.value / 100)
       : promo.value;
 
-    res.json({
-      success: true,
-      data: {
-        code:     promo.code,
-        type:     promo.type,
-        value:    promo.value,
-        discount,
-      },
-    });
+    res.json({ success: true, data: { code: promo.code, type: promo.type, value: promo.value, discount } });
   } catch (error) {
     console.error('Erreur POST /promos/verify :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });

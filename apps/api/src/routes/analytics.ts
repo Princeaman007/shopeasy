@@ -298,4 +298,26 @@ router.post('/track', async (req: Request, res: Response) => {
   }
 });
 
+// GET /analytics/me?periode=7j|30j
+router.get('/me', authenticate, requireMerchant, async (req, res) => {
+  try {
+    const shop    = await Shop.findOne({ ownerId: req.user!.userId });
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+
+    const periode = req.query.periode === '30j' ? 30 : 7;
+    const depuis  = new Date();
+    depuis.setDate(depuis.getDate() - periode);
+    const depuisStr = depuis.toISOString().split('T')[0];
+
+    const data = await Analytics.find({
+      shopId: shop._id,
+      date:   { $gte: depuisStr },
+    }).sort({ date: 1 }).lean();
+
+    res.json({ success: true, data });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 export default router;

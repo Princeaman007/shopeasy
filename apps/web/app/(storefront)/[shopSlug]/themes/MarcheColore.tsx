@@ -1,0 +1,403 @@
+'use client';
+
+import { useState }       from 'react';
+import Image              from 'next/image';
+import Link               from 'next/link';
+import {
+  ShoppingCart, Search, Menu, X,
+  CheckCircle, MapPin, Clock, ChevronRight, Star,
+} from 'lucide-react';
+import { getThemeConfig } from '../theme.config';
+import type { ShopPublic } from '../types';
+
+// ---------------------------------------------------------------------------
+interface Props {
+  shop:     ShopPublic;
+  produits: any[];
+}
+
+const formatFcfa = (n: number) =>
+  new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
+
+// ---------------------------------------------------------------------------
+export default function MarcheColore({ shop, produits }: Props) {
+  const t = getThemeConfig('marche-colore');
+  const [menuOuvert, setMenuOuvert] = useState(false);
+
+  return (
+    <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
+
+      {/* ── BANNIÈRE TOP ── */}
+      <div
+        className="text-center py-2 text-xs font-medium"
+        style={{ backgroundColor: t.accent, color: '#000' }}
+      >
+        🛒 Livraison disponible partout en Côte d'Ivoire !
+      </div>
+
+      {/* ── NAVBAR ── */}
+      <nav
+        style={{ backgroundColor: t.surface, borderBottom: `2px solid ${t.accent}` }}
+        className="sticky top-0 z-40"
+      >
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+
+          {/* Logo + nom */}
+          <Link href={`/${shop.slug}`} className="flex items-center gap-3">
+            {shop.logo
+              ? <Image src={shop.logo} alt={shop.name} width={40} height={40}
+                       className="rounded-full object-cover border-2"
+                       style={{ borderColor: t.accent }} />
+              : <div className="w-10 h-10 rounded-full flex items-center justify-center
+                                text-xl font-bold border-2"
+                     style={{ backgroundColor: t.accent, borderColor: t.accent, color: '#000' }}>
+                  {shop.name[0]}
+                </div>
+            }
+            <div>
+              <p className="font-bold" style={{ color: t.text }}>{shop.name}</p>
+              {shop.isVerified && (
+                <p className="text-xs flex items-center gap-1" style={{ color: t.accent }}>
+                  <CheckCircle size={10} /> Boutique vérifiée
+                </p>
+              )}
+            </div>
+          </Link>
+
+          {/* Nav desktop */}
+          <div className="hidden md:flex items-center gap-6">
+            {(['Catalogue', 'À propos'] as const).map(lien => (
+              <Link
+                key={lien}
+                href={lien === 'Catalogue'
+                  ? `/${shop.slug}/catalogue`
+                  : `/${shop.slug}/about`}
+                className="text-sm font-semibold hover:opacity-70 transition-opacity"
+                style={{ color: t.text }}
+              >
+                {lien}
+              </Link>
+            ))}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/${shop.slug}/panier`}
+              className="flex items-center gap-2 px-3 py-2 rounded-full text-sm font-bold
+                         transition-colors"
+              style={{ backgroundColor: t.accent, color: '#000' }}
+            >
+              <ShoppingCart size={16} />
+              <span className="hidden sm:inline">Panier</span>
+            </Link>
+            <button
+              onClick={() => setMenuOuvert(!menuOuvert)}
+              className="md:hidden p-2 rounded-xl"
+              style={{ backgroundColor: t.elevated }}
+            >
+              {menuOuvert
+                ? <X    size={20} style={{ color: t.text }} />
+                : <Menu size={20} style={{ color: t.text }} />
+              }
+            </button>
+          </div>
+        </div>
+
+        {/* Menu mobile */}
+        {menuOuvert && (
+          <div
+            style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
+            className="md:hidden px-4 py-4 space-y-2"
+          >
+            {(['Catalogue', 'À propos'] as const).map(lien => (
+              <Link
+                key={lien}
+                href={lien === 'Catalogue'
+                  ? `/${shop.slug}/catalogue`
+                  : `/${shop.slug}/about`}
+                className="block text-sm font-semibold py-2"
+                style={{ color: t.text }}
+                onClick={() => setMenuOuvert(false)}
+              >
+                {lien}
+              </Link>
+            ))}
+          </div>
+        )}
+      </nav>
+
+      {/* ── HERO MARCHÉ ── */}
+      <div style={{ backgroundColor: t.surface }}>
+        <div className="max-w-6xl mx-auto px-4 py-12 md:py-20">
+          <div className="text-center space-y-5 max-w-2xl mx-auto">
+
+            <div className="text-5xl">🛍️</div>
+
+            <h1 className="text-3xl md:text-5xl font-extrabold leading-tight"
+                style={{ color: t.text }}>
+              {shop.name}
+            </h1>
+
+            {shop.about?.description && (
+              <p className="text-base leading-relaxed" style={{ color: t.muted }}>
+                {shop.about.description.slice(0, 150)}
+                {shop.about.description.length > 150 ? '...' : ''}
+              </p>
+            )}
+
+            {/* Stats */}
+            <div className="flex items-center justify-center gap-6 pt-2">
+              <div className="text-center">
+                <p className="font-bold text-xl" style={{ color: t.accent }}>
+                  {produits.length}+
+                </p>
+                <p className="text-xs" style={{ color: t.muted }}>Produits</p>
+              </div>
+              <div className="w-px h-8" style={{ backgroundColor: t.border }} />
+              <div className="text-center">
+                <div className="flex items-center gap-1 justify-center">
+                  {[1,2,3,4,5].map(i => (
+                    <Star key={i} size={14} fill={t.accent} style={{ color: t.accent }} />
+                  ))}
+                </div>
+                <p className="text-xs" style={{ color: t.muted }}>Qualité garantie</p>
+              </div>
+              <div className="w-px h-8" style={{ backgroundColor: t.border }} />
+              <div className="text-center">
+                <p className="font-bold text-xl" style={{ color: t.accent }}>🚚</p>
+                <p className="text-xs" style={{ color: t.muted }}>Livraison rapide</p>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <div className="flex flex-wrap gap-3 justify-center pt-2">
+              <Link
+                href={`/${shop.slug}/catalogue`}
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full
+                           font-bold text-sm transition-all hover:opacity-90"
+                style={{ backgroundColor: t.accent, color: '#000' }}
+              >
+                Voir les produits
+                <ChevronRight size={16} />
+              </Link>
+              {shop.whatsapp && (
+                <Link
+                  href={`https://wa.me/${shop.whatsapp.replace(/\D/g,'')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full
+                             font-bold text-sm transition-all hover:opacity-90 border-2"
+                  style={{ borderColor: t.accent, color: t.accent,
+                           backgroundColor: 'transparent' }}
+                >
+                  Commander via WhatsApp
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── RECHERCHE ── */}
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <Link
+          href={`/${shop.slug}/recherche`}
+          className="flex items-center gap-3 px-4 py-3 rounded-full border-2 w-full"
+          style={{ backgroundColor: t.surface, borderColor: t.accent }}
+        >
+          <Search size={18} style={{ color: t.accent }} />
+          <span className="text-sm font-medium" style={{ color: t.muted }}>
+            Rechercher dans la boutique...
+          </span>
+        </Link>
+      </div>
+
+      {/* ── PRODUITS ── */}
+      <div className="max-w-6xl mx-auto px-4 pb-16 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-extrabold" style={{ color: t.text }}>
+            🏪 Nos produits
+          </h2>
+          <Link
+            href={`/${shop.slug}/catalogue`}
+            className="text-sm font-bold flex items-center gap-1 hover:opacity-80
+                       px-3 py-1.5 rounded-full border-2"
+            style={{ borderColor: t.accent, color: t.accent }}
+          >
+            Tout voir <ChevronRight size={14} />
+          </Link>
+        </div>
+
+        {produits.length === 0 ? (
+          <div className="text-center py-16" style={{ color: t.muted }}>
+            <p className="text-4xl mb-3">🔍</p>
+            <p className="font-semibold">Aucun produit pour le moment</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {produits.map(produit => (
+              <Link
+                key={produit._id}
+                href={`/${shop.slug}/produits/${produit._id}`}
+                className="group rounded-2xl overflow-hidden transition-all
+                           hover:-translate-y-1 hover:shadow-xl"
+                style={{ backgroundColor: t.surface, border: `2px solid ${t.border}` }}
+              >
+                <div className="aspect-square relative overflow-hidden"
+                     style={{ backgroundColor: t.elevated }}>
+                  {produit.images?.[0]
+                    ? <Image src={produit.images[0]} alt={produit.name}
+                             fill className="object-cover group-hover:scale-105
+                                            transition-transform" />
+                    : <div className="w-full h-full flex items-center
+                                      justify-center text-4xl">🛍️</div>
+                  }
+                  {produit.comparePrice && produit.comparePrice > produit.price && (
+                    <div className="absolute top-2 left-2 text-xs font-extrabold
+                                    px-2 py-1 rounded-full"
+                         style={{ backgroundColor: t.accent, color: '#000' }}>
+                      -{Math.round((1 - produit.price / produit.comparePrice) * 100)}%
+                    </div>
+                  )}
+                  {produit.totalStock === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center"
+                         style={{ backgroundColor: `${t.bg}cc` }}>
+                      <span className="text-xs font-bold px-3 py-1 rounded-full"
+                            style={{ backgroundColor: t.elevated, color: t.muted }}>
+                        Rupture
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-3 space-y-2">
+                  <p className="font-semibold text-sm line-clamp-2"
+                     style={{ color: t.text }}>
+                    {produit.name}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-extrabold text-sm" style={{ color: t.accent }}>
+                        {formatFcfa(produit.price)}
+                      </p>
+                      {produit.comparePrice && produit.comparePrice > produit.price && (
+                        <p className="text-xs line-through" style={{ color: t.muted }}>
+                          {formatFcfa(produit.comparePrice)}
+                        </p>
+                      )}
+                    </div>
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center
+                                 group-hover:scale-110 transition-transform"
+                      style={{ backgroundColor: t.accent }}
+                    >
+                      <ShoppingCart size={14} color="#000" />
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* ── À PROPOS ── */}
+      {shop.about && (shop.about.description || shop.about.ownerName) && (
+        <div id="about"
+             style={{ backgroundColor: t.surface, borderTop: `2px solid ${t.accent}` }}>
+          <div className="max-w-6xl mx-auto px-4 py-16 space-y-8">
+            <h2 className="text-2xl font-extrabold" style={{ color: t.text }}>
+              🏪 À propos de {shop.name}
+            </h2>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {shop.about.description && (
+                <div className="space-y-4">
+                  <p className="leading-relaxed" style={{ color: t.muted }}>
+                    {shop.about.description}
+                  </p>
+                  <div className="space-y-2">
+                    {shop.about.location && (
+                      <div className="flex items-center gap-2 text-sm font-medium"
+                           style={{ color: t.text }}>
+                        <MapPin size={16} style={{ color: t.accent }} />
+                        {shop.about.location}
+                      </div>
+                    )}
+                    {shop.about.workingHours && (
+                      <div className="flex items-center gap-2 text-sm font-medium"
+                           style={{ color: t.text }}>
+                        <Clock size={16} style={{ color: t.accent }} />
+                        {shop.about.workingHours}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {shop.about.ownerName && (
+                <div className="flex items-center gap-4 p-5 rounded-2xl border-2"
+                     style={{ backgroundColor: t.elevated, borderColor: t.accent }}>
+                  {shop.about.ownerPhoto
+                    ? <Image src={shop.about.ownerPhoto}
+                             alt={shop.about.ownerName}
+                             width={64} height={64}
+                             className="rounded-full object-cover flex-shrink-0 border-2"
+                             style={{ borderColor: t.accent }} />
+                    : <div className="w-16 h-16 rounded-full flex items-center
+                                      justify-center text-2xl font-bold flex-shrink-0"
+                           style={{ backgroundColor: t.accent, color: '#000' }}>
+                        {shop.about.ownerName[0]}
+                      </div>
+                  }
+                  <div>
+                    <p className="font-extrabold" style={{ color: t.text }}>
+                      {shop.about.ownerName}
+                    </p>
+                    <p className="text-sm" style={{ color: t.muted }}>Propriétaire</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FOOTER ── */}
+      <footer
+        style={{ backgroundColor: t.bg, borderTop: `2px solid ${t.accent}` }}
+        className="py-8"
+      >
+        <div className="max-w-6xl mx-auto px-4 text-center space-y-2">
+          <p className="font-extrabold text-lg" style={{ color: t.text }}>
+            {shop.name} 🛍️
+          </p>
+          <p className="text-xs" style={{ color: t.muted }}>
+            Propulsé par{' '}
+            <Link href="/" className="font-bold hover:underline"
+                  style={{ color: t.accent }}>
+              ShopEasy CI
+            </Link>
+          </p>
+        </div>
+      </footer>
+
+      {/* ── BOUTON WHATSAPP FLOTTANT ── */}
+      {shop.whatsapp && (
+        <Link
+          href={`https://wa.me/${shop.whatsapp.replace(/\D/g,'')}?text=Bonjour, je suis intéressé par vos produits`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg
+                     flex items-center justify-center transition-transform hover:scale-110"
+          style={{ backgroundColor: '#25D366' }}
+        >
+          <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+        </Link>
+      )}
+    </div>
+  );
+}

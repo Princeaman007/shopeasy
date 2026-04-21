@@ -1,33 +1,47 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { Order } from '../models/Order';
+import { Order }   from '../models/Order';
 import { Product } from '../models/Product';
-import { Shop } from '../models/Shop';
+import { Shop }    from '../models/Shop';
 import { authenticate, requireMerchant, optionalAuth } from '../middleware/auth';
 
 const router = Router();
 
-// ─── Schémas de validation ───────────────────────────────────────────────────
-
+// ---------------------------------------------------------------------------
+// Schémas
+// ---------------------------------------------------------------------------
 const itemSchema = z.object({
   productId: z.string(),
+  name:      z.string().optional(),
+  price:     z.number().optional(),
   quantity:  z.number().int().min(1),
+  variants:  z.record(z.string()).optional(),
   variant:   z.string().optional(),
-});
-
-const customerSchema = z.object({
-  name:    z.string().min(2).max(100),
-  phone:   z.string().min(8).max(20),
-  email:   z.string().email().optional(),
-  address: z.string().min(5).max(300),
-  city:    z.string().min(2).max(100),
+  image:     z.string().optional().nullable(),
 });
 
 const createOrderSchema = z.object({
-  shopId:    z.string(),
-  items:     z.array(itemSchema).min(1),
-  customer:  customerSchema,
-  promoCode: z.string().optional(),
+  shopId:        z.string(),
+  items:         z.array(itemSchema).min(1),
+  // Champs directs (depuis CommandeClient)
+  nomClient:     z.string().min(2).optional(),
+  telephone:     z.string().min(8).optional(),
+  adresse:       z.string().optional(),
+  ville:         z.string().optional(),
+  modeLivraison: z.enum(['livraison', 'retrait']).optional(),
+  notes:         z.string().optional(),
+  subtotal:      z.number().optional(),
+  total:         z.number().optional(),
+  promoCode:     z.string().optional(),
+  discount:      z.number().optional(),
+  // Champs imbriqués (ancien format)
+  customer: z.object({
+    name:    z.string().min(2).max(100),
+    phone:   z.string().min(8).max(20),
+    email:   z.string().email().optional(),
+    address: z.string().min(5).max(300),
+    city:    z.string().min(2).max(100),
+  }).optional(),
 });
 
 const updateStatusSchema = z.object({
@@ -35,20 +49,21 @@ const updateStatusSchema = z.object({
   note:   z.string().optional(),
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/**
- * Génère un numéro de commande unique — ex: SEC-2024-0042
- */
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 const genererNumeroCommande = async (): Promise<string> => {
-  const annee = new Date().getFullYear();
-  const count = await Order.countDocuments();
+  const annee  = new Date().getFullYear();
+  const count  = await Order.countDocuments();
   const numero = String(count + 1).padStart(4, '0');
   return `SEC-${annee}-${numero}`;
 };
 
-// ─── POST /orders — Créer une commande (client ou invité) ────────────────────
+const getShop = (userId: string) => Shop.findOne({ ownerId: userId });
 
+// ---------------------------------------------------------------------------
+// POST /orders — Créer une commande (public, storefront)
+// ---------------------------------------------------------------------------
 router.post('/', optionalAuth, async (req: Request, res: Response) => {
   try {
     const parsed = createOrderSchema.safeParse(req.body);
@@ -56,24 +71,26 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       res.status(400).json({
         success: false,
         message: 'Données invalides',
-        errors: parsed.error.flatten().fieldErrors,
+        errors:  parsed.error.flatten().fieldErrors,
       });
       return;
     }
 
-    const { shopId, items, customer, promoCode } = parsed.data;
+    const {
+      shopId, items, promoCode,
+      nomClient, telephone, adresse, ville, modeLivraison, notes,
+      subtotal: subtotalFront, total: totalFront, discount: discountFront,
+      customer,
+    } = parsed.data;
 
-    // Vérifie que la boutique existe et est active
+    // Vérifie la boutique
     const shop = await Shop.findById(shopId);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;
     }
 
-    if (
-      shop.subscriptionStatus === 'expired' ||
-      shop.subscriptionStatus === 'suspended'
-    ) {
+    if (shop.subscriptionStatus === 'expired' || shop.subscriptionStatus === 'suspended') {
       res.status(403).json({
         success: false,
         message: 'Cette boutique est temporairement indisponible',
@@ -81,11 +98,31 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    // Récupère les produits et calcule les prix
+    // Construit les items de commande
     const orderItems = [];
     let subtotal = 0;
 
     for (const item of items) {
+      // Si le prix est déjà fourni par le frontend, on l'utilise
+      if (item.price && item.name) {
+        subtotal += item.price * item.quantity;
+        orderItems.push({
+          productId: item.productId,
+          name:      item.name,
+          price:     item.price,
+          quantity:  item.quantity,
+          variant:   item.variant ?? '',
+          variants:  item.variants ?? {},
+          image:     item.image ?? '',
+        });
+        // Décrémente le stock
+        await Product.findByIdAndUpdate(item.productId, {
+          $inc: { totalStock: -item.quantity },
+        });
+        continue;
+      }
+
+      // Sinon on récupère depuis la DB
       const product = await Product.findOne({
         _id:    item.productId,
         shopId,
@@ -95,12 +132,11 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       if (!product) {
         res.status(400).json({
           success: false,
-          message: `Produit introuvable ou indisponible : ${item.productId}`,
+          message: `Produit introuvable : ${item.productId}`,
         });
         return;
       }
 
-      // Vérifie le stock
       if (product.totalStock < item.quantity) {
         res.status(400).json({
           success: false,
@@ -109,29 +145,27 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
         return;
       }
 
-      const prix = product.price;
-      subtotal += prix * item.quantity;
-
+      subtotal += product.price * item.quantity;
       orderItems.push({
         productId: product._id,
         name:      product.name,
-        price:     prix,
+        price:     product.price,
         quantity:  item.quantity,
         variant:   item.variant ?? '',
+        variants:  item.variants ?? {},
         image:     product.images[0] ?? '',
       });
 
-      // Décrémente le stock
       product.totalStock -= item.quantity;
       if (product.totalStock === 0) product.status = 'out_of_stock';
       await product.save();
     }
 
-    // Applique le code promo si fourni (premium uniquement)
-    let discount = 0;
+    // Code promo
+    let discount      = discountFront ?? 0;
     let promoApplique = '';
 
-    if (promoCode && shop.planType === 'premium') {
+    if (promoCode && shop.planType === 'premium' && !discount) {
       const { PromoCode } = await import('../models/PromoCode');
       const promo = await PromoCode.findOne({
         shopId,
@@ -140,16 +174,14 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       });
 
       if (promo) {
-        const now = new Date();
-        const nonExpire  = !promo.expiresAt || promo.expiresAt > now;
-        const sousLimite = !promo.maxUses || promo.usedCount < promo.maxUses;
-        const montantOk  = !promo.minOrder || subtotal >= promo.minOrder;
+        const nonExpire  = !promo.expiresAt || promo.expiresAt > new Date();
+        const sousLimite = !promo.maxUses   || promo.usedCount < promo.maxUses;
+        const montantOk  = !promo.minOrder  || subtotal >= promo.minOrder;
 
         if (nonExpire && sousLimite && montantOk) {
           discount = promo.type === 'percent'
             ? Math.round(subtotal * promo.value / 100)
             : promo.value;
-
           promo.usedCount += 1;
           await promo.save();
           promoApplique = promo.code;
@@ -157,23 +189,37 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       }
     }
 
-    const total          = Math.max(0, subtotal - discount);
-    const orderNumber    = await genererNumeroCommande();
-    const isGuest        = !req.user;
-    const customerId     = req.user ? req.user.userId : undefined;
+    const total       = Math.max(0, (totalFront ?? subtotal) - discount);
+    const orderNumber = await genererNumeroCommande();
+
+    // Normalise les infos client (supporte les deux formats)
+    const clientNom  = nomClient  ?? customer?.name    ?? '';
+    const clientTel  = telephone  ?? customer?.phone   ?? '';
+    const clientAdr  = adresse    ?? customer?.address ?? '';
+    const clientVille = ville     ?? customer?.city    ?? '';
 
     const order = await Order.create({
       shopId,
-      customerId:  customerId ?? null,
+      customerId:    req.user?.userId ?? null,
       orderNumber,
-      items:       orderItems,
-      promoCode:   promoApplique,
+      items:         orderItems,
+      promoCode:     promoApplique,
       discount,
       subtotal,
       total,
+      nomClient:     clientNom,
+      telephone:     clientTel,
+      adresse:       clientAdr,
+      ville:         clientVille,
+      modeLivraison: modeLivraison ?? 'livraison',
+      notes:         notes ?? '',
+      // Compat ancien format
       customer: {
-        ...customer,
-        isGuest,
+        name:    clientNom,
+        phone:   clientTel,
+        address: clientAdr,
+        city:    clientVille,
+        isGuest: !req.user,
       },
       status: 'new',
       statusHistory: [{
@@ -196,17 +242,21 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET /orders/shop/me — Commandes du marchand ─────────────────────────────
-
+// ---------------------------------------------------------------------------
+// GET /orders/shop/me — Commandes du marchand
+// ⚠️ DOIT être avant /:id
+// ---------------------------------------------------------------------------
 router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const {
-      page   = '1',
-      limit  = '20',
-      status,
-    } = req.query;
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
-    const filter: Record<string, any> = { shopId: req.shop!.id };
+    const { page = '1', limit = '20', status } = req.query;
+
+    const filter: Record<string, any> = { shopId: shop._id };
     if (status) filter.status = status;
 
     const skip  = (Number(page) - 1) * Number(limit);
@@ -234,11 +284,18 @@ router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: 
   }
 });
 
-// ─── GET /orders/shop/me/stats — Stats commandes du marchand ─────────────────
-
+// ---------------------------------------------------------------------------
+// GET /orders/shop/me/stats — Stats commandes du marchand
+// ---------------------------------------------------------------------------
 router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shopId = req.shop!.id;
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
+
+    const shopId = shop._id;
 
     const [total, nouvelles, confirmées, enLivraison, livrées, annulées] =
       await Promise.all([
@@ -250,9 +307,8 @@ router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request,
         Order.countDocuments({ shopId, status: 'cancelled' }),
       ]);
 
-    // Chiffre d'affaires total (commandes livrées)
     const ca = await Order.aggregate([
-      { $match: { shopId: shopId, status: 'delivered' } },
+      { $match: { shopId, status: 'delivered' } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
 
@@ -274,35 +330,33 @@ router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request,
   }
 });
 
-// ─── GET /orders/:id — Détail d'une commande ─────────────────────────────────
+// ---------------------------------------------------------------------------
+// GET /orders/client/me — Commandes du client connecté
+// ⚠️ DOIT être avant /:id
+// ---------------------------------------------------------------------------
+router.get('/client/me', authenticate, async (req: Request, res: Response) => {
+  try {
+    const orders = await Order.find({ customerId: req.user!.userId })
+      .sort({ createdAt: -1 })
+      .lean();
 
-router.get('/:id', authenticate, async (req: Request, res: Response) => {
+    res.json({ success: true, data: orders });
+  } catch (error) {
+    console.error('Erreur GET /orders/client/me :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// GET /orders/:id — Détail d'une commande
+// ---------------------------------------------------------------------------
+router.get('/:id', async (req: Request, res: Response) => {
   try {
     const order = await Order.findById(req.params.id).lean();
-
     if (!order) {
       res.status(404).json({ success: false, message: 'Commande introuvable' });
       return;
     }
-
-    // Un marchand ne peut voir que ses commandes
-    if (
-      req.user!.role === 'merchant' &&
-      String(order.shopId) !== req.shop?.id
-    ) {
-      res.status(403).json({ success: false, message: 'Accès refusé' });
-      return;
-    }
-
-    // Un client ne peut voir que ses propres commandes
-    if (
-      req.user!.role === 'client' &&
-      String(order.customerId) !== req.user!.userId
-    ) {
-      res.status(403).json({ success: false, message: 'Accès refusé' });
-      return;
-    }
-
     res.json({ success: true, data: order });
   } catch (error) {
     console.error('Erreur GET /orders/:id :', error);
@@ -310,8 +364,9 @@ router.get('/:id', authenticate, async (req: Request, res: Response) => {
   }
 });
 
-// ─── PATCH /orders/:id/status — Mettre à jour le statut (marchand) ───────────
-
+// ---------------------------------------------------------------------------
+// PATCH /orders/:id/status — Mettre à jour le statut (marchand)
+// ---------------------------------------------------------------------------
 router.patch('/:id/status', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const parsed = updateStatusSchema.safeParse(req.body);
@@ -319,16 +374,18 @@ router.patch('/:id/status', authenticate, requireMerchant, async (req: Request, 
       res.status(400).json({
         success: false,
         message: 'Statut invalide',
-        errors: parsed.error.flatten().fieldErrors,
+        errors:  parsed.error.flatten().fieldErrors,
       });
       return;
     }
 
-    const order = await Order.findOne({
-      _id:    req.params.id,
-      shopId: req.shop!.id,
-    });
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
+    const order = await Order.findOne({ _id: req.params.id, shopId: shop._id });
     if (!order) {
       res.status(404).json({ success: false, message: 'Commande introuvable' });
       return;
@@ -336,10 +393,9 @@ router.patch('/:id/status', authenticate, requireMerchant, async (req: Request, 
 
     const { status, note } = parsed.data;
 
-    // Transitions de statut autorisées
     const transitions: Record<string, string[]> = {
       new:       ['confirmed', 'cancelled'],
-      confirmed: ['shipping', 'cancelled'],
+      confirmed: ['shipping',  'cancelled'],
       shipping:  ['delivered', 'cancelled'],
       delivered: [],
       cancelled: [],
@@ -354,36 +410,12 @@ router.patch('/:id/status', authenticate, requireMerchant, async (req: Request, 
     }
 
     order.status = status;
-    order.statusHistory.push({
-      status,
-      date: new Date(),
-      note: note ?? '',
-    });
-
+    order.statusHistory.push({ status, date: new Date(), note: note ?? '' });
     await order.save();
 
-    res.json({
-      success: true,
-      data:    order,
-      message: `Commande ${status}`,
-    });
+    res.json({ success: true, data: order, message: `Commande ${status}` });
   } catch (error) {
     console.error('Erreur PATCH /orders/:id/status :', error);
-    res.status(500).json({ success: false, message: 'Erreur serveur' });
-  }
-});
-
-// ─── GET /orders/client/me — Commandes du client connecté ────────────────────
-
-router.get('/client/me', authenticate, async (req: Request, res: Response) => {
-  try {
-    const orders = await Order.find({ customerId: req.user!.userId })
-      .sort({ createdAt: -1 })
-      .lean();
-
-    res.json({ success: true, data: orders });
-  } catch (error) {
-    console.error('Erreur GET /orders/client/me :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });

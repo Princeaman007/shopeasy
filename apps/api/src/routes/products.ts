@@ -1,16 +1,19 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { Product } from '../models/Product';
+import { Shop }    from '../models/Shop';
 import { Category } from '../models/Category';
 import { authenticate, requireMerchant } from '../middleware/auth';
 import slugify from 'slugify';
 import { generateShareImage } from '../services/ShareImage';
+
 const router = Router();
 
-// ─── Schémas de validation ───────────────────────────────────────────────────
-
+// ---------------------------------------------------------------------------
+// Schémas
+// ---------------------------------------------------------------------------
 const variantSchema = z.object({
-  type:    z.string(), // ex: "Couleur", "Taille"
+  type:    z.string(),
   label:   z.string(),
   options: z.array(z.string()),
 });
@@ -22,31 +25,26 @@ const stockSchema = z.object({
 });
 
 const productSchema = z.object({
-  name:          z.string().min(2).max(200),
-  description:   z.string().max(2000).optional(),
-  categoryId:    z.string().optional(),
-  price:         z.number().min(0),
-  comparePrice:  z.number().optional(),
-  images:        z.array(z.string()).optional(),
-  video:         z.string().optional(),
-  hasVariants:   z.boolean().optional(),
-  variants:      z.array(variantSchema).optional(),
-  stock:         z.array(stockSchema).optional(),
-  totalStock:    z.number().int().min(0).optional(),
-  status:        z.enum(['active', 'draft', 'out_of_stock']).optional(),
+  name:         z.string().min(2).max(200),
+  description:  z.string().max(2000).optional(),
+  categoryId:   z.string().optional(),
+  price:        z.number().min(0),
+  comparePrice: z.number().optional(),
+  images:       z.array(z.string()).optional(),
+  video:        z.string().optional(),
+  hasVariants:  z.boolean().optional(),
+  variants:     z.array(variantSchema).optional(),
+  stock:        z.array(stockSchema).optional(),
+  totalStock:   z.number().int().min(0).optional(),
+  status:       z.enum(['active', 'draft', 'out_of_stock']).optional(),
 });
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/**
- * Calcule le stock total depuis les combinaisons de variantes
- */
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 const calculerStockTotal = (stock: { quantity: number }[]): number =>
   stock.reduce((sum, s) => sum + s.quantity, 0);
 
-/**
- * Vérifie les limites du plan Basic
- */
 const verifierLimitesPlan = (
   planType: 'basic' | 'premium',
   images: string[],
@@ -59,13 +57,23 @@ const verifierLimitesPlan = (
   return null;
 };
 
-// ─── GET /products/shop/me — Produits du marchand connecté ───────────────────
+const getShop = (userId: string) => Shop.findOne({ ownerId: userId });
 
+// ---------------------------------------------------------------------------
+// GET /products/shop/me — Produits du marchand connecté
+// ⚠️ DOIT être avant /shop/:shopId et /:id
+// ---------------------------------------------------------------------------
 router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
+
     const { page = '1', limit = '20', status, categoryId } = req.query;
 
-    const filter: Record<string, any> = { shopId: req.shop!.id };
+    const filter: Record<string, any> = { shopId: shop._id };
     if (status)     filter.status     = status;
     if (categoryId) filter.categoryId = categoryId;
 
@@ -94,8 +102,9 @@ router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: 
   }
 });
 
-// ─── GET /products/shop/:shopId — Produits publics d'une boutique ─────────────
-
+// ---------------------------------------------------------------------------
+// GET /products/shop/:shopId — Produits publics d'une boutique (storefront)
+// ---------------------------------------------------------------------------
 router.get('/shop/:shopId', async (req: Request, res: Response) => {
   try {
     const { categoryId, page = '1', limit = '20' } = req.query;
@@ -131,17 +140,16 @@ router.get('/shop/:shopId', async (req: Request, res: Response) => {
   }
 });
 
-// ─── GET /products/:id — Détail d'un produit ────────────────────────────────
-
+// ---------------------------------------------------------------------------
+// GET /products/:id — Détail produit public
+// ---------------------------------------------------------------------------
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const product = await Product.findById(req.params.id).lean();
-
     if (!product) {
       res.status(404).json({ success: false, message: 'Produit introuvable' });
       return;
     }
-
     res.json({ success: true, data: product });
   } catch (error) {
     console.error('Erreur GET /products/:id :', error);
@@ -149,8 +157,9 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ─── POST /products — Créer un produit ───────────────────────────────────────
-
+// ---------------------------------------------------------------------------
+// POST /products — Créer un produit
+// ---------------------------------------------------------------------------
 router.post('/', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const parsed = productSchema.safeParse(req.body);
@@ -158,21 +167,24 @@ router.post('/', authenticate, requireMerchant, async (req: Request, res: Respon
       res.status(400).json({
         success: false,
         message: 'Données invalides',
-        errors: parsed.error.flatten().fieldErrors,
+        errors:  parsed.error.flatten().fieldErrors,
       });
       return;
     }
 
-    const { planType } = req.shop!;
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
-    // Vérifie la limite de produits pour le plan Basic
-    if (planType === 'basic') {
-      const count = await Product.countDocuments({ shopId: req.shop!.id });
+    if (shop.planType === 'basic') {
+      const count = await Product.countDocuments({ shopId: shop._id });
       if (count >= 10) {
         res.status(403).json({
           success: false,
           message: 'Plan Basic : maximum 10 produits. Passez en Premium pour des produits illimités.',
-          code: 'PRODUCT_LIMIT_REACHED',
+          code:    'PRODUCT_LIMIT_REACHED',
         });
         return;
       }
@@ -184,34 +196,30 @@ router.post('/', authenticate, requireMerchant, async (req: Request, res: Respon
       stock = [], totalStock, status = 'draft',
     } = parsed.data;
 
-    // Vérifie les limites photos/vidéo selon le plan
-    const erreurPlan = verifierLimitesPlan(planType, images, video);
+    const erreurPlan = verifierLimitesPlan(shop.planType, images, video);
     if (erreurPlan) {
       res.status(403).json({ success: false, message: erreurPlan });
       return;
     }
 
-    // Vérifie que la catégorie appartient bien à cette boutique
     if (categoryId) {
-      const cat = await Category.findOne({ _id: categoryId, shopId: req.shop!.id });
+      const cat = await Category.findOne({ _id: categoryId, shopId: shop._id });
       if (!cat) {
         res.status(400).json({ success: false, message: 'Catégorie invalide' });
         return;
       }
     }
 
-    // Génère un slug unique
     let slug = slugify(name, { lower: true, strict: true, locale: 'fr' });
-    const existing = await Product.findOne({ shopId: req.shop!.id, slug });
+    const existing = await Product.findOne({ shopId: shop._id, slug });
     if (existing) slug = `${slug}-${Date.now()}`;
 
-    // Calcule le stock total
     const stockTotal = hasVariants
       ? calculerStockTotal(stock)
       : (totalStock ?? 0);
 
     const product = await Product.create({
-      shopId: req.shop!.id,
+      shopId:       shop._id,
       categoryId:   categoryId ?? null,
       name,
       description:  description ?? '',
@@ -227,19 +235,16 @@ router.post('/', authenticate, requireMerchant, async (req: Request, res: Respon
       status,
     });
 
-    res.status(201).json({
-      success: true,
-      data: product,
-      message: 'Produit créé',
-    });
+    res.status(201).json({ success: true, data: product, message: 'Produit créé' });
   } catch (error) {
     console.error('Erreur POST /products :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-// ─── PATCH /products/:id — Modifier un produit ───────────────────────────────
-
+// ---------------------------------------------------------------------------
+// PATCH /products/:id — Modifier un produit
+// ---------------------------------------------------------------------------
 router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const parsed = productSchema.partial().safeParse(req.body);
@@ -247,33 +252,33 @@ router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Re
       res.status(400).json({
         success: false,
         message: 'Données invalides',
-        errors: parsed.error.flatten().fieldErrors,
+        errors:  parsed.error.flatten().fieldErrors,
       });
       return;
     }
 
-    const product = await Product.findOne({
-      _id:    req.params.id,
-      shopId: req.shop!.id,
-    });
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
+    const product = await Product.findOne({ _id: req.params.id, shopId: shop._id });
     if (!product) {
       res.status(404).json({ success: false, message: 'Produit introuvable' });
       return;
     }
 
-    const { planType } = req.shop!;
     const {
       name, description, categoryId, price, comparePrice,
       images, video, hasVariants, variants, stock, totalStock, status,
     } = parsed.data;
 
-    // Vérifie les limites photos/vidéo selon le plan
     if (images || video) {
       const erreurPlan = verifierLimitesPlan(
-        planType,
+        shop.planType,
         images ?? product.images,
-        video ?? (product.video ?? undefined)
+        video  ?? (product.video ?? undefined)
       );
       if (erreurPlan) {
         res.status(403).json({ success: false, message: erreurPlan });
@@ -281,16 +286,13 @@ router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Re
       }
     }
 
-    // Mise à jour du slug si le nom change
     if (name && name !== product.name) {
       product.name = name;
-      let newSlug = slugify(name, { lower: true, strict: true, locale: 'fr' });
-      const existing = await Product.findOne({
-        shopId: req.shop!.id,
-        slug: newSlug,
-        _id: { $ne: product._id },
+      let newSlug  = slugify(name, { lower: true, strict: true, locale: 'fr' });
+      const exists = await Product.findOne({
+        shopId: shop._id, slug: newSlug, _id: { $ne: product._id },
       });
-      if (existing) newSlug = `${newSlug}-${Date.now()}`;
+      if (exists) newSlug = `${newSlug}-${Date.now()}`;
       product.slug = newSlug;
     }
 
@@ -304,7 +306,6 @@ router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Re
     if (variants     !== undefined) product.variants     = variants as any;
     if (status       !== undefined) product.status       = status;
 
-    // Recalcule le stock total
     if (stock !== undefined) {
       product.stock      = stock as any;
       product.totalStock = product.hasVariants
@@ -315,7 +316,6 @@ router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Re
     }
 
     await product.save();
-
     res.json({ success: true, data: product, message: 'Produit mis à jour' });
   } catch (error) {
     console.error('Erreur PATCH /products/:id :', error);
@@ -323,15 +323,18 @@ router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Re
   }
 });
 
-// ─── DELETE /products/:id — Supprimer un produit ─────────────────────────────
-
+// ---------------------------------------------------------------------------
+// DELETE /products/:id — Supprimer un produit
+// ---------------------------------------------------------------------------
 router.delete('/:id', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const product = await Product.findOneAndDelete({
-      _id:    req.params.id,
-      shopId: req.shop!.id,
-    });
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
+    const product = await Product.findOneAndDelete({ _id: req.params.id, shopId: shop._id });
     if (!product) {
       res.status(404).json({ success: false, message: 'Produit introuvable' });
       return;
@@ -344,21 +347,24 @@ router.delete('/:id', authenticate, requireMerchant, async (req: Request, res: R
   }
 });
 
-// ─── PATCH /products/:id/stock — Mise à jour rapide du stock ─────────────────
-
+// ---------------------------------------------------------------------------
+// PATCH /products/:id/stock — Mise à jour rapide du stock
+// ---------------------------------------------------------------------------
 router.patch('/:id/stock', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const { stock, totalStock } = req.body;
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
-    const product = await Product.findOne({
-      _id:    req.params.id,
-      shopId: req.shop!.id,
-    });
-
+    const product = await Product.findOne({ _id: req.params.id, shopId: shop._id });
     if (!product) {
       res.status(404).json({ success: false, message: 'Produit introuvable' });
       return;
     }
+
+    const { stock, totalStock } = req.body;
 
     if (stock !== undefined) {
       product.stock      = stock;
@@ -367,7 +373,6 @@ router.patch('/:id/stock', authenticate, requireMerchant, async (req: Request, r
       product.totalStock = totalStock;
     }
 
-    // Met à jour le statut automatiquement selon le stock
     if (product.totalStock === 0) {
       product.status = 'out_of_stock';
     } else if (product.status === 'out_of_stock') {
@@ -375,7 +380,6 @@ router.patch('/:id/stock', authenticate, requireMerchant, async (req: Request, r
     }
 
     await product.save();
-
     res.json({ success: true, data: product, message: 'Stock mis à jour' });
   } catch (error) {
     console.error('Erreur PATCH /products/:id/stock :', error);
@@ -383,16 +387,18 @@ router.patch('/:id/stock', authenticate, requireMerchant, async (req: Request, r
   }
 });
 
-
-// ─── POST /products/:id/share-image — Génère l'image partageable ─────────────
-
+// ---------------------------------------------------------------------------
+// POST /products/:id/share-image — Génère l'image partageable
+// ---------------------------------------------------------------------------
 router.post('/:id/share-image', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const product = await Product.findOne({
-      _id:    req.params.id,
-      shopId: req.shop!.id,
-    });
+    const shop = await getShop(req.user!.userId);
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
+    const product = await Product.findOne({ _id: req.params.id, shopId: shop._id });
     if (!product) {
       res.status(404).json({ success: false, message: 'Produit introuvable' });
       return;
@@ -406,13 +412,6 @@ router.post('/:id/share-image', authenticate, requireMerchant, async (req: Reque
       return;
     }
 
-    const shop = await Shop.findById(req.shop!.id).select('name isVerified');
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
-
-    // Génère l'image partageable
     const shareImageUrl = await generateShareImage({
       productName:  product.name,
       price:        product.price,
@@ -421,15 +420,10 @@ router.post('/:id/share-image', authenticate, requireMerchant, async (req: Reque
       isVerified:   shop.isVerified,
     });
 
-    // Sauvegarde l'URL sur le produit
-    product.shareImageUrl = shareImageUrl;
+    (product as any).shareImageUrl = shareImageUrl;
     await product.save();
 
-    res.json({
-      success: true,
-      data:    { shareImageUrl },
-      message: 'Image partageable générée',
-    });
+    res.json({ success: true, data: { shareImageUrl }, message: 'Image partageable générée' });
   } catch (error) {
     console.error('Erreur POST /products/:id/share-image :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
