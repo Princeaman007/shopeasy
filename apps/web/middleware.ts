@@ -1,83 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// ─── Routes protégées ─────────────────────────────────────────────────────────
-
-/**
- * Routes accessibles uniquement aux marchands connectés
- */
 const ROUTES_DASHBOARD = ['/dashboard'];
-
-/**
- * Routes accessibles uniquement aux admins
- */
-const ROUTES_ADMIN = ['/admin'];
-
-/**
- * Routes accessibles uniquement aux clients connectés
- */
-const ROUTES_CLIENT = ['/mes-commandes', '/mes-favoris', '/mes-adresses', '/profil'];
-
-/**
- * Routes accessibles uniquement aux non-connectés
- */
-const ROUTES_AUTH = ['/connexion', '/inscription','/inscription-client', '/mot-de-passe-oublie'];
-
-// ─── Middleware ───────────────────────────────────────────────────────────────
+const ROUTES_ADMIN     = ['/admin'];
+const ROUTES_CLIENT    = ['/mes-commandes', '/mes-favoris', '/mes-adresses', '/profil'];
+const ROUTES_AUTH      = ['/connexion', '/inscription', '/inscription-client', '/mot-de-passe-oublie'];
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Récupère le token depuis les cookies
   const token = req.cookies.get('token')?.value;
 
-  // Décode le payload JWT sans vérifier la signature
-  // (la vérification se fait côté API)
-  let payload: { userId: string; role: string; shopId?: string } | null = null;
+  let payload: { userId: string; role: string; exp?: number; shopId?: string } | null = null;
 
   if (token) {
     try {
       const base64Payload = token.split('.')[1];
-      const decoded = Buffer.from(base64Payload, 'base64').toString('utf-8');
-      payload = JSON.parse(decoded);
+      const decoded       = Buffer.from(base64Payload, 'base64').toString('utf-8');
+      const parsed        = JSON.parse(decoded);
+
+      // ⚠️ Vérifie l'expiration
+      if (parsed.exp && parsed.exp * 1000 > Date.now()) {
+        payload = parsed;
+      }
+      // Si expiré → payload reste null
     } catch {
-      // Token malformé — on ignore
+      // Token malformé
     }
   }
 
   const isConnecte = !!payload;
   const role       = payload?.role;
 
-  // ── Redirection si non connecté sur routes protégées ──
-
-  if (ROUTES_DASHBOARD.some((r) => pathname.startsWith(r))) {
-    if (!isConnecte) {
-      return NextResponse.redirect(new URL('/connexion', req.url));
-    }
-    if (role !== 'merchant') {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
+  if (ROUTES_DASHBOARD.some(r => pathname.startsWith(r))) {
+    if (!isConnecte) return NextResponse.redirect(new URL('/connexion', req.url));
+    if (role !== 'merchant') return NextResponse.redirect(new URL('/', req.url));
   }
 
-  if (ROUTES_ADMIN.some((r) => pathname.startsWith(r))) {
-    if (!isConnecte) {
-      return NextResponse.redirect(new URL('/connexion', req.url));
-    }
-    if (role !== 'admin') {
-      return NextResponse.redirect(new URL('/', req.url));
-    }
+  if (ROUTES_ADMIN.some(r => pathname.startsWith(r))) {
+    if (!isConnecte) return NextResponse.redirect(new URL('/connexion', req.url));
+    if (role !== 'admin') return NextResponse.redirect(new URL('/', req.url));
   }
 
-  if (ROUTES_CLIENT.some((r) => pathname.startsWith(r))) {
-    if (!isConnecte) {
-      return NextResponse.redirect(new URL('/connexion', req.url));
-    }
+  if (ROUTES_CLIENT.some(r => pathname.startsWith(r))) {
+    if (!isConnecte) return NextResponse.redirect(new URL('/connexion', req.url));
   }
 
-  // ── Redirection si déjà connecté sur routes auth ──
-
-  if (ROUTES_AUTH.some((r) => pathname.startsWith(r))) {
+  if (ROUTES_AUTH.some(r => pathname.startsWith(r))) {
     if (isConnecte) {
-      if (role === 'admin')    return NextResponse.redirect(new URL('/admin', req.url));
+      if (role === 'admin')    return NextResponse.redirect(new URL('/admin',     req.url));
       if (role === 'merchant') return NextResponse.redirect(new URL('/dashboard', req.url));
       return NextResponse.redirect(new URL('/', req.url));
     }
@@ -85,8 +55,6 @@ export function middleware(req: NextRequest) {
 
   return NextResponse.next();
 }
-
-// ─── Config — routes sur lesquelles le middleware s'applique ─────────────────
 
 export const config = {
   matcher: [

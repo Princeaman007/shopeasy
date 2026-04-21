@@ -8,7 +8,6 @@ import {
   useCallback,
   ReactNode,
 } from 'react';
-import { useRouter } from 'next/navigation';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,14 +30,14 @@ interface Shop {
 }
 
 interface AuthContextType {
-  user:          User | null;
-  shop:          Shop | null;
-  token:         string | null;
-  isLoading:     boolean;
-  isConnecte:    boolean;
-  login:         (token: string, user: User, shop?: Shop) => void;
-  logout:        () => void;
-  refreshShop:   () => Promise<void>;
+  user:        User | null;
+  shop:        Shop | null;
+  token:       string | null;
+  isLoading:   boolean;
+  isConnecte:  boolean;
+  login:       (token: string, user: User, shop?: Shop) => void;
+  logout:      () => Promise<void>;
+  refreshShop: () => Promise<void>;
 }
 
 // ─── Contexte ─────────────────────────────────────────────────────────────────
@@ -48,16 +47,12 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // ─── Provider ─────────────────────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
-
   const [user,      setUser]      = useState<User | null>(null);
   const [shop,      setShop]      = useState<Shop | null>(null);
   const [token,     setToken]     = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  /**
-   * Charge les données depuis le localStorage au démarrage
-   */
+  // -- Chargement depuis localStorage au démarrage --
   useEffect(() => {
     try {
       const storedToken = localStorage.getItem('token');
@@ -70,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (storedShop) setShop(JSON.parse(storedShop));
       }
     } catch {
-      // localStorage invalide — on nettoie
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       localStorage.removeItem('shop');
@@ -79,9 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  /**
-   * Connexion — sauvegarde les données
-   */
+  // -- Connexion --
   const login = useCallback((
     newToken: string,
     newUser:  User,
@@ -92,16 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (newShop) setShop(newShop);
 
     localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.setItem('user',  JSON.stringify(newUser));
     if (newShop) localStorage.setItem('shop', JSON.stringify(newShop));
   }, []);
 
-  /**
-   * Déconnexion — nettoie tout
-   */
+  // -- Déconnexion --
   const logout = useCallback(async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/logout`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
         method:      'POST',
         credentials: 'include',
       });
@@ -117,30 +107,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     localStorage.removeItem('shop');
 
-    router.push('/connexion');
-  }, [router]);
+    // Supprime le cookie côté client aussi (au cas où)
+    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+    document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 
-  /**
-   * Rafraîchit les infos de la boutique depuis l'API
-   */
+    window.location.href = '/connexion';
+  }, []);
+
+  // -- Rafraîchit les infos boutique --
   const refreshShop = useCallback(async () => {
     if (!token) return;
-
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/shops/me`,
+        `${process.env.NEXT_PUBLIC_API_URL}/shops/me`,
         {
           headers:     { Authorization: `Bearer ${token}` },
           credentials: 'include',
         }
       );
-
       if (!response.ok) return;
 
-      const result = await response.json();
+      const result   = await response.json();
       const shopData = result.data;
 
-      setShop({
+      const shopMapped: Shop = {
         id:                 shopData._id,
         slug:               shopData.slug,
         name:               shopData.name,
@@ -149,9 +139,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         trialEndsAt:        shopData.trialEndsAt,
         selectedTheme:      shopData.selectedTheme,
         isVerified:         shopData.isVerified,
-      });
+      };
 
-      localStorage.setItem('shop', JSON.stringify(shopData));
+      setShop(shopMapped);
+      localStorage.setItem('shop', JSON.stringify(shopMapped));
     } catch {
       console.error('Erreur refreshShop');
     }
