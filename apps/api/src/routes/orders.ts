@@ -241,7 +241,21 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
+/**
+ * GET /api/orders/mes-commandes
+ * Commandes du client connecté, triées par date décroissante
+ */
+router.get('/mes-commandes', authenticate, async (req, res) => {
+  try {
+    const commandes = await Order.find({ customerId: req.user!.userId })
+      .sort({ createdAt: -1 })
+      .lean();
 
+    res.json({ orders: commandes });
+  } catch {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
 // ---------------------------------------------------------------------------
 // GET /orders/shop/me — Commandes du marchand
 // ⚠️ DOIT être avant /:id

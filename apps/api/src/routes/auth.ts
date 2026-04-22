@@ -7,88 +7,89 @@ import { signToken, signRefreshToken, verifyToken, verifyRefreshToken, IJwtPaylo
 import crypto from 'crypto';
 import { getRedis } from '../config/redis';
 import { sendPasswordResetEmail } from '../services/Email';
+import { rattacherCommandesInvite } from '../services/OrderAttachment';
 
 const router = Router();
 
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
-    try {
+  try {
 
 
-        const parsed = RegisterMerchantSchema.safeParse(req.body);
-        if (!parsed.success) {
-            res.status(400).json({ success: false, errors: parsed.error.flatten().fieldErrors });
-            return;
-        }
-
-        const { name, email, phone, password, shopName, shopSlug, whatsapp } = parsed.data;
-
-
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            res.status(409).json({ success: false, message: 'Cet email est deja utilise' });
-            return;
-        }
-
-        const existingShop = await Shop.findOne({ slug: shopSlug });
-        if (existingShop) {
-            res.status(409).json({ success: false, message: 'Ce nom de boutique est deja pris' });
-            return;
-        }
-
-        const user = await User.create({ name, email, phone, password, role: 'merchant' });
-
-        const shop = await Shop.create({
-            slug: shopSlug,
-            name: shopName,
-            ownerId: user._id,
-            whatsapp,
-            planType: 'basic' as const,
-            selectedTheme: 'vitrine-moderne',
-            subscriptionStatus: 'trial' as const,
-            trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            subscriptionExpiresAt: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
-        });
-
-        await User.findByIdAndUpdate(user._id, { shopId: shop._id });
-
-        await Category.insertMany(
-            PREDEFINED_CATEGORIES.map((cat) => ({
-                shopId: shop._id,
-                name: cat.name,
-                slug: cat.slug,
-                icon: cat.icon,
-                order: cat.order,
-                predefined: true,
-                parentId: null,
-            }))
-        );
-
-        const token = signToken({
-            userId: String(user._id),
-            role: 'merchant',
-            shopId: String(shop._id),
-        });
-
-        res.cookie('token', token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-
-        res.status(201).json({
-            success: true,
-            message: 'Compte cree avec succes',
-            data: {
-                user: { id: user._id, name: user.name, email: user.email, role: user.role },
-                shop: { id: shop._id, slug: shop.slug, name: shop.name, planType: shop.planType, subscriptionStatus: shop.subscriptionStatus, trialEndsAt: shop.trialEndsAt },
-                token,
-            },
-        });
-    } catch (error) {
-        console.error('Erreur inscription :', error);
-        res.status(500).json({ success: false, message: 'Erreur serveur' });
+    const parsed = RegisterMerchantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ success: false, errors: parsed.error.flatten().fieldErrors });
+      return;
     }
+
+    const { name, email, phone, password, shopName, shopSlug, whatsapp } = parsed.data;
+
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(409).json({ success: false, message: 'Cet email est deja utilise' });
+      return;
+    }
+
+    const existingShop = await Shop.findOne({ slug: shopSlug });
+    if (existingShop) {
+      res.status(409).json({ success: false, message: 'Ce nom de boutique est deja pris' });
+      return;
+    }
+
+    const user = await User.create({ name, email, phone, password, role: 'merchant' });
+
+    const shop = await Shop.create({
+      slug: shopSlug,
+      name: shopName,
+      ownerId: user._id,
+      whatsapp,
+      planType: 'basic' as const,
+      selectedTheme: 'vitrine-moderne',
+      subscriptionStatus: 'trial' as const,
+      trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      subscriptionExpiresAt: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
+    });
+
+    await User.findByIdAndUpdate(user._id, { shopId: shop._id });
+
+    await Category.insertMany(
+      PREDEFINED_CATEGORIES.map((cat) => ({
+        shopId: shop._id,
+        name: cat.name,
+        slug: cat.slug,
+        icon: cat.icon,
+        order: cat.order,
+        predefined: true,
+        parentId: null,
+      }))
+    );
+
+    const token = signToken({
+      userId: String(user._id),
+      role: 'merchant',
+      shopId: String(shop._id),
+    });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Compte cree avec succes',
+      data: {
+        user: { id: user._id, name: user.name, email: user.email, role: user.role },
+        shop: { id: shop._id, slug: shop.slug, name: shop.name, planType: shop.planType, subscriptionStatus: shop.subscriptionStatus, trialEndsAt: shop.trialEndsAt },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error('Erreur inscription :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
 });
 
 /**
@@ -160,7 +161,9 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 jours
     });
-
+    if (user.role === 'client') {
+      await rattacherCommandesInvite(String(user._id), user.email);
+    }
     res.json({
       success: true,
       message: 'Connexion reussie',
@@ -297,7 +300,7 @@ router.post('/register-client', async (req: Request, res: Response): Promise<voi
       password,
       role: 'client',
     });
-
+    await rattacherCommandesInvite(String(user._id), email);
     // Genere le token
     const token = signToken({
       userId: String(user._id),

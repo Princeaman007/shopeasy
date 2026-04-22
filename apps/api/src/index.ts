@@ -18,6 +18,7 @@ import analyticsRoutes from './routes/analytics';
 import leadRoutes from './routes/leads';
 import adminRoutes from './routes/admin';
 import uploadRoutes from './routes/uploads';
+import usersRouter from './routes/users';
 const app = express();
 
 app.use(express.json());
@@ -47,7 +48,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/leads', leadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/uploads', uploadRoutes);
-
+app.use('/api/users', usersRouter);
 
 // Route de santé
 app.get('/health', (_req, res) => {

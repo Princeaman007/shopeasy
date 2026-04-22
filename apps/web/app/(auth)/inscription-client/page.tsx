@@ -30,8 +30,8 @@ export default function InscriptionClientPage() {
 
   // Récupère le redirect URL si présent
   const redirectUrl = typeof window !== 'undefined'
-    ? new URLSearchParams(window.location.search).get('redirect') ?? '/mes-commandes'
-    : '/mes-commandes';
+    ? new URLSearchParams(window.location.search).get('redirect') ?? '/'
+: '/';
 
   const {
     register,
@@ -43,7 +43,7 @@ export default function InscriptionClientPage() {
     setErreurServeur('');
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/register-client`,
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register-client`,
         {
           method:      'POST',
           headers:     { 'Content-Type': 'application/json' },
