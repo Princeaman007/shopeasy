@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import BonLivraison from '@/components/dashboard/BonLivraison';
 import {
   ArrowLeft, Loader2, Phone, MapPin,
   Clock, CheckCircle, Truck, XCircle, Package,
@@ -20,23 +21,22 @@ const formatDate = (date: string) =>
 
 const STATUTS = {
   new:       { label: 'Nouvelle',     icone: Clock,        classe: 'bg-blue-500/20 text-blue-400',    next: ['confirmed', 'cancelled'] },
-  confirmed: { label: 'Confirmée',    icone: CheckCircle,  classe: 'bg-primary/20 text-primary',      next: ['shipping', 'cancelled']  },
+  confirmed: { label: 'Confirmee',    icone: CheckCircle,  classe: 'bg-primary/20 text-primary',      next: ['shipping', 'cancelled']  },
   shipping:  { label: 'En livraison', icone: Truck,        classe: 'bg-orange-500/20 text-orange-400',next: ['delivered', 'cancelled'] },
-  delivered: { label: 'Livrée',       icone: CheckCircle,  classe: 'bg-green-500/20 text-green-400',  next: []                         },
-  cancelled: { label: 'Annulée',      icone: XCircle,      classe: 'bg-red-500/20 text-red-400',      next: []                         },
+  delivered: { label: 'Livree',       icone: CheckCircle,  classe: 'bg-green-500/20 text-green-400',  next: []                         },
+  cancelled: { label: 'Annulee',      icone: XCircle,      classe: 'bg-red-500/20 text-red-400',      next: []                         },
 };
 
 const STATUT_LABELS: Record<string, string> = {
   confirmed: 'Confirmer',
   shipping:  'Marquer en livraison',
-  delivered: 'Marquer comme livrée',
+  delivered: 'Marquer comme livree',
   cancelled: 'Annuler',
 };
 
 export default function CommandeDetailPage() {
-  const { id }    = useParams<{ id: string }>();
-  const router    = useRouter();
-  const { token } = useAuth();
+  const { id }          = useParams<{ id: string }>();
+  const { token, shop } = useAuth();
 
   const [commande,   setCommande]   = useState<any>(null);
   const [isLoading,  setIsLoading]  = useState(true);
@@ -47,7 +47,7 @@ export default function CommandeDetailPage() {
       if (!token || !id) return;
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/orders/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const result = await response.json();
@@ -65,14 +65,11 @@ export default function CommandeDetailPage() {
     setIsUpdating(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/orders/${id}/status`,
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/status`,
         {
           method:  'PATCH',
-          headers: {
-            Authorization:  `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: nouveauStatut }),
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ status: nouveauStatut }),
         }
       );
       const result = await response.json();
@@ -102,7 +99,7 @@ export default function CommandeDetailPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
 
-      {/* En-tête */}
+      {/* En-tete */}
       <div className="flex items-center gap-4">
         <Link href="/dashboard/commandes"
           className="w-9 h-9 flex items-center justify-center bg-elevated border border-border rounded-xl text-muted hover:text-white transition-colors">
@@ -123,24 +120,25 @@ export default function CommandeDetailPage() {
       {/* Actions statut */}
       {statut.next.length > 0 && (
         <div className="bg-surface border border-border rounded-2xl p-4 flex flex-wrap gap-3">
-          <p className="text-muted text-sm w-full mb-1">Mettre à jour le statut :</p>
+          <p className="text-muted text-sm w-full mb-1">Mettre a jour le statut :</p>
           {statut.next.map((s) => (
-            <button
-              key={s}
-              onClick={() => changerStatut(s)}
-              disabled={isUpdating}
+            <button key={s} onClick={() => changerStatut(s)} disabled={isUpdating}
               className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors disabled:opacity-50 ${
                 s === 'cancelled'
                   ? 'bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20'
                   : 'bg-primary hover:bg-primary-hover text-black'
-              }`}
-            >
+              }`}>
               {isUpdating ? <Loader2 size={14} className="animate-spin" /> : null}
               {STATUT_LABELS[s]}
             </button>
           ))}
         </div>
       )}
+
+      {/* Bon de livraison */}
+      <div className="flex justify-end">
+        <BonLivraison commande={commande} shopName={shop?.name ?? 'Boutique'} />
+      </div>
 
       {/* Infos client */}
       <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
@@ -155,7 +153,7 @@ export default function CommandeDetailPage() {
             <div>
               <p className="text-white font-medium">{commande.customer.name}</p>
               <p className="text-muted text-xs">
-                {commande.customer.isGuest ? 'Client invité' : 'Client inscrit'}
+                {commande.customer.isGuest ? 'Client invite' : 'Client inscrit'}
               </p>
             </div>
           </div>
@@ -172,9 +170,9 @@ export default function CommandeDetailPage() {
         </div>
       </div>
 
-      {/* Produits commandés */}
+      {/* Produits commandes */}
       <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
-        <h2 className="text-white font-semibold">Produits commandés</h2>
+        <h2 className="text-white font-semibold">Produits commandes</h2>
         <div className="space-y-3">
           {commande.items.map((item: any, i: number) => (
             <div key={i} className="flex items-center gap-4 py-3 border-b border-border last:border-0">
@@ -189,9 +187,7 @@ export default function CommandeDetailPage() {
               </div>
               <div className="flex-1">
                 <p className="text-white font-medium text-sm">{item.name}</p>
-                {item.variant && (
-                  <p className="text-muted text-xs">{item.variant}</p>
-                )}
+                {item.variant && <p className="text-muted text-xs">{item.variant}</p>}
               </div>
               <div className="text-right">
                 <p className="text-white text-sm">x{item.quantity}</p>
@@ -210,7 +206,7 @@ export default function CommandeDetailPage() {
                 <span className="text-white">{formatFcfa(commande.subtotal)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted">Réduction ({commande.promoCode})</span>
+                <span className="text-muted">Reduction ({commande.promoCode})</span>
                 <span className="text-green-400">-{formatFcfa(commande.discount)}</span>
               </div>
             </>
@@ -222,12 +218,12 @@ export default function CommandeDetailPage() {
         </div>
       </div>
 
-      {/* Historique statuts */}
+      {/* Historique */}
       <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
         <h2 className="text-white font-semibold">Historique</h2>
         <div className="space-y-3">
           {commande.statusHistory?.map((h: any, i: number) => {
-            const s     = STATUTS[h.status as keyof typeof STATUTS];
+            const s      = STATUTS[h.status as keyof typeof STATUTS];
             const HIcone = s?.icone ?? Clock;
             return (
               <div key={i} className="flex items-start gap-3">

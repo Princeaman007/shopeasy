@@ -75,7 +75,7 @@ export default function BoutiquesPage() {
   return (
     <div className="min-h-screen bg-bg">
 
-      {/*  Header  */}
+      {/* Header */}
       <div className="border-b border-border bg-surface">
         <div className="max-w-6xl mx-auto px-4 py-12">
           <Link href="/" className="inline-flex items-center gap-2 text-muted hover:text-white text-sm mb-6 transition-colors">
@@ -83,39 +83,35 @@ export default function BoutiquesPage() {
           </Link>
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 text-primary text-xs font-medium px-3 py-1.5 rounded-full mb-4">
-              <BadgeCheck size={13} /> Boutiques Premium vérifiées
+              <BadgeCheck size={13} /> Boutiques Premium verifiees
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Découvrez nos boutiques</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-3">Decouvrez nos boutiques</h1>
             <p className="text-muted text-lg max-w-xl mx-auto">
-              Les meilleures boutiques ivoiriennes, toutes vérifiées et prêtes à vous livrer
+              Les meilleures boutiques ivoiriennes, toutes verifiees et pretes a vous livrer
             </p>
           </div>
           <div className="max-w-xl mx-auto relative">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
-            <input
-              type="text"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
+            <input type="text" value={recherche} onChange={(e) => setRecherche(e.target.value)}
               placeholder="Rechercher une boutique..."
-              className="w-full bg-elevated border border-border rounded-2xl pl-11 pr-4 py-3.5 text-white placeholder-muted focus:outline-none focus:border-primary transition-colors text-sm"
-            />
+              className="w-full bg-elevated border border-border rounded-2xl pl-11 pr-4 py-3.5 text-white placeholder-muted focus:outline-none focus:border-primary transition-colors text-sm" />
             {recherche && (
               <button onClick={() => setRecherche('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-white transition-colors">
-                
+                x
               </button>
             )}
           </div>
           {pagination && !chargement && (
             <p className="text-center text-muted text-sm mt-4">
-              {pagination.total} boutique{pagination.total !== 1 ? 's' : ''} trouvée{pagination.total !== 1 ? 's' : ''}
+              {pagination.total} boutique{pagination.total !== 1 ? 's' : ''} trouvee{pagination.total !== 1 ? 's' : ''}
               {recherche && ` pour "${recherche}"`}
             </p>
           )}
         </div>
       </div>
 
-      {/*  Contenu  */}
+      {/* Contenu */}
       <div className="max-w-6xl mx-auto px-4 py-10">
         {chargement && (
           <div className="flex items-center justify-center py-20">
@@ -128,9 +124,9 @@ export default function BoutiquesPage() {
             <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center mx-auto mb-4">
               <Store size={28} className="text-muted" />
             </div>
-            <h2 className="text-white font-semibold mb-2">Aucune boutique trouvée</h2>
+            <h2 className="text-white font-semibold mb-2">Aucune boutique trouvee</h2>
             <p className="text-muted text-sm">
-              {recherche ? `Aucun résultat pour "${recherche}"` : 'Aucune boutique premium disponible'}
+              {recherche ? `Aucun resultat pour "${recherche}"` : 'Aucune boutique premium disponible'}
             </p>
           </div>
         )}
@@ -139,12 +135,10 @@ export default function BoutiquesPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {boutiques.map((boutique) => (
-                <Link
-                  key={boutique._id}
-                  href={`/${boutique.slug}`}
-                  className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1"
-                >
-                  {/*  Hero  */}
+                <Link key={boutique._id} href={`/${boutique.slug}`}
+                  className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1">
+
+                  {/* Hero */}
                   <div className="relative h-44 overflow-hidden">
                     {boutique.heroImage ? (
                       <Image src={boutique.heroImage} alt={boutique.name} fill
@@ -152,18 +146,15 @@ export default function BoutiquesPage() {
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-primary/20 to-elevated" />
                     )}
-                    {/* Overlay dégradé */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-                    {/* Badge vérifié */}
                     {boutique.isVerified && (
                       <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1 flex items-center gap-1">
                         <BadgeCheck size={12} className="text-black" />
-                        <span className="text-black text-xs font-bold">Vérifié</span>
+                        <span className="text-black text-xs font-bold">Verifie</span>
                       </div>
                     )}
 
-                    {/* Logo + nom en bas du hero */}
                     <div className="absolute bottom-3 left-3 flex items-center gap-2">
                       {boutique.logo ? (
                         <Image src={boutique.logo} alt={boutique.name} width={40} height={40}
@@ -176,9 +167,7 @@ export default function BoutiquesPage() {
                         </div>
                       )}
                       <div>
-                        <p className="text-white font-bold text-sm drop-shadow-lg">
-                          {boutique.name}
-                        </p>
+                        <p className="text-white font-bold text-sm drop-shadow-lg">{boutique.name}</p>
                         {boutique.about?.location && (
                           <p className="text-white/70 text-xs flex items-center gap-1">
                             <MapPin size={10} /> {boutique.about.location}
@@ -188,21 +177,17 @@ export default function BoutiquesPage() {
                     </div>
                   </div>
 
-                  {/*  Description  */}
+                  {/* Description */}
                   {boutique.about?.description && (
                     <div className="px-4 pt-3">
-                      <p className="text-muted text-xs line-clamp-2">
-                        {boutique.about.description}
-                      </p>
+                      <p className="text-muted text-xs line-clamp-2">{boutique.about.description}</p>
                     </div>
                   )}
 
-                  {/*  Aperçu produits  */}
+                  {/* Apercu produits */}
                   {boutique.produits?.length > 0 && (
                     <div className="p-4 space-y-2">
-                      <p className="text-muted text-xs font-medium uppercase tracking-wide">
-                        Quelques produits
-                      </p>
+                      <p className="text-muted text-xs font-medium uppercase tracking-wide">Quelques produits</p>
                       <div className="grid grid-cols-3 gap-2">
                         {boutique.produits.map((produit) => (
                           <div key={produit._id}
@@ -211,13 +196,10 @@ export default function BoutiquesPage() {
                               <Image src={produit.images[0]} alt={produit.name} fill
                                 className="object-cover group-hover:scale-105 transition-transform" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-2xl"></div>
+                              <div className="w-full h-full flex items-center justify-center text-2xl">...</div>
                             )}
-                            {/* Prix overlay */}
                             <div className="absolute bottom-0 inset-x-0 bg-black/60 px-1.5 py-1">
-                              <p className="text-primary text-xs font-bold truncate">
-                                {formatFcfa(produit.price)}
-                              </p>
+                              <p className="text-primary text-xs font-bold truncate">{formatFcfa(produit.price)}</p>
                             </div>
                           </div>
                         ))}
@@ -225,15 +207,13 @@ export default function BoutiquesPage() {
                     </div>
                   )}
 
-                  {/*  Footer carte  */}
+                  {/* Footer carte */}
                   <div className="px-4 pb-4 flex items-center justify-between">
                     <span className="text-muted text-xs">
-                      {boutique.produits?.length > 0
-                        ? `${boutique.produits.length}+ produits`
-                        : 'Boutique premium'}
+                      {boutique.produits?.length > 0 ? `${boutique.produits.length}+ produits` : 'Boutique premium'}
                     </span>
                     <span className="text-primary text-xs font-semibold group-hover:underline">
-                      Visiter la boutique 
+                      Visiter la boutique
                     </span>
                   </div>
                 </Link>

@@ -93,30 +93,48 @@ export default function PageAnalytics() {
   const [periode,     setPeriode]     = useState<'7j' | '30j'>('7j');
 
   // -- Chargement --
-  useEffect(() => {
-    const charger = async () => {
-      try {
-        const token = localStorage.getItem('token');
+ useEffect(() => {
+  const charger = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
 
-        // Vérifie le plan
-        const shopRes  = await fetch(`${API}/shops/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const shopData = await shopRes.json();
-        if (shopData.success) setPlanType(shopData.data.planType);
+      // Verifie le plan
+      const shopRes  = await fetch(`${API}/shops/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const shopData = await shopRes.json();
+      if (shopData.success) setPlanType(shopData.data.planType);
 
-        // Charge les analytics
-        const res  = await fetch(`${API}/analytics/me?periode=${periode}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (data.success) setAnalytics(data.data);
-      } finally {
-        setChargement(false);
+      // Charge les analytics avances
+      const nbJours = periode === '7j' ? 7 : 30;
+      const res = await fetch(`${API}/analytics/advanced?periode=${nbJours}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setAnalytics(data.data.evolution.map((j: any) => ({
+          date:        j.date,
+          visitors:    j.visiteurs,
+          orders:      j.commandes,
+          revenue:     j.revenue,
+          conversion:  j.conversion,
+          sources:     { instagram: 0, tiktok: 0, facebook: 0, direct: 0, other: 0 },
+          topProducts: (data.data.topProduits ?? []).map((p: any) => ({
+            productId: p._id,
+            name:      p.name,
+            views:     0,
+            orders:    p.commandes,
+          })),
+        })));
       }
-    };
-    charger();
-  }, [periode]);
+    } finally {
+      setChargement(false);
+    }
+  };
+  charger();
+}, [periode]);
 
   // -- Calcul des totaux --
   const totaux = analytics.reduce(

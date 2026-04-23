@@ -701,4 +701,17 @@ router.patch('/orders/:id/status', authenticate, requireAdmin, async (req, res) 
   }
 });
 
+// GET /admin/stats/public — Stats publiques pour la landing page
+router.get('/stats/public', async (req: Request, res: Response) => {
+  try {
+    const [totalBoutiques, totalCommandes] = await Promise.all([
+      Shop.countDocuments({ subscriptionStatus: { $in: ['active', 'trial'] } }),
+      Order.countDocuments(),
+    ]);
+
+    res.json({ success: true, totalBoutiques, totalCommandes });
+  } catch {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
 export default router;

@@ -6,14 +6,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   ShoppingCart, Package, TrendingUp, Users,
   ArrowUp, ArrowDown, Clock, CheckCircle,
-  Truck, XCircle,
+  Truck, XCircle, Eye,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer,
 } from 'recharts';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Stats {
   resume: {
@@ -28,22 +26,15 @@ interface Stats {
   evolution: { date: string; commandes: number; revenue: number }[];
 }
 
-// ─── Composant carte métrique ─────────────────────────────────────────────────
-
 function CarteMetrique({
-  titre,
-  valeur,
-  sousTitre,
-  icone: Icone,
-  couleur,
-  tendance,
+  titre, valeur, sousTitre, icone: Icone, couleur, tendance,
 }: {
-  titre:     string;
-  valeur:    string | number;
+  titre:      string;
+  valeur:     string | number;
   sousTitre?: string;
-  icone:     any;
-  couleur:   string;
-  tendance?: 'up' | 'down' | null;
+  icone:      any;
+  couleur:    string;
+  tendance?:  'up' | 'down' | null;
 }) {
   return (
     <div className="bg-surface border border-border rounded-2xl p-6">
@@ -66,23 +57,31 @@ function CarteMetrique({
   );
 }
 
-// ─── Composant principal ──────────────────────────────────────────────────────
+const API = process.env.NEXT_PUBLIC_API_URL;
 
 export default function DashboardPage() {
   const { token, shop } = useAuth();
-  const [stats,     setStats]     = useState<Stats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [stats,          setStats]          = useState<Stats | null>(null);
+  const [totalVisiteurs, setTotalVisiteurs] = useState(0);
+  const [isLoading,      setIsLoading]      = useState(true);
 
   useEffect(() => {
     const fetchStats = async () => {
       if (!token) return;
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/analytics/basic`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const result = await response.json();
-        if (result.success) setStats(result.data);
+        // Stats basiques
+        const [resBasic, resAnalytics] = await Promise.all([
+          fetch(`${API}/analytics/basic`,          { headers: { Authorization: `Bearer ${token}` } }),
+          fetch(`${API}/analytics/advanced?periode=30`, { headers: { Authorization: `Bearer ${token}` } }),
+        ]);
+
+        const basic     = await resBasic.json();
+        const analytics = await resAnalytics.json();
+
+        if (basic.success)     setStats(basic.data);
+        if (analytics.success) {
+          setTotalVisiteurs(analytics.data.totalVisiteurs ?? 0);
+        }
       } catch (error) {
         console.error('Erreur chargement stats :', error);
       } finally {
@@ -114,24 +113,24 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* En-tête */}
+      {/* En-tete */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Tableau de bord</h1>
           <p className="text-muted text-sm mt-1">
-            Bienvenue, voici un aperçu de votre activité
+            Bienvenue, voici un apercu de votre activite
           </p>
         </div>
         {shop?.subscriptionStatus === 'trial' && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl px-4 py-2">
             <p className="text-blue-400 text-sm font-medium">
-              🎉 Période d'essai en cours
+              Periode d'essai en cours
             </p>
           </div>
         )}
       </div>
 
-      {/* Métriques principales */}
+      {/* Metriques principales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <CarteMetrique
           titre="Commandes ce mois"
@@ -152,28 +151,28 @@ export default function DashboardPage() {
         <CarteMetrique
           titre="Produits actifs"
           valeur={resume?.produitsActifs ?? 0}
-          sousTitre={shop?.planType === 'basic' ? 'Max 10 (Basic)' : 'Illimité (Premium)'}
+          sousTitre={shop?.planType === 'basic' ? 'Max 10 (Basic)' : 'Illimite (Premium)'}
           icone={Package}
           couleur="bg-purple-500/80"
           tendance={null}
         />
         <CarteMetrique
-          titre="Commandes livrées"
-          valeur={resume?.commandesLivrees ?? 0}
-          sousTitre="Paiement encaissé"
-          icone={Users}
+          titre="Visiteurs (30j)"
+          valeur={totalVisiteurs.toLocaleString('fr-FR')}
+          sousTitre={`${resume?.commandesLivrees ?? 0} commandes livrees`}
+          icone={Eye}
           couleur="bg-orange-500/80"
           tendance="up"
         />
       </div>
 
-      {/* Graphique évolution + Statuts */}
+      {/* Graphique evolution + Statuts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Graphique commandes */}
         <div className="lg:col-span-2 bg-surface border border-border rounded-2xl p-6">
           <h2 className="text-white font-semibold mb-6">
-            Évolution des commandes (30 derniers jours)
+            Evolution des commandes (30 derniers jours)
           </h2>
           {stats?.evolution && stats.evolution.length > 0 ? (
             <ResponsiveContainer width="100%" height={200}>
@@ -213,7 +212,7 @@ export default function DashboardPage() {
           ) : (
             <div className="h-48 flex items-center justify-center">
               <p className="text-muted text-sm">
-                Pas encore de données — vos graphiques apparaîtront ici
+                Pas encore de donnees — vos graphiques apparaitront ici
               </p>
             </div>
           )}
@@ -224,11 +223,11 @@ export default function DashboardPage() {
           <h2 className="text-white font-semibold mb-6">Statuts des commandes</h2>
           <div className="space-y-3">
             {[
-              { label: 'Nouvelles',    key: 'new',       icone: Clock,       couleur: 'text-blue-400',   bg: 'bg-blue-500/10' },
-              { label: 'Confirmées',   key: 'confirmed', icone: CheckCircle, couleur: 'text-primary',    bg: 'bg-primary/10' },
+              { label: 'Nouvelles',    key: 'new',       icone: Clock,       couleur: 'text-blue-400',   bg: 'bg-blue-500/10'   },
+              { label: 'Confirmees',   key: 'confirmed', icone: CheckCircle, couleur: 'text-primary',    bg: 'bg-primary/10'    },
               { label: 'En livraison', key: 'shipping',  icone: Truck,       couleur: 'text-orange-400', bg: 'bg-orange-500/10' },
-              { label: 'Livrées',      key: 'delivered', icone: CheckCircle, couleur: 'text-green-400',  bg: 'bg-green-500/10' },
-              { label: 'Annulées',     key: 'cancelled', icone: XCircle,     couleur: 'text-red-400',    bg: 'bg-red-500/10' },
+              { label: 'Livrees',      key: 'delivered', icone: CheckCircle, couleur: 'text-green-400',  bg: 'bg-green-500/10'  },
+              { label: 'Annulees',     key: 'cancelled', icone: XCircle,     couleur: 'text-red-400',    bg: 'bg-red-500/10'    },
             ].map((item) => {
               const Icone = item.icone;
               const count = stats?.parStatut?.[item.key] ?? 0;
@@ -248,19 +247,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Accès rapides */}
+      {/* Acces rapides */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { href: '/dashboard/produits',  label: 'Gérer les produits', emoji: '📦' },
-          { href: '/dashboard/commandes', label: 'Voir les commandes', emoji: '🛒' },
-          { href: '/dashboard/themes',    label: 'Changer de thème',   emoji: '🎨' },
+          { href: '/dashboard/produits',  label: 'Gerer les produits' },
+          { href: '/dashboard/commandes', label: 'Voir les commandes' },
+          { href: '/dashboard/themes',    label: 'Changer de theme'   },
         ].map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="bg-surface border border-border hover:border-primary/40 rounded-2xl p-4 flex items-center gap-3 transition-all hover:bg-elevated group"
-          >
-            <span className="text-2xl">{item.emoji}</span>
+          <Link key={item.href} href={item.href}
+            className="bg-surface border border-border hover:border-primary/40 rounded-2xl p-4 flex items-center gap-3 transition-all hover:bg-elevated group">
             <span className="text-white text-sm font-medium group-hover:text-primary transition-colors">
               {item.label}
             </span>
