@@ -6,6 +6,7 @@ import MarcheColore    from './themes/MarcheColore';
 import LuxeSombre      from './themes/LuxeSombre';
 import BoutiquePro     from './themes/BoutiquePro';
 import StoriesStyle    from './themes/StoriesStyle';
+import TrackVisite     from './TrackVisite';
 
 const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
@@ -111,8 +112,9 @@ export default async function StorefrontPage({
 
   const ThemeComponent = themeMap[shop.selectedTheme] ?? VitrinModerne;
 
-  return (
+ return (
     <ThemeProvider themeId={shop.selectedTheme}>
+      <TrackVisite shopId={shop._id} />
       <ThemeComponent shop={shop} produits={produits} />
     </ThemeProvider>
   );

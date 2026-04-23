@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Analytics } from '../models/Analytics';
-import { Order } from '../models/Order';
-import { Product } from '../models/Product';
+import { Order }     from '../models/Order';
+import { Product }   from '../models/Product';
+import { Shop }      from '../models/Shop';
 import { authenticate, requireMerchant } from '../middleware/auth';
 
 const router = Router();
@@ -12,8 +14,8 @@ const requirePremium = (req: Request, res: Response, next: Function) => {
   if (req.shop!.planType !== 'premium') {
     res.status(403).json({
       success: false,
-      message: 'Les analytics avancés sont réservés au plan Premium',
-      code: 'PREMIUM_REQUIRED',
+      message: 'Les analytics avances sont reserves au plan Premium',
+      code:    'PREMIUM_REQUIRED',
     });
     return;
   }
@@ -22,15 +24,9 @@ const requirePremium = (req: Request, res: Response, next: Function) => {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/**
- * Formate une date en string YYYY-MM-DD
- */
 const formatDate = (date: Date): string =>
   date.toISOString().split('T')[0];
 
-/**
- * Retourne les 30 derniers jours sous forme de tableau de strings
- */
 const derniers30Jours = (): string[] => {
   const jours: string[] = [];
   for (let i = 29; i >= 0; i--) {
@@ -45,13 +41,11 @@ const derniers30Jours = (): string[] => {
 
 router.get('/basic', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shopId = req.shop!.id;
+    const shopId = new mongoose.Types.ObjectId(req.shop!.id);
 
-    // Période : 30 derniers jours
     const debut = new Date();
     debut.setDate(debut.getDate() - 30);
 
-    // Commandes des 30 derniers jours
     const [
       commandesTotal,
       commandesMois,
@@ -64,26 +58,18 @@ router.get('/basic', authenticate, requireMerchant, async (req: Request, res: Re
       Product.countDocuments({ shopId, status: 'active' }),
     ]);
 
-    // Chiffre d'affaires
     const caTotal = await Order.aggregate([
-      { $match: { shopId: shopId, status: 'delivered' } },
+      { $match: { shopId, status: 'delivered' } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
 
     const caMois = await Order.aggregate([
-      {
-        $match: {
-          shopId:    shopId,
-          status:    'delivered',
-          createdAt: { $gte: debut },
-        },
-      },
+      { $match: { shopId, status: 'delivered', createdAt: { $gte: debut } } },
       { $group: { _id: null, total: { $sum: '$total' } } },
     ]);
 
-    // Commandes par statut
     const parStatut = await Order.aggregate([
-      { $match: { shopId: shopId } },
+      { $match: { shopId } },
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ]);
 
@@ -95,17 +81,11 @@ router.get('/basic', authenticate, requireMerchant, async (req: Request, res: Re
       {}
     );
 
-    // Évolution commandes sur 30 jours (regroupé par jour)
     const evolutionCommandes = await Order.aggregate([
-      {
-        $match: {
-          shopId:    shopId,
-          createdAt: { $gte: debut },
-        },
-      },
+      { $match: { shopId, createdAt: { $gte: debut } } },
       {
         $group: {
-          _id:      { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          _id:       { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
           commandes: { $sum: 1 },
           revenue:   { $sum: '$total' },
         },
@@ -113,7 +93,6 @@ router.get('/basic', authenticate, requireMerchant, async (req: Request, res: Re
       { $sort: { _id: 1 } },
     ]);
 
-    // Remplit les jours sans commandes avec 0
     const joursMap = evolutionCommandes.reduce(
       (acc: Record<string, any>, item) => {
         acc[item._id] = item;
@@ -136,8 +115,8 @@ router.get('/basic', authenticate, requireMerchant, async (req: Request, res: Re
           commandesMois,
           commandesLivrees,
           produitsActifs,
-          chiffreAffairesTotal: caTotal[0]?.total  ?? 0,
-          chiffreAffairesMois:  caMois[0]?.total   ?? 0,
+          chiffreAffairesTotal: caTotal[0]?.total ?? 0,
+          chiffreAffairesMois:  caMois[0]?.total  ?? 0,
         },
         parStatut: statutMap,
         evolution,
@@ -149,7 +128,7 @@ router.get('/basic', authenticate, requireMerchant, async (req: Request, res: Re
   }
 });
 
-// ─── GET /analytics/advanced — Analytics avancés (Premium) ───────────────────
+// ─── GET /analytics/advanced — Analytics avances (Premium) ───────────────────
 
 router.get(
   '/advanced',
@@ -158,26 +137,62 @@ router.get(
   requirePremium,
   async (req: Request, res: Response) => {
     try {
-      const shopId = req.shop!.id;
-      const { periode = '30' } = req.query;
-      const jours = Math.min(Number(periode), 90); // max 90 jours
+      const shopId  = new mongoose.Types.ObjectId(req.shop!.id);
+      const periode = req.query.periode === '7' ? 7 : 30;
 
       const debut = new Date();
-      debut.setDate(debut.getDate() - jours);
+      debut.setDate(debut.getDate() - periode);
+      const depuisStr = debut.toISOString().split('T')[0];
 
-      // Récupère les analytics pré-agrégés
-      const analytics = await Analytics.find({
+      // ── Evolution depuis les vraies commandes ──
+      const evolutionCommandes = await Order.aggregate([
+        { $match: { shopId, createdAt: { $gte: debut } } },
+        {
+          $group: {
+            _id:       { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+            commandes: { $sum: 1 },
+            revenue:   { $sum: '$total' },
+          },
+        },
+        { $sort: { _id: 1 } },
+      ]);
+
+      const joursMap = evolutionCommandes.reduce(
+        (acc: Record<string, any>, item) => { acc[item._id] = item; return acc; },
+        {}
+      );
+
+      const joursListe: string[] = [];
+      for (let i = periode - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        joursListe.push(d.toISOString().split('T')[0]);
+      }
+
+      // ── Visites depuis Analytics (peut etre vide) ──
+      const analyticsData = await Analytics.find({
         shopId,
-        date: { $gte: formatDate(debut) },
-      })
-        .sort({ date: 1 })
-        .lean();
+        date: { $gte: depuisStr },
+      }).lean();
 
-      // Top produits sur la période
+      const analyticsMap = analyticsData.reduce(
+        (acc: Record<string, any>, item) => { acc[item.date] = item; return acc; },
+        {}
+      );
+
+      const evolution = joursListe.map((jour) => ({
+        date:       jour,
+        visiteurs:  analyticsMap[jour]?.visitors ?? 0,
+        commandes:  joursMap[jour]?.commandes    ?? 0,
+        revenue:    joursMap[jour]?.revenue      ?? 0,
+        conversion: 0,
+      }));
+
+      // ── Top produits ──
       const topProduits = await Order.aggregate([
         {
           $match: {
-            shopId:    shopId,
+            shopId,
             createdAt: { $gte: debut },
             status:    { $ne: 'cancelled' },
           },
@@ -185,75 +200,31 @@ router.get(
         { $unwind: '$items' },
         {
           $group: {
-            _id:      '$items.productId',
-            name:     { $first: '$items.name' },
+            _id:       '$items.productId',
+            name:      { $first: '$items.name' },
             commandes: { $sum: '$items.quantity' },
-            revenue:  { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+            revenue:   { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
           },
         },
         { $sort: { commandes: -1 } },
-        { $limit: 10 },
-      ]);
-
-      // Villes les plus actives
-      const topVilles = await Order.aggregate([
-        {
-          $match: {
-            shopId:    shopId,
-            createdAt: { $gte: debut },
-          },
-        },
-        {
-          $group: {
-            _id:   '$customer.city',
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { count: -1 } },
         { $limit: 5 },
       ]);
 
-      // Taux de conversion moyen
-      const totalVisiteurs = analytics.reduce((s, a) => s + a.visitors, 0);
-      const totalCommandes = analytics.reduce((s, a) => s + a.orders,   0);
-      const tauxConversion = totalVisiteurs > 0
-        ? ((totalCommandes / totalVisiteurs) * 100).toFixed(2)
-        : '0';
-
-      // Revenus par jour (avec jours vides à 0)
-      const analyticsMap = analytics.reduce(
-        (acc: Record<string, any>, item) => {
-          acc[item.date] = item;
-          return acc;
-        },
-        {}
-      );
-
-      const joursListe: string[] = [];
-      for (let i = jours - 1; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        joursListe.push(formatDate(d));
-      }
-
-      const evolution = joursListe.map((jour) => ({
-        date:      jour,
-        visiteurs: analyticsMap[jour]?.visitors   ?? 0,
-        commandes: analyticsMap[jour]?.orders     ?? 0,
-        revenue:   analyticsMap[jour]?.revenue    ?? 0,
-        conversion: analyticsMap[jour]?.conversion ?? 0,
-      }));
+      const totalVisiteurs = analyticsData.reduce((s, a) => s + a.visitors, 0);
+      const totalCommandes = evolutionCommandes.reduce((s, a) => s + a.commandes, 0);
+      const totalRevenue   = evolutionCommandes.reduce((s, a) => s + a.revenue, 0);
 
       res.json({
         success: true,
         data: {
-          periode:        jours,
+          periode,
           totalVisiteurs,
           totalCommandes,
-          tauxConversion: `${tauxConversion}%`,
+          totalRevenue,
+          tauxConversion: '0%',
           evolution,
           topProduits,
-          topVilles,
+          topVilles: [],
         },
       });
     } catch (error) {
@@ -263,7 +234,7 @@ router.get(
   }
 );
 
-// ─── POST /analytics/track — Enregistre une visite (appelé par le storefront) ─
+// ─── POST /analytics/track ────────────────────────────────────────────────────
 
 router.post('/track', async (req: Request, res: Response) => {
   try {
@@ -274,12 +245,10 @@ router.post('/track', async (req: Request, res: Response) => {
       return;
     }
 
-    const aujourd_hui = formatDate(new Date());
-
-    const sources = ['instagram', 'tiktok', 'facebook', 'direct', 'other'];
+    const aujourd_hui  = formatDate(new Date());
+    const sources      = ['instagram', 'tiktok', 'facebook', 'direct', 'other'];
     const sourceValide = sources.includes(source) ? source : 'other';
 
-    // Upsert — crée ou incrémente le compteur du jour
     await Analytics.findOneAndUpdate(
       { shopId, date: aujourd_hui },
       {
@@ -298,21 +267,27 @@ router.post('/track', async (req: Request, res: Response) => {
   }
 });
 
-// GET /analytics/me?periode=7j|30j
+// ─── GET /analytics/me ────────────────────────────────────────────────────────
+
 router.get('/me', authenticate, requireMerchant, async (req, res) => {
   try {
-    const shop    = await Shop.findOne({ ownerId: req.user!.userId });
-    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    if (!shop) {
+      res.status(404).json({ success: false, message: 'Boutique introuvable' });
+      return;
+    }
 
-    const periode = req.query.periode === '30j' ? 30 : 7;
-    const depuis  = new Date();
+    const periode   = req.query.periode === '30j' ? 30 : 7;
+    const depuis    = new Date();
     depuis.setDate(depuis.getDate() - periode);
     const depuisStr = depuis.toISOString().split('T')[0];
 
     const data = await Analytics.find({
       shopId: shop._id,
       date:   { $gte: depuisStr },
-    }).sort({ date: 1 }).lean();
+    })
+      .sort({ date: 1 })
+      .lean();
 
     res.json({ success: true, data });
   } catch (error) {
