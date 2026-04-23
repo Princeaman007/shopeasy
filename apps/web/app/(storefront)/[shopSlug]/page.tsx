@@ -8,7 +8,7 @@ import BoutiquePro     from './themes/BoutiquePro';
 import StoriesStyle    from './themes/StoriesStyle';
 import TrackVisite     from './TrackVisite';
 
-const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:4000/api';
 
 async function getShop(slug: string) {
   try {
@@ -35,9 +35,10 @@ async function getProduits(shopId: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { shopSlug: string };
+  params: Promise<{ shopSlug: string }>;
 }): Promise<Metadata> {
-  const shop = await getShop(params.shopSlug);
+  const { shopSlug } = await params;
+  const shop = await getShop(shopSlug);
 
   if (!shop) {
     return {
@@ -48,7 +49,7 @@ export async function generateMetadata({
 
   const description = shop.about?.description
     ? shop.about.description.slice(0, 160)
-    : `Découvrez ${shop.name} sur ShopEasy CI — boutique en ligne en Côte d'Ivoire.`;
+    : `Decouvrez ${shop.name} sur ShopEasy CI — boutique en ligne en Cote d'Ivoire.`;
 
   const imageOg = shop.logo ?? 'https://shopeasyci.ci/og-default.png';
 
@@ -62,14 +63,7 @@ export async function generateMetadata({
       locale:      'fr_CI',
       url:         `https://${shop.slug}.shopeasyci.ci`,
       siteName:    'ShopEasy CI',
-      images: [
-        {
-          url:    imageOg,
-          width:  1200,
-          height: 630,
-          alt:    `${shop.name} — ShopEasy CI`,
-        },
-      ],
+      images: [{ url: imageOg, width: 1200, height: 630, alt: `${shop.name} — ShopEasy CI` }],
     },
     twitter: {
       card:        'summary_large_image',
@@ -83,7 +77,7 @@ export async function generateMetadata({
     keywords: [
       shop.name,
       'boutique en ligne',
-      "Côte d'Ivoire",
+      "Cote d'Ivoire",
       'ShopEasy CI',
       shop.about?.location ?? 'Abidjan',
     ],
@@ -96,9 +90,11 @@ export async function generateMetadata({
 export default async function StorefrontPage({
   params,
 }: {
-  params: { shopSlug: string };
+  params: Promise<{ shopSlug: string }>;
 }) {
-  const shop = await getShop(params.shopSlug);
+  const { shopSlug } = await params;
+
+  const shop = await getShop(shopSlug);
   if (!shop) notFound();
 
   const produits = await getProduits(shop._id);
@@ -112,7 +108,7 @@ export default async function StorefrontPage({
 
   const ThemeComponent = themeMap[shop.selectedTheme] ?? VitrinModerne;
 
- return (
+  return (
     <ThemeProvider themeId={shop.selectedTheme}>
       <TrackVisite shopId={shop._id} />
       <ThemeComponent shop={shop} produits={produits} />

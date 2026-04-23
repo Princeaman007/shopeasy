@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import ThemeProvider   from '../ThemeProvider';
 import RechercheClient from './RechercheClient';
 
-const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:4000/api';
 
 async function getShop(slug: string) {
   try {
@@ -27,10 +27,13 @@ export default async function RecherchePage({
   params,
   searchParams,
 }: {
-  params:       { shopSlug: string };
-  searchParams: { q?: string };
+  params:       Promise<{ shopSlug: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
-  const shop = await getShop(params.shopSlug);
+  const { shopSlug } = await params;
+  const { q }        = await searchParams;
+
+  const shop = await getShop(shopSlug);
   if (!shop) notFound();
 
   const produits = await getProduits(shop._id);
@@ -40,7 +43,7 @@ export default async function RecherchePage({
       <RechercheClient
         shop={shop}
         produits={produits}
-        queryInitiale={searchParams.q ?? ''}
+        queryInitiale={q ?? ''}
       />
     </ThemeProvider>
   );
