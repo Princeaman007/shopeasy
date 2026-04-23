@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image                   from 'next/image';
-import Link                    from 'next/link';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
   ChevronLeft, Trash2, Plus, Minus,
   ShoppingCart, MessageCircle, Tag, X, Check,
@@ -12,13 +12,13 @@ import type { ShopPublic } from '../types';
 
 // ---------------------------------------------------------------------------
 interface ArticlePanier {
-  cle:       string;
+  cle: string;
   produitId: string;
-  nom:       string;
-  prix:      number;
-  image:     string | null;
+  nom: string;
+  prix: number;
+  image: string | null;
   variantes: Record<string, string>;
-  quantite:  number;
+  quantite: number;
 }
 
 interface Props {
@@ -32,13 +32,13 @@ const formatFcfa = (n: number) =>
 export default function PanierClient({ shop }: Props) {
   const t = getThemeConfig(shop.selectedTheme);
 
-  const [articles,        setArticles]        = useState<ArticlePanier[]>([]);
-  const [codePromo,       setCodePromo]       = useState('');
-  const [promoApplique,   setPromoApplique]   = useState<{
+  const [articles, setArticles] = useState<ArticlePanier[]>([]);
+  const [codePromo, setCodePromo] = useState('');
+  const [promoApplique, setPromoApplique] = useState<{
     code: string; type: string; value: number; discount: number;
   } | null>(null);
-  const [promoLoading,    setPromoLoading]    = useState(false);
-  const [promoErreur,     setPromoErreur]     = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoErreur, setPromoErreur] = useState('');
   const [commandeEnvoyee, setCommandeEnvoyee] = useState(false);
 
   // -- Chargement panier depuis localStorage --
@@ -75,9 +75,9 @@ export default function PanierClient({ shop }: Props) {
   };
 
   // -- Calculs --
-  const sousTotal  = articles.reduce((s, a) => s + a.prix * a.quantite, 0);
-  const reduction  = promoApplique?.discount ?? 0;
-  const total      = Math.max(0, sousTotal - reduction);
+  const sousTotal = articles.reduce((s, a) => s + a.prix * a.quantite, 0);
+  const reduction = promoApplique?.discount ?? 0;
+  const total = Math.max(0, sousTotal - reduction);
   const nbArticles = articles.reduce((s, a) => s + a.quantite, 0);
 
   // -- Appliquer code promo --
@@ -88,11 +88,11 @@ export default function PanierClient({ shop }: Props) {
     try {
       const API = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API}/promos/verify`, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          code:     codePromo.trim().toUpperCase(),
-          shopId:   shop._id,
+        body: JSON.stringify({
+          code: codePromo.trim().toUpperCase(),
+          shopId: shop._id,
           subtotal: sousTotal,
         }),
       });
@@ -213,10 +213,10 @@ export default function PanierClient({ shop }: Props) {
                   >
                     {article.image
                       ? <Image src={article.image} alt={article.nom}
-                               fill className="object-cover" />
+                        fill className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-2xl">
-                          🛍️
-                        </div>
+                        🛍️
+                      </div>
                     }
                   </div>
 
@@ -257,7 +257,7 @@ export default function PanierClient({ shop }: Props) {
                           <Minus size={12} style={{ color: t.text }} />
                         </button>
                         <span className="w-6 text-center text-sm font-bold"
-                              style={{ color: t.text }}>
+                          style={{ color: t.text }}>
                           {article.quantite}
                         </span>
                         <button
@@ -295,7 +295,7 @@ export default function PanierClient({ shop }: Props) {
                 style={{ backgroundColor: t.surface, borderColor: t.border }}
               >
                 <p className="text-sm font-semibold flex items-center gap-2"
-                   style={{ color: t.text }}>
+                  style={{ color: t.text }}>
                   <Tag size={16} style={{ color: t.accent }} />
                   Code promo
                 </p>
@@ -308,7 +308,7 @@ export default function PanierClient({ shop }: Props) {
                     <div className="flex items-center gap-2">
                       <Check size={16} style={{ color: t.accent }} />
                       <span className="font-mono font-bold text-sm"
-                            style={{ color: t.accent }}>
+                        style={{ color: t.accent }}>
                         {promoApplique.code}
                       </span>
                       <span className="text-xs" style={{ color: t.muted }}>
@@ -386,6 +386,16 @@ export default function PanierClient({ shop }: Props) {
                 </div>
               </div>
 
+              <Link
+                href={`/${shop.slug}/commande`}
+                className="w-full py-4 rounded-2xl font-bold flex items-center
+             justify-center gap-2 transition-all hover:opacity-90"
+                style={{ backgroundColor: t.accent, color: '#fff' }}
+              >
+                <ShoppingCart size={20} />
+                Passer la commande — {formatFcfa(total)}
+              </Link>
+
               {/* Bouton commander WhatsApp */}
               {shop.whatsapp && (
                 <button
@@ -397,9 +407,9 @@ export default function PanierClient({ shop }: Props) {
                   {commandeEnvoyee
                     ? <><Check size={20} /> Commande envoyée sur WhatsApp !</>
                     : <>
-                        <MessageCircle size={20} />
-                        Commander via WhatsApp — {formatFcfa(total)}
-                      </>
+                      <MessageCircle size={20} />
+                      Commander via WhatsApp — {formatFcfa(total)}
+                    </>
                   }
                 </button>
               )}

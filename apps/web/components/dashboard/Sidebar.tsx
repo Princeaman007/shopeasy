@@ -7,24 +7,25 @@ import { useAuth } from '@/contexts/AuthContext';
 import {
   ShoppingBag, LayoutDashboard, Package, ShoppingCart,
   Tag, Palette, Settings, BarChart2, Gift, Users,
-  Share2, CreditCard, X, Menu, Crown,
+  Share2, CreditCard, X, Menu, Crown, FileText,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/dashboard',            icone: LayoutDashboard, label: 'Accueil',      premium: false, exact: true  },
-  { href: '/dashboard/produits',   icone: Package,         label: 'Produits',     premium: false, exact: false },
-  { href: '/dashboard/commandes',  icone: ShoppingCart,    label: 'Commandes',    premium: false, exact: false },
-  { href: '/dashboard/categories', icone: Tag,             label: 'Catégories',   premium: false, exact: false },
-  { href: '/dashboard/themes',     icone: Palette,         label: 'Thèmes',       premium: false, exact: false },
-  { href: '/dashboard/analytics',  icone: BarChart2,       label: 'Analytics',    premium: true,  exact: false },
-  { href: '/dashboard/codes-promo',icone: Gift,            label: 'Codes promo',  premium: true,  exact: false },
-  { href: '/dashboard/equipe',     icone: Users,           label: 'Équipe',       premium: true,  exact: false },
+  { href: '/dashboard',             icone: LayoutDashboard, label: 'Accueil',     premium: false, exact: true  },
+  { href: '/dashboard/produits',    icone: Package,         label: 'Produits',    premium: false, exact: false },
+  { href: '/dashboard/commandes',   icone: ShoppingCart,    label: 'Commandes',   premium: false, exact: false },
+  { href: '/dashboard/categories',  icone: Tag,             label: 'Categories',  premium: false, exact: false },
+  { href: '/dashboard/themes',      icone: Palette,         label: 'Themes',      premium: false, exact: false },
+  { href: '/dashboard/analytics',   icone: BarChart2,       label: 'Analytics',   premium: true,  exact: false },
+  { href: '/dashboard/codes-promo', icone: Gift,            label: 'Codes promo', premium: true,  exact: false },
+  { href: '/dashboard/equipe',      icone: Users,           label: 'Equipe',      premium: true,  exact: false },
 ];
 
 const NAV_SETTINGS = [
-  { href: '/dashboard/parametres/boutique',    icone: Settings,  label: 'Paramètres boutique' },
-  { href: '/dashboard/parametres/partage',     icone: Share2,    label: 'Partage & QR Code'   },
-  { href: '/dashboard/parametres/abonnement',  icone: CreditCard,label: 'Abonnement'           },
+  { href: '/dashboard/parametres/boutique',   icone: Settings,   label: 'Parametres boutique' },
+  { href: '/dashboard/parametres/about',      icone: FileText,   label: 'A propos'             },
+  { href: '/dashboard/parametres/partage',    icone: Share2,     label: 'Partage & QR Code'    },
+  { href: '/dashboard/parametres/abonnement', icone: CreditCard, label: 'Abonnement'            },
 ];
 
 export default function Sidebar() {
@@ -54,21 +55,23 @@ export default function Sidebar() {
           <div className="bg-elevated rounded-xl p-3">
             <div className="flex items-center justify-between mb-1">
               <p className="text-white font-semibold text-sm truncate">{shop.name}</p>
-              {shop.isVerified && <span className="text-primary text-xs">✓</span>}
+              {shop.isVerified && <span className="text-primary text-xs">Verifie</span>}
             </div>
             <div className="flex items-center gap-2">
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                isPremium ? 'bg-primary/20 text-primary' : 'bg-elevated border border-border text-muted'
+                isPremium
+                  ? 'bg-primary/20 text-primary'
+                  : 'bg-elevated border border-border text-muted'
               }`}>
-                {isPremium ? '⭐ Premium' : 'Basic'}
+                {isPremium ? 'Premium' : 'Basic'}
               </span>
               <span className={`text-xs px-2 py-0.5 rounded-full ${
-                shop.subscriptionStatus === 'active'  ? 'bg-green-500/20 text-green-400' :
-                shop.subscriptionStatus === 'trial'   ? 'bg-blue-500/20 text-blue-400' :
-                                                        'bg-red-500/20 text-red-400'
+                shop.subscriptionStatus === 'active' ? 'bg-green-500/20 text-green-400' :
+                shop.subscriptionStatus === 'trial'  ? 'bg-blue-500/20 text-blue-400'  :
+                                                       'bg-red-500/20 text-red-400'
               }`}>
-                {shop.subscriptionStatus === 'trial' ? 'Essai' :
-                 shop.subscriptionStatus === 'active' ? 'Actif' : 'Expiré'}
+                {shop.subscriptionStatus === 'trial'  ? 'Essai' :
+                 shop.subscriptionStatus === 'active' ? 'Actif' : 'Expire'}
               </span>
             </div>
           </div>
@@ -99,7 +102,7 @@ export default function Sidebar() {
         })}
 
         <div className="pt-4 pb-2">
-          <p className="text-muted text-xs font-medium px-3 uppercase tracking-wider">Paramètres</p>
+          <p className="text-muted text-xs font-medium px-3 uppercase tracking-wider">Parametres</p>
         </div>
 
         {NAV_SETTINGS.map((item) => {
@@ -129,7 +132,7 @@ export default function Sidebar() {
               <Crown size={14} className="text-primary" />
               <p className="text-primary text-sm font-semibold">Passer en Premium</p>
             </div>
-            <p className="text-muted text-xs">Produits illimités, analytics, codes promo...</p>
+            <p className="text-muted text-xs">Produits illimites, analytics, codes promo...</p>
           </Link>
         </div>
       )}
