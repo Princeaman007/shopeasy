@@ -2,19 +2,25 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
 import { v2 as cloudinary } from 'cloudinary';
-import { Shop } from '../models/Shop';
-import { Product } from '../models/Product';
+import { Shop }     from '../models/Shop';
+import { Product }  from '../models/Product';
 import { Category } from '../models/Category';
 import { authenticate, requireMerchant } from '../middleware/auth';
 import { ShopService } from '../services/ShopService';
 
-// ---------------------------------------------------------------------------
-// Configuration multer + Cloudinary
-// ---------------------------------------------------------------------------
+// ─── Multer ───────────────────────────────────────────────────────────────────
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits:  { fileSize: 2 * 1024 * 1024 },
 });
+
+const uploadHero = multer({
+  storage: multer.memoryStorage(),
+  limits:  { fileSize: 10 * 1024 * 1024 },
+});
+
+// ─── Cloudinary ───────────────────────────────────────────────────────────────
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -24,9 +30,8 @@ cloudinary.config({
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Schémas Zod
-// ---------------------------------------------------------------------------
+// ─── Schemas Zod ──────────────────────────────────────────────────────────────
+
 const updateShopSchema = z.object({
   name:               z.string().min(2).max(60).optional(),
   whatsapp:           z.string().min(8).max(20).optional(),
@@ -42,9 +47,8 @@ const updateAboutSchema = z.object({
   workingHours: z.string().max(200).optional(),
 });
 
-// ---------------------------------------------------------------------------
-// Helper upload Cloudinary depuis buffer
-// ---------------------------------------------------------------------------
+// ─── Helper Cloudinary ────────────────────────────────────────────────────────
+
 const uploadToCloudinary = (
   buffer: Buffer,
   folder: string,
@@ -58,21 +62,12 @@ const uploadToCloudinary = (
     stream.end(buffer);
   });
 
-// ---------------------------------------------------------------------------
-// GET /shops/me — Boutique du marchand connecté
-// ⚠️ DOIT être avant /:slug
-// ---------------------------------------------------------------------------
+// ─── GET /shops/me ────────────────────────────────────────────────────────────
+
 router.get('/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shop = await Shop.findOne({ ownerId: req.user!.userId })
-      .select('-__v')
-      .lean();
-
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
-
+    const shop = await Shop.findOne({ ownerId: req.user!.userId }).select('-__v').lean();
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
     res.json({ success: true, data: shop });
   } catch (error) {
     console.error('Erreur GET /shops/me :', error);
@@ -80,16 +75,12 @@ router.get('/me', authenticate, requireMerchant, async (req: Request, res: Respo
   }
 });
 
-// ---------------------------------------------------------------------------
-// GET /shops/me/stats — Stats basiques
-// ---------------------------------------------------------------------------
+// ─── GET /shops/me/stats ──────────────────────────────────────────────────────
+
 router.get('/me/stats', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const shop = await Shop.findOne({ ownerId: req.user!.userId });
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
     const [totalProduits, totalCategories] = await Promise.all([
       Product.countDocuments({ shopId: shop._id, status: 'active' }),
@@ -113,26 +104,80 @@ router.get('/me/stats', authenticate, requireMerchant, async (req: Request, res:
   }
 });
 
-// ---------------------------------------------------------------------------
-// PATCH /shops/me — Modifier infos boutique
-// ---------------------------------------------------------------------------
+// ─── GET /shops/me/equipe ─────────────────────────────────────────────────────
+
+router.get('/me/equipe', authenticate, requireMerchant, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const shop = await Shop.findOne({ ownerId: req.user!.userId }).populate('admins', 'name email');
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    res.json({ success: true, membres: shop.admins });
+  } catch {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ─── POST /shops/me/equipe ────────────────────────────────────────────────────
+
+router.post('/me/equipe', authenticate, requireMerchant, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) { res.status(400).json({ success: false, message: 'Email obligatoire' }); return; }
+
+    const { User } = await import('../models/User');
+    const userToAdd = await User.findOne({ email: email.toLowerCase() });
+    if (!userToAdd) { res.status(404).json({ success: false, message: 'Aucun compte trouve avec cet email' }); return; }
+
+    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+
+    if (shop.planType !== 'premium') {
+      res.status(403).json({ success: false, message: 'Fonctionnalite Premium uniquement' }); return;
+    }
+    if (String(userToAdd._id) === req.user!.userId) {
+      res.status(400).json({ success: false, message: 'Vous etes deja proprietaire' }); return;
+    }
+
+    const dejaAdmin = shop.admins.some((a: any) => String(a) === String(userToAdd._id));
+    if (dejaAdmin) {
+      res.status(400).json({ success: false, message: "Cet utilisateur est deja dans l'equipe" }); return;
+    }
+
+    shop.admins.push(userToAdd._id as any);
+    await shop.save();
+    await shop.populate('admins', 'name email');
+    res.json({ success: true, membres: shop.admins });
+  } catch {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ─── DELETE /shops/me/equipe/:userId ─────────────────────────────────────────
+
+router.delete('/me/equipe/:userId', authenticate, requireMerchant, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    shop.admins = shop.admins.filter((a: any) => String(a) !== req.params.userId) as any;
+    await shop.save();
+    await shop.populate('admins', 'name email');
+    res.json({ success: true, membres: shop.admins });
+  } catch {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ─── PATCH /shops/me ─────────────────────────────────────────────────────────
+
 router.patch('/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const parsed = updateShopSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        message: 'Données invalides',
-        errors: parsed.error.flatten().fieldErrors,
-      });
+      res.status(400).json({ success: false, message: 'Donnees invalides', errors: parsed.error.flatten().fieldErrors });
       return;
     }
 
     const shop = await Shop.findOne({ ownerId: req.user!.userId });
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
     const { name, whatsapp, whatsappOrderNotif, logo } = parsed.data;
 
@@ -145,57 +190,45 @@ router.patch('/me', authenticate, requireMerchant, async (req: Request, res: Res
     if (logo               !== undefined) (shop as any).logo      = logo;
 
     await shop.save();
-    res.json({ success: true, data: shop, message: 'Boutique mise à jour' });
+    res.json({ success: true, data: shop, message: 'Boutique mise a jour' });
   } catch (error) {
     console.error('Erreur PATCH /shops/me :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-// ---------------------------------------------------------------------------
-// PATCH /shops/me/theme — Changer le thème
-// ---------------------------------------------------------------------------
+// ─── PATCH /shops/me/theme ────────────────────────────────────────────────────
+
 router.patch('/me/theme', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const { selectedTheme } = req.body;
-
     const shop = await Shop.findOne({ ownerId: req.user!.userId });
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
     const THEMES_BASIC   = ['vitrine-moderne', 'marche-colore'];
     const THEMES_PREMIUM = [...THEMES_BASIC, 'luxe-sombre', 'boutique-pro', 'stories-style'];
     const themes         = shop.planType === 'premium' ? THEMES_PREMIUM : THEMES_BASIC;
 
     if (!themes.includes(selectedTheme)) {
-      res.status(403).json({ success: false, message: 'Thème non disponible pour votre plan' });
-      return;
+      res.status(403).json({ success: false, message: 'Theme non disponible pour votre plan' }); return;
     }
 
     shop.selectedTheme = selectedTheme;
     await shop.save();
-
-    res.json({ success: true, data: shop, message: 'Thème mis à jour' });
+    res.json({ success: true, data: shop, message: 'Theme mis a jour' });
   } catch (error) {
     console.error('Erreur PATCH /shops/me/theme :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-// ---------------------------------------------------------------------------
-// PATCH /shops/me/about — Modifier À propos
-// ---------------------------------------------------------------------------
+// ─── PATCH /shops/me/about ────────────────────────────────────────────────────
+
 router.patch('/me/about', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const parsed = updateAboutSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        message: 'Données invalides',
-        errors: parsed.error.flatten().fieldErrors,
-      });
+      res.status(400).json({ success: false, message: 'Donnees invalides', errors: parsed.error.flatten().fieldErrors });
       return;
     }
 
@@ -205,40 +238,23 @@ router.patch('/me/about', authenticate, requireMerchant, async (req: Request, re
       { new: true, select: '-__v' }
     );
 
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
-
-    res.json({ success: true, data: shop, message: 'À propos mis à jour' });
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    res.json({ success: true, data: shop, message: 'A propos mis a jour' });
   } catch (error) {
     console.error('Erreur PATCH /shops/me/about :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-// ---------------------------------------------------------------------------
-// POST /shops/me/logo — Upload logo
-// ---------------------------------------------------------------------------
+// ─── POST /shops/me/logo ──────────────────────────────────────────────────────
+
 router.post('/me/logo', authenticate, requireMerchant, upload.single('file'), async (req: Request, res: Response) => {
   try {
-    if (!req.file) {
-      res.status(400).json({ success: false, message: 'Aucun fichier reçu' });
-      return;
-    }
-
+    if (!req.file) { res.status(400).json({ success: false, message: 'Aucun fichier recu' }); return; }
     const shop = await Shop.findOne({ ownerId: req.user!.userId });
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
-
-    const result = await uploadToCloudinary(
-      req.file.buffer,
-      `shopeasy/${shop._id}/logo`,
-      [{ width: 400, height: 400, crop: 'fill' }]
-    );
-
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    const result = await uploadToCloudinary(req.file.buffer, `shopeasy/${shop._id}/logo`,
+      [{ width: 400, height: 400, crop: 'fill' }]);
     res.json({ success: true, url: result.secure_url });
   } catch (error) {
     console.error('Erreur upload logo :', error);
@@ -246,28 +262,15 @@ router.post('/me/logo', authenticate, requireMerchant, upload.single('file'), as
   }
 });
 
-// ---------------------------------------------------------------------------
-// POST /shops/me/owner-photo — Upload photo propriétaire
-// ---------------------------------------------------------------------------
+// ─── POST /shops/me/owner-photo ───────────────────────────────────────────────
+
 router.post('/me/owner-photo', authenticate, requireMerchant, upload.single('file'), async (req: Request, res: Response) => {
   try {
-    if (!req.file) {
-      res.status(400).json({ success: false, message: 'Aucun fichier reçu' });
-      return;
-    }
-
+    if (!req.file) { res.status(400).json({ success: false, message: 'Aucun fichier recu' }); return; }
     const shop = await Shop.findOne({ ownerId: req.user!.userId });
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
-    }
-
-    const result = await uploadToCloudinary(
-      req.file.buffer,
-      `shopeasy/${shop._id}/owner`,
-      [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }]
-    );
-
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    const result = await uploadToCloudinary(req.file.buffer, `shopeasy/${shop._id}/owner`,
+      [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }]);
     res.json({ success: true, url: result.secure_url });
   } catch (error) {
     console.error('Erreur upload owner-photo :', error);
@@ -275,26 +278,94 @@ router.post('/me/owner-photo', authenticate, requireMerchant, upload.single('fil
   }
 });
 
-// ---------------------------------------------------------------------------
-// GET /shops/:slug — Boutique publique (storefront)
-// ⚠️ DOIT être en dernier
-// ---------------------------------------------------------------------------
-router.get('/:slug', async (req: Request, res: Response) => {
-  try {
-    const shop = await Shop.findOne({ slug: req.params.slug })
-      .select('-__v')
-      .lean();
+// ─── POST /shops/me/hero ──────────────────────────────────────────────────────
 
-    if (!shop) {
-      res.status(404).json({ success: false, message: 'Boutique introuvable' });
-      return;
+router.post('/me/hero', authenticate, requireMerchant, (req, res, next) => {
+  uploadHero.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ success: false, message: 'Fichier trop volumineux — max 10 Mo' });
+    }
+    if (err) return res.status(500).json({ success: false, message: 'Erreur upload' });
+    next();
+  });
+}, async (req: Request, res: Response) => {
+  try {
+    if (!req.file) { res.status(400).json({ success: false, message: 'Aucun fichier recu' }); return; }
+    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    const result = await uploadToCloudinary(req.file.buffer, `shopeasy/${shop._id}/hero`,
+      [{ width: 1920, height: 600, crop: 'fill', gravity: 'auto' }]);
+    shop.heroImage = result.secure_url;
+    await shop.save();
+    res.json({ success: true, url: result.secure_url });
+  } catch (error) {
+    console.error('Erreur upload hero :', error);
+    res.status(500).json({ success: false, message: 'Erreur upload' });
+  }
+});
+
+// ─── GET /shops/annuaire ──────────────────────────────────────────────────────
+
+router.get('/annuaire', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page      = parseInt(req.query.page as string) || 1;
+    const limite    = 12;
+    const recherche = req.query.q as string || '';
+    const skip      = (page - 1) * limite;
+
+    const filtre: Record<string, unknown> = {
+      planType:           'premium',
+      subscriptionStatus: { $in: ['active', 'trial'] },
+    };
+
+    if (recherche.trim()) {
+      filtre.name = { $regex: recherche.trim(), $options: 'i' };
     }
 
+    const [boutiques, total] = await Promise.all([
+      Shop.find(filtre)
+        .select('slug name about isVerified selectedTheme createdAt heroImage logo')
+        .sort({ isVerified: -1, createdAt: -1 })
+        .skip(skip)
+        .limit(limite)
+        .lean(),
+      Shop.countDocuments(filtre),
+    ]);
+
+    const boutiquesAvecProduits = await Promise.all(
+      boutiques.map(async (shop: any) => {
+        const produits = await Product.find({ shopId: shop._id, status: 'active' })
+          .select('name price images')
+          .sort({ createdAt: -1 })
+          .limit(3)
+          .lean();
+        return { ...shop, produits };
+      })
+    );
+
+    res.json({
+      boutiques: boutiquesAvecProduits,
+      pagination: {
+        page,
+        total,
+        pages:   Math.ceil(total / limite),
+        parPage: limite,
+      },
+    });
+  } catch {
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ─── GET /shops/:slug — DOIT etre en dernier ──────────────────────────────────
+
+router.get('/:slug', async (req: Request, res: Response) => {
+  try {
+    const shop = await Shop.findOne({ slug: req.params.slug }).select('-__v').lean();
+    if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+
     if (shop.subscriptionStatus === 'expired' || shop.subscriptionStatus === 'suspended') {
-      res.status(403).json({
-        success: false,
-        message: 'Cette boutique est temporairement indisponible',
-      });
+      res.status(403).json({ success: false, message: 'Cette boutique est temporairement indisponible' });
       return;
     }
 
