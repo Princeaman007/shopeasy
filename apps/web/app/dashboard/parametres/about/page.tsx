@@ -8,11 +8,12 @@ import Image from 'next/image';
 // Types
 // ---------------------------------------------------------------------------
 interface FormAbout {
-  description:  string;
-  ownerName:    string;
-  ownerPhoto:   string;
-  location:     string;
+  description: string;
+  ownerName: string;
+  ownerPhoto: string;
+  location: string;
   workingHours: string;
+  returnPolicy: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -20,19 +21,20 @@ const API = process.env.NEXT_PUBLIC_API_URL;
 
 // ---------------------------------------------------------------------------
 export default function PageAbout() {
-  const [form,          setForm]          = useState<FormAbout>({
-    description:  '',
-    ownerName:    '',
-    ownerPhoto:   '',
-    location:     '',
+  const [form, setForm] = useState<FormAbout>({
+    description: '',
+    ownerName: '',
+    ownerPhoto: '',
+    location: '',
     workingHours: '',
+    returnPolicy: '',
   });
-  const [photoPreview,  setPhotoPreview]  = useState('');
-  const [photoFile,     setPhotoFile]     = useState<File | null>(null);
-  const [chargement,    setChargement]    = useState(true);
-  const [sauvegarde,    setSauvegarde]    = useState(false);
-  const [succes,        setSucces]        = useState('');
-  const [erreur,        setErreur]        = useState('');
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [chargement, setChargement] = useState(true);
+  const [sauvegarde, setSauvegarde] = useState(false);
+  const [succes, setSucces] = useState('');
+  const [erreur, setErreur] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   // -- Chargement --
@@ -40,18 +42,19 @@ export default function PageAbout() {
     const charger = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res   = await fetch(`${API}/shops/me`, {
+        const res = await fetch(`${API}/shops/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         if (data.success && data.data.about) {
           const a = data.data.about;
           setForm({
-            description:  a.description  ?? '',
-            ownerName:    a.ownerName    ?? '',
-            ownerPhoto:   a.ownerPhoto   ?? '',
-            location:     a.location     ?? '',
+            description: a.description ?? '',
+            ownerName: a.ownerName ?? '',
+            ownerPhoto: a.ownerPhoto ?? '',
+            location: a.location ?? '',
             workingHours: a.workingHours ?? '',
+            returnPolicy: a.returnPolicy ?? '',
           });
           if (a.ownerPhoto) setPhotoPreview(a.ownerPhoto);
         }
@@ -98,9 +101,9 @@ export default function PageAbout() {
         formData.append('file', photoFile);
 
         const uploadRes = await fetch(`${API}/shops/me/owner-photo`, {
-          method:  'POST',
+          method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
-          body:    formData,
+          body: formData,
         });
         const uploadData = await uploadRes.json();
         if (uploadData.success) ownerPhotoUrl = uploadData.url;
@@ -108,17 +111,18 @@ export default function PageAbout() {
 
       // 2. Sauvegarde about
       const res = await fetch(`${API}/shops/me/about`, {
-        method:  'PATCH',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization:  `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          description:  form.description.trim(),
-          ownerName:    form.ownerName.trim(),
-          ownerPhoto:   ownerPhotoUrl,
-          location:     form.location.trim(),
+          description: form.description.trim(),
+          ownerName: form.ownerName.trim(),
+          ownerPhoto: ownerPhotoUrl,
+          location: form.location.trim(),
           workingHours: form.workingHours.trim(),
+          returnPolicy: form.returnPolicy.trim(),
         }),
       });
 
@@ -345,6 +349,47 @@ export default function PageAbout() {
           </div>
         </div>
       )}
+
+      {/* ── Politique de retour ── */}
+      <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+        <h2 className="text-white font-semibold flex items-center gap-2">
+          <FileText size={18} className="text-primary" />
+          Politique de retour
+        </h2>
+        <p className="text-muted text-xs">
+          Informez vos clients sur vos conditions de retour et d'echange.
+          Cette information sera visible sur votre boutique.
+        </p>
+        <textarea
+          value={form.returnPolicy}
+          onChange={e => setForm(prev => ({ ...prev, returnPolicy: e.target.value }))}
+          rows={4}
+          placeholder="Ex : Les retours sont acceptes dans les 7 jours suivant la reception. Le produit doit etre dans son etat d'origine. Contactez-nous via WhatsApp pour initier un retour..."
+          className="w-full bg-elevated border border-border rounded-xl px-4 py-3
+               text-white placeholder-muted focus:outline-none focus:border-primary
+               resize-none leading-relaxed"
+          maxLength={500}
+        />
+        <p className="text-muted text-xs text-right">{form.returnPolicy.length}/500</p>
+
+        {/* Exemples rapides */}
+        <div className="space-y-2">
+          <p className="text-muted text-xs font-medium">Modeles rapides :</p>
+          <div className="flex flex-wrap gap-2">
+            {[
+              'Pas de retour ni d\'echange',
+              'Echange possible sous 7 jours',
+              'Retour accepte sous 14 jours',
+            ].map(modele => (
+              <button key={modele} type="button"
+                onClick={() => setForm(prev => ({ ...prev, returnPolicy: modele }))}
+                className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted hover:text-white hover:border-primary transition-colors">
+                {modele}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* ── Bouton sauvegarder ── */}
       <button
