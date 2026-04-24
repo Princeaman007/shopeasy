@@ -45,6 +45,7 @@ const updateAboutSchema = z.object({
   ownerPhoto:   z.string().optional(),
   location:     z.string().max(200).optional(),
   workingHours: z.string().max(200).optional(),
+  returnPolicy: z.string().max(500).optional(),
 });
 
 // ─── Helper Cloudinary ────────────────────────────────────────────────────────

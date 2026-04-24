@@ -299,6 +299,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                   </div>
                 </div>
               )}
+              
               {shop.about.ownerName && (
                 <div className="flex items-center gap-4 p-5 rounded-2xl border-2"
                   style={{ backgroundColor: t.elevated, borderColor: t.accent }}>

@@ -14,6 +14,7 @@ import BoutonPanier from '@/components/storefront/BoutonPanier';
 import BoutonFavori from '@/components/storefront/BoutonFavori';
 import FormulaireAvis from '@/components/storefront/FormulaireAvis';
 import ListeAvis from '@/components/storefront/ListeAvis';
+
 interface Props {
   shop: ShopPublic;
   produit: any;
@@ -26,17 +27,17 @@ const formatFcfa = (n: number) =>
 export default function ProduitClient({ shop, produit, similaires }: Props) {
   const t = getThemeConfig(shop.selectedTheme);
 
-  const [imageActive, setImageActive] = useState(0);
-  const [quantite, setQuantite] = useState(1);
+  const [imageActive,       setImageActive]       = useState(0);
+  const [quantite,          setQuantite]          = useState(1);
   const [variantesChoisies, setVariantesChoisies] = useState<Record<string, string>>({});
-  const [ajoutePanier, setAjoutePanier] = useState(false);
-  const [imagesAffichees, setImagesAffichees] = useState<string[]>(produit.images ?? []);
-  const [stockVariante, setStockVariante] = useState<number | null>(null);
-  const [refreshAvis, setRefreshAvis] = useState(0);
+  const [ajoutePanier,      setAjoutePanier]      = useState(false);
+  const [imagesAffichees,   setImagesAffichees]   = useState<string[]>(produit.images ?? []);
+  const [stockVariante,     setStockVariante]     = useState<number | null>(null);
+  const [refreshAvis,       setRefreshAvis]       = useState(0);
 
   const variantes: { nom: string; valeurs: string[]; images: Record<string, string[]> }[] =
     (produit.variants ?? []).map((v: any) => ({
-      nom: v.nom ?? v.name ?? v.label ?? '',
+      nom:    v.nom    ?? v.name  ?? v.label   ?? '',
       valeurs: v.valeurs ?? v.values ?? v.options ?? [],
       images: v.images ?? {},
     }));
@@ -45,7 +46,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
     const nouvellesVariantes = { ...variantesChoisies, [nomVariante]: valeur };
     setVariantesChoisies(nouvellesVariantes);
     const varianteAvecImages = variantes.find(v => v.nom === nomVariante);
-    const imagesVariante = varianteAvecImages?.images?.[valeur];
+    const imagesVariante     = varianteAvecImages?.images?.[valeur];
     if (imagesVariante && imagesVariante.length > 0) {
       setImagesAffichees(imagesVariante);
     } else {
@@ -56,9 +57,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       v.nom === nomVariante ? true : !!nouvellesVariantes[v.nom]
     );
     if (toutesChoisies && produit.stock?.length > 0) {
-      const cle = variantes
-        .map(v => v.nom === nomVariante ? valeur : nouvellesVariantes[v.nom])
-        .join('-');
+      const cle       = variantes.map(v => v.nom === nomVariante ? valeur : nouvellesVariantes[v.nom]).join('-');
       const skuTrouve = produit.stock.find((s: any) => s.sku === cle);
       setStockVariante(skuTrouve?.quantity ?? 0);
     } else {
@@ -71,12 +70,12 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
     variantes.every(v => variantesChoisies[v.nom]);
 
   const stockDispo = stockVariante !== null ? stockVariante : (produit.totalStock ?? 0);
-  const enRupture = stockDispo === 0;
+  const enRupture  = stockDispo === 0;
 
   const ajouterAuPanier = () => {
     if (!toutesVariantesChoisies || enRupture) return;
-    const panier = JSON.parse(localStorage.getItem(`panier_${shop.slug}`) ?? '[]');
-    const cle = `${produit._id}_${JSON.stringify(variantesChoisies)}`;
+    const panier   = JSON.parse(localStorage.getItem(`panier_${shop.slug}`) ?? '[]');
+    const cle      = `${produit._id}_${JSON.stringify(variantesChoisies)}`;
     const existant = panier.find((i: any) => i.cle === cle);
     if (existant) {
       existant.quantite += quantite;
@@ -84,9 +83,9 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       panier.push({
         cle,
         produitId: produit._id,
-        nom: produit.name,
-        prix: produit.price,
-        image: imagesAffichees[0] ?? produit.images?.[0] ?? null,
+        nom:       produit.name,
+        prix:      produit.price,
+        image:     imagesAffichees[0] ?? produit.images?.[0] ?? null,
         variantes: variantesChoisies,
         quantite,
       });
@@ -117,20 +116,20 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   };
 
   const couleurCSS: Record<string, string> = {
-    noir: '#1a1a1a', black: '#1a1a1a',
-    blanc: '#ffffff', white: '#ffffff',
-    rouge: '#ef4444', red: '#ef4444',
-    bleu: '#3b82f6', blue: '#3b82f6',
-    vert: '#22c55e', green: '#22c55e',
-    jaune: '#eab308', yellow: '#eab308',
+    noir: '#1a1a1a',    black: '#1a1a1a',
+    blanc: '#ffffff',   white: '#ffffff',
+    rouge: '#ef4444',   red: '#ef4444',
+    bleu: '#3b82f6',    blue: '#3b82f6',
+    vert: '#22c55e',    green: '#22c55e',
+    jaune: '#eab308',   yellow: '#eab308',
     orange: '#f97316',
-    violet: '#a855f7', purple: '#a855f7',
-    rose: '#ec4899', pink: '#ec4899',
-    marron: '#92400e', brown: '#92400e',
+    violet: '#a855f7',  purple: '#a855f7',
+    rose: '#ec4899',    pink: '#ec4899',
+    marron: '#92400e',  brown: '#92400e',
     beige: '#d4b896',
-    gris: '#6b7280', grey: '#6b7280', gray: '#6b7280',
-    or: '#f59e0b', gold: '#f59e0b',
-    argent: '#94a3b8', silver: '#94a3b8',
+    gris: '#6b7280',    grey: '#6b7280',   gray: '#6b7280',
+    or: '#f59e0b',      gold: '#f59e0b',
+    argent: '#94a3b8',  silver: '#94a3b8',
   };
 
   return (
@@ -154,6 +153,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
+
+        {/* ── GRILLE PRODUIT ── */}
         <div className="grid md:grid-cols-2 gap-10">
 
           {/* ── GALERIE ── */}
@@ -267,7 +268,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {variant.valeurs.map(valeur => {
-                      const choisi = variantesChoisies[variant.nom] === valeur;
+                      const choisi  = variantesChoisies[variant.nom] === valeur;
                       const couleur = couleurCSS[valeur.toLowerCase()];
                       return (
                         <button key={valeur}
@@ -275,9 +276,9 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                           className="relative flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all"
                           style={{
                             backgroundColor: choisi ? t.accent : t.surface,
-                            borderColor: choisi ? t.accent : t.border,
-                            color: choisi ? '#fff' : t.text,
-                            transform: choisi ? 'scale(1.05)' : 'scale(1)',
+                            borderColor:     choisi ? t.accent : t.border,
+                            color:           choisi ? '#fff' : t.text,
+                            transform:       choisi ? 'scale(1.05)' : 'scale(1)',
                           }}>
                           {estCouleur && couleur && (
                             <span className="w-4 h-4 rounded-full flex-shrink-0 border"
@@ -361,10 +362,24 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Produits similaires */}
+          </div>
+        </div>{/* ── FIN GRILLE ── */}
+
+        {/* ── POLITIQUE DE RETOUR ── */}
+        {shop.about?.returnPolicy && (
+          <div className="mt-6 p-4 rounded-2xl border space-y-2"
+            style={{ backgroundColor: t.surface, borderColor: t.border }}>
+            <p className="text-sm font-semibold" style={{ color: t.text }}>
+              🔄 Politique de retour
+            </p>
+            <p className="text-xs leading-relaxed" style={{ color: t.muted }}>
+              {shop.about.returnPolicy}
+            </p>
+          </div>
+        )}
+
+        {/* ── PRODUITS SIMILAIRES ── */}
         {similaires.length > 0 && (
           <div className="mt-16 space-y-6">
             <h2 className="text-xl font-bold" style={{ color: t.text }}>Produits similaires</h2>
@@ -388,16 +403,14 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             </div>
           </div>
         )}
-      </div>
-      {/* ── AVIS ── */}
-      <div className="mt-12 space-y-8">
-        <div className="grid md:grid-cols-2 gap-8">
 
-          {/* Liste avis */}
+      </div>{/* ── FIN max-w-6xl ── */}
+
+      {/* ── AVIS ── */}
+      <div className="max-w-6xl mx-auto px-4 mt-12 space-y-8">
+        <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <h2 className="text-xl font-bold" style={{ color: t.text }}>
-              Avis clients
-            </h2>
+            <h2 className="text-xl font-bold" style={{ color: t.text }}>Avis clients</h2>
             <ListeAvis
               shopSlug={shop.slug}
               productId={produit._id}
@@ -410,8 +423,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               refresh={refreshAvis}
             />
           </div>
-
-          {/* Formulaire */}
           <div className="p-5 rounded-2xl border space-y-4"
             style={{ backgroundColor: t.surface, borderColor: t.border }}>
             <FormulaireAvis
@@ -430,7 +441,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
         </div>
       </div>
 
-      {/* WhatsApp flottant */}
+      {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (
         <Link href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par ${produit.name}`}
           target="_blank" rel="noopener noreferrer"
