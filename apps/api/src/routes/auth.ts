@@ -6,16 +6,16 @@ import { RegisterMerchantSchema, LoginSchema, RegisterClientSchema } from '@shop
 import { signToken, signRefreshToken, verifyToken, verifyRefreshToken, IJwtPayload } from '../config/jwt';
 import crypto from 'crypto';
 import { getRedis } from '../config/redis';
-import { sendPasswordResetEmail } from '../services/Email';
+import { sendPasswordResetEmail, sendWelcomeEmail, sendEmailConfirmation } from '../services/Email';
 import { rattacherCommandesInvite } from '../services/OrderAttachment';
-import { sendWelcomeEmail, sendEmailConfirmation } from '../services/Email';
 
 const router = Router();
 
+// ---------------------------------------------------------------------------
+// POST /api/auth/register — Inscription marchand
+// ---------------------------------------------------------------------------
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
-
-
     const parsed = RegisterMerchantSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ success: false, errors: parsed.error.flatten().fieldErrors });
@@ -23,7 +23,6 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
     }
 
     const { name, email, phone, password, shopName, shopSlug, whatsapp } = parsed.data;
-
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -37,7 +36,11 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const user = await User.create({ name, email, phone, password, role: 'merchant' });
+    const user = await User.create({
+      name, email, phone, password,
+      role: 'merchant',
+      emailVerified: false,
+    });
 
     const shop = await Shop.create({
       slug: shopSlug,
@@ -55,37 +58,27 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 
     await Category.insertMany(
       PREDEFINED_CATEGORIES.map((cat) => ({
-        shopId: shop._id,
-        name: cat.name,
-        slug: cat.slug,
-        icon: cat.icon,
-        order: cat.order,
-        predefined: true,
-        parentId: null,
+        shopId: shop._id, name: cat.name, slug: cat.slug,
+        icon: cat.icon, order: cat.order, predefined: true, parentId: null,
       }))
     );
 
-    const token = signToken({
-      userId: String(user._id),
-      role: 'merchant',
-      shopId: String(shop._id),
-    });
+    // Genere token confirmation email et stocke dans Redis 24h
+    const confirmToken = crypto.randomBytes(32).toString('hex');
+    const redis = getRedis();
+    await redis.setex(`confirm:${confirmToken}`, 24 * 60 * 60, String(user._id));
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // Envoie email de confirmation
+    try {
+      await sendEmailConfirmation(email, name, confirmToken);
+    } catch (emailErr) {
+      console.error('Erreur envoi email confirmation:', emailErr);
+    }
 
     res.status(201).json({
       success: true,
-      message: 'Compte cree avec succes',
-      data: {
-        user: { id: user._id, name: user.name, email: user.email, role: user.role },
-        shop: { id: shop._id, slug: shop.slug, name: shop.name, planType: shop.planType, subscriptionStatus: shop.subscriptionStatus, trialEndsAt: shop.trialEndsAt },
-        token,
-      },
+      message: 'Compte cree — verifiez votre email pour confirmer votre inscription',
+      data: { email },
     });
   } catch (error) {
     console.error('Erreur inscription :', error);
@@ -93,44 +86,128 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-/**
- * POST /api/auth/login
- * Connexion marchand ou client
- */
+// ---------------------------------------------------------------------------
+// GET /api/auth/confirm-email?token=xxx
+// ---------------------------------------------------------------------------
+router.get('/confirm-email', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      res.status(400).json({ success: false, message: 'Token manquant' });
+      return;
+    }
+
+    const redis = getRedis();
+    const userId = await redis.get(`confirm:${String(token)}`);
+    if (!userId) {
+      res.status(400).json({ success: false, message: 'Lien invalide ou expire' });
+      return;
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { emailVerified: true },
+      { new: true }
+    );
+    if (!user) {
+      res.status(400).json({ success: false, message: 'Utilisateur introuvable' });
+      return;
+    }
+
+    await redis.del(`confirm:${String(token)}`);
+
+    // Envoie email de bienvenue
+    try {
+      const shop = user.shopId ? await Shop.findById(user.shopId) : null;
+      await sendWelcomeEmail(user.email, user.name, shop?.slug ?? '');
+    } catch (emailErr) {
+      console.error('Erreur envoi email bienvenue:', emailErr);
+    }
+
+    res.json({
+      success: true,
+      message: 'Email confirme — vous pouvez maintenant vous connecter',
+    });
+  } catch (error) {
+    console.error('Erreur confirm-email :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/auth/resend-confirmation — Renvoyer l'email de confirmation
+// ---------------------------------------------------------------------------
+router.post('/resend-confirmation', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ success: false, message: 'Email obligatoire' });
+      return;
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+emailVerified');
+    if (!user) {
+      res.json({ success: true, message: 'Si cet email existe, un nouveau lien a ete envoye' });
+      return;
+    }
+
+    if (user.emailVerified) {
+      res.status(400).json({ success: false, message: 'Email deja confirme' });
+      return;
+    }
+
+    const confirmToken = crypto.randomBytes(32).toString('hex');
+    const redis = getRedis();
+    await redis.setex(`confirm:${confirmToken}`, 24 * 60 * 60, String(user._id));
+
+    try {
+      await sendEmailConfirmation(user.email, user.name, confirmToken);
+    } catch (emailErr) {
+      console.error('Erreur renvoi email:', emailErr);
+    }
+
+    res.json({ success: true, message: 'Nouveau lien de confirmation envoye' });
+  } catch (error) {
+    console.error('Erreur resend-confirmation :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/auth/login
+// ---------------------------------------------------------------------------
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
     const parsed = LoginSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        errors: parsed.error.flatten().fieldErrors,
-      });
+      res.status(400).json({ success: false, errors: parsed.error.flatten().fieldErrors });
       return;
     }
 
     const { email, password } = parsed.data;
 
-    // Cherche l'utilisateur avec le mot de passe (select: false par defaut)
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ email }).select('+password +emailVerified');
     if (!user) {
-      res.status(401).json({
-        success: false,
-        message: 'Email ou mot de passe incorrect',
-      });
+      res.status(401).json({ success: false, message: 'Email ou mot de passe incorrect' });
       return;
     }
 
-    // Verifie le mot de passe
     const isValid = await user.comparePassword(password);
     if (!isValid) {
-      res.status(401).json({
+      res.status(401).json({ success: false, message: 'Email ou mot de passe incorrect' });
+      return;
+    }
+
+    // Verifie que l'email est confirme
+    if (!user.emailVerified) {
+      res.status(403).json({
         success: false,
-        message: 'Email ou mot de passe incorrect',
+        message: 'Veuillez confirmer votre email avant de vous connecter',
+        code: 'EMAIL_NOT_VERIFIED',
       });
       return;
     }
 
-    // Recupere la boutique si marchand
     let shop = null;
     if (user.role === 'merchant' && user.shopId) {
       shop = await Shop.findById(user.shopId).select(
@@ -138,7 +215,6 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       );
     }
 
-    // Genere les tokens
     const tokenPayload: IJwtPayload = {
       userId: String(user._id),
       role: user.role,
@@ -148,33 +224,24 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     const token = signToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
 
-    // Cookies httpOnly
     res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+      httpOnly: true, secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true, secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 jours
-    });
     if (user.role === 'client') {
       await rattacherCommandesInvite(String(user._id), user.email);
     }
+
     res.json({
       success: true,
       message: 'Connexion reussie',
       data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
+        user: { id: user._id, name: user.name, email: user.email, role: user.role },
         shop,
         token,
       },
@@ -185,10 +252,9 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-/**
- * POST /api/auth/refresh
- * Renouvelle l'access token via le refresh token
- */
+// ---------------------------------------------------------------------------
+// POST /api/auth/refresh
+// ---------------------------------------------------------------------------
 router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
   try {
     const refreshToken = req.cookies?.refreshToken;
@@ -198,7 +264,6 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
     }
 
     const payload = verifyRefreshToken(refreshToken);
-
     const user = await User.findById(payload.userId);
     if (!user) {
       res.status(401).json({ success: false, message: 'Utilisateur introuvable' });
@@ -212,10 +277,8 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
     });
 
     res.cookie('token', newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
+      httpOnly: true, secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({ success: true, token: newToken });
@@ -224,20 +287,18 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-/**
- * POST /api/auth/logout
- * Deconnexion — supprime les cookies
- */
+// ---------------------------------------------------------------------------
+// POST /api/auth/logout
+// ---------------------------------------------------------------------------
 router.post('/logout', (_req: Request, res: Response): void => {
   res.clearCookie('token');
   res.clearCookie('refreshToken');
   res.json({ success: true, message: 'Deconnecte avec succes' });
 });
 
-/**
- * GET /api/auth/me
- * Retourne l'utilisateur connecte
- */
+// ---------------------------------------------------------------------------
+// GET /api/auth/me
+// ---------------------------------------------------------------------------
 router.get('/me', async (req: Request, res: Response): Promise<void> => {
   try {
     const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
@@ -266,79 +327,47 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
-/**
- * POST /api/auth/register-client
- * Inscription client
- */
+// ---------------------------------------------------------------------------
+// POST /api/auth/register-client
+// ---------------------------------------------------------------------------
 router.post('/register-client', async (req: Request, res: Response): Promise<void> => {
   try {
     const parsed = RegisterClientSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({
-        success: false,
-        errors: parsed.error.flatten().fieldErrors,
-      });
+      res.status(400).json({ success: false, errors: parsed.error.flatten().fieldErrors });
       return;
     }
 
     const { name, email, phone, password } = parsed.data;
 
-    // Verifie si email deja utilise
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(409).json({
-        success: false,
-        message: 'Cet email est deja utilise',
-      });
+      res.status(409).json({ success: false, message: 'Cet email est deja utilise' });
       return;
     }
 
-    // Cree le client
+    // Client avec confirmation email
     const user = await User.create({
-      name,
-      email,
-      phone,
-      password,
+      name, email, phone, password,
       role: 'client',
-    });
-    await rattacherCommandesInvite(String(user._id), email);
-    // Genere le token
-    const token = signToken({
-      userId: String(user._id),
-      role: 'client',
+      emailVerified: false,
     });
 
-    const refreshToken = signRefreshToken({
-      userId: String(user._id),
-      role: 'client',
-    });
+    // Genere token confirmation
+    const confirmToken = crypto.randomBytes(32).toString('hex');
+    const redis = getRedis();
+    await redis.setex(`confirm:${confirmToken}`, 24 * 60 * 60, String(user._id));
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    try {
+      await sendEmailConfirmation(email, name, confirmToken);
+    } catch (emailErr) {
+      console.error('Erreur envoi email confirmation client:', emailErr);
+    }
 
     res.status(201).json({
       success: true,
-      message: 'Compte client cree avec succes',
-      data: {
-        user: {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        },
-        token,
-      },
+      message: 'Compte cree — verifiez votre email pour confirmer votre inscription',
+      data: { email },
     });
   } catch (error) {
     console.error('Erreur inscription client :', error);
@@ -346,10 +375,9 @@ router.post('/register-client', async (req: Request, res: Response): Promise<voi
   }
 });
 
-/**
- * POST /api/auth/forgot-password
- * Demande de reinitialisation — envoie un email avec le token
- */
+// ---------------------------------------------------------------------------
+// POST /api/auth/forgot-password
+// ---------------------------------------------------------------------------
 router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
@@ -359,97 +387,57 @@ router.post('/forgot-password', async (req: Request, res: Response): Promise<voi
     }
 
     const user = await User.findOne({ email: email.toLowerCase() });
-
-    // Reponse identique meme si l'email n'existe pas (securite)
     if (!user) {
-      res.json({
-        success: true,
-        message: 'Si cet email existe, vous recevrez un lien de reinitialisation',
-      });
+      res.json({ success: true, message: 'Si cet email existe, vous recevrez un lien de reinitialisation' });
       return;
     }
 
-    // Genere un token securise
     const resetToken = crypto.randomBytes(32).toString('hex');
-
-    // Stocke dans Redis — expire dans 1 heure
     const redis = getRedis();
-    await redis.setex(
-      `reset:${resetToken}`,
-      60 * 60, // 1 heure
-      String(user._id)
-    );
-
-    // Envoie l'email
+    await redis.setex(`reset:${resetToken}`, 60 * 60, String(user._id));
     await sendPasswordResetEmail(user.email, user.name, resetToken);
 
-    res.json({
-      success: true,
-      message: 'Si cet email existe, vous recevrez un lien de reinitialisation',
-    });
+    res.json({ success: true, message: 'Si cet email existe, vous recevrez un lien de reinitialisation' });
   } catch (error) {
     console.error('Erreur forgot-password :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
 
-/**
- * POST /api/auth/reset-password
- * Reinitialisation effective avec le token
- */
+// ---------------------------------------------------------------------------
+// POST /api/auth/reset-password
+// ---------------------------------------------------------------------------
 router.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
   try {
     const { token, password } = req.body;
 
     if (!token || !password) {
-      res.status(400).json({
-        success: false,
-        message: 'Token et nouveau mot de passe obligatoires',
-      });
+      res.status(400).json({ success: false, message: 'Token et mot de passe obligatoires' });
       return;
     }
-
     if (password.length < 6) {
-      res.status(400).json({
-        success: false,
-        message: 'Mot de passe trop court — minimum 6 caracteres',
-      });
+      res.status(400).json({ success: false, message: 'Mot de passe trop court — minimum 6 caracteres' });
       return;
     }
 
-    // Verifie le token dans Redis
     const redis = getRedis();
     const userId = await redis.get(`reset:${token}`);
-
     if (!userId) {
-      res.status(400).json({
-        success: false,
-        message: 'Token invalide ou expire',
-      });
+      res.status(400).json({ success: false, message: 'Token invalide ou expire' });
       return;
     }
 
-    // Recupere l'utilisateur
     const user = await User.findById(userId);
     if (!user) {
-      res.status(400).json({
-        success: false,
-        message: 'Utilisateur introuvable',
-      });
+      res.status(400).json({ success: false, message: 'Utilisateur introuvable' });
       return;
     }
 
-    // Met a jour le mot de passe (le pre-save hook le hashera)
     user.password = password;
     await user.save();
-
-    // Supprime le token Redis
     await redis.del(`reset:${token}`);
 
-    res.json({
-      success: true,
-      message: 'Mot de passe reinitialise avec succes',
-    });
+    res.json({ success: true, message: 'Mot de passe reinitialise avec succes' });
   } catch (error) {
     console.error('Erreur reset-password :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });

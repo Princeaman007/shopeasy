@@ -3,7 +3,13 @@ import { z } from 'zod';
 import { Order }   from '../models/Order';
 import { Product } from '../models/Product';
 import { Shop }    from '../models/Shop';
+import { User }    from '../models/User';
 import { authenticate, requireMerchant, optionalAuth } from '../middleware/auth';
+import {
+  sendOrderNotificationEmail,
+  sendOrderConfirmationEmail,
+  sendOrderStatusEmail,
+} from '../services/Email';
 
 const router = Router();
 
@@ -23,7 +29,6 @@ const itemSchema = z.object({
 const createOrderSchema = z.object({
   shopId:        z.string(),
   items:         z.array(itemSchema).min(1),
-  // Champs directs (depuis CommandeClient)
   nomClient:     z.string().min(2).optional(),
   telephone:     z.string().min(8).optional(),
   adresse:       z.string().optional(),
@@ -34,7 +39,6 @@ const createOrderSchema = z.object({
   total:         z.number().optional(),
   promoCode:     z.string().optional(),
   discount:      z.number().optional(),
-  // Champs imbriqués (ancien format)
   customer: z.object({
     name:    z.string().min(2).max(100),
     phone:   z.string().min(8).max(20),
@@ -83,7 +87,6 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       customer,
     } = parsed.data;
 
-    // Vérifie la boutique
     const shop = await Shop.findById(shopId);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
@@ -98,12 +101,10 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       return;
     }
 
-    // Construit les items de commande
     const orderItems = [];
     let subtotal = 0;
 
     for (const item of items) {
-      // Si le prix est déjà fourni par le frontend, on l'utilise
       if (item.price && item.name) {
         subtotal += item.price * item.quantity;
         orderItems.push({
@@ -115,33 +116,23 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
           variants:  item.variants ?? {},
           image:     item.image ?? '',
         });
-        // Décrémente le stock
         await Product.findByIdAndUpdate(item.productId, {
           $inc: { totalStock: -item.quantity },
         });
         continue;
       }
 
-      // Sinon on récupère depuis la DB
       const product = await Product.findOne({
-        _id:    item.productId,
-        shopId,
-        status: 'active',
+        _id: item.productId, shopId, status: 'active',
       });
 
       if (!product) {
-        res.status(400).json({
-          success: false,
-          message: `Produit introuvable : ${item.productId}`,
-        });
+        res.status(400).json({ success: false, message: `Produit introuvable : ${item.productId}` });
         return;
       }
 
       if (product.totalStock < item.quantity) {
-        res.status(400).json({
-          success: false,
-          message: `Stock insuffisant pour : ${product.name}`,
-        });
+        res.status(400).json({ success: false, message: `Stock insuffisant pour : ${product.name}` });
         return;
       }
 
@@ -161,16 +152,13 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       await product.save();
     }
 
-    // Code promo
     let discount      = discountFront ?? 0;
     let promoApplique = '';
 
     if (promoCode && shop.planType === 'premium' && !discount) {
       const { PromoCode } = await import('../models/PromoCode');
       const promo = await PromoCode.findOne({
-        shopId,
-        code:     promoCode.toUpperCase(),
-        isActive: true,
+        shopId, code: promoCode.toUpperCase(), isActive: true,
       });
 
       if (promo) {
@@ -189,14 +177,12 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       }
     }
 
-    const total       = Math.max(0, (totalFront ?? subtotal) - discount);
-    const orderNumber = await genererNumeroCommande();
-
-    // Normalise les infos client (supporte les deux formats)
-    const clientNom  = nomClient  ?? customer?.name    ?? '';
-    const clientTel  = telephone  ?? customer?.phone   ?? '';
-    const clientAdr  = adresse    ?? customer?.address ?? '';
-    const clientVille = ville     ?? customer?.city    ?? '';
+    const total        = Math.max(0, (totalFront ?? subtotal) - discount);
+    const orderNumber  = await genererNumeroCommande();
+    const clientNom    = nomClient ?? customer?.name    ?? '';
+    const clientTel    = telephone ?? customer?.phone   ?? '';
+    const clientAdr    = adresse   ?? customer?.address ?? '';
+    const clientVille  = ville     ?? customer?.city    ?? '';
 
     const order = await Order.create({
       shopId,
@@ -213,7 +199,6 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       ville:         clientVille,
       modeLivraison: modeLivraison ?? 'livraison',
       notes:         notes ?? '',
-      // Compat ancien format
       customer: {
         name:    clientNom,
         phone:   clientTel,
@@ -222,14 +207,47 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
         isGuest: !req.user,
       },
       status: 'new',
-      statusHistory: [{
-        status: 'new',
-        date:   new Date(),
-        note:   'Commande passée',
-      }],
+      statusHistory: [{ status: 'new', date: new Date(), note: 'Commande passée' }],
       smsSent:     false,
       waNotifSent: false,
     });
+
+    // Email au marchand
+    try {
+      const merchant = await User.findOne({ _id: shop.ownerId }).select('email name');
+      if (merchant?.email) {
+        await sendOrderNotificationEmail(merchant.email, merchant.name, {
+          orderNumber:   order.orderNumber,
+          customerName:  clientNom,
+          customerPhone: clientTel,
+          total:         order.total,
+          items:         orderItems.map(i => ({
+            name: i.name, quantity: i.quantity, price: i.price,
+          })),
+        });
+      }
+    } catch (emailErr) {
+      console.error('Erreur email marchand:', emailErr);
+    }
+
+    // Email au client si email fourni
+    try {
+      const customerEmail = customer?.email;
+      if (customerEmail) {
+        await sendOrderConfirmationEmail(customerEmail, clientNom, {
+          orderNumber: order.orderNumber,
+          shopName:    shop.name,
+          total:       order.total,
+          items:       orderItems.map(i => ({
+            name: i.name, quantity: i.quantity, price: i.price,
+          })),
+          address: clientAdr,
+          city:    clientVille,
+        });
+      }
+    } catch (emailErr) {
+      console.error('Erreur email client:', emailErr);
+    }
 
     res.status(201).json({
       success: true,
@@ -241,24 +259,23 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
-/**
- * GET /api/orders/mes-commandes
- * Commandes du client connecté, triées par date décroissante
- */
+
+// ---------------------------------------------------------------------------
+// GET /orders/mes-commandes
+// ---------------------------------------------------------------------------
 router.get('/mes-commandes', authenticate, async (req, res) => {
   try {
     const commandes = await Order.find({ customerId: req.user!.userId })
       .sort({ createdAt: -1 })
       .lean();
-
     res.json({ orders: commandes });
   } catch {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
 // ---------------------------------------------------------------------------
 // GET /orders/shop/me — Commandes du marchand
-// ⚠️ DOIT être avant /:id
 // ---------------------------------------------------------------------------
 router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
@@ -269,7 +286,6 @@ router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: 
     }
 
     const { page = '1', limit = '20', status } = req.query;
-
     const filter: Record<string, any> = { shopId: shop._id };
     if (status) filter.status = status;
 
@@ -299,7 +315,7 @@ router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: 
 });
 
 // ---------------------------------------------------------------------------
-// GET /orders/shop/me/stats — Stats commandes du marchand
+// GET /orders/shop/me/stats
 // ---------------------------------------------------------------------------
 router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
@@ -310,7 +326,6 @@ router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request,
     }
 
     const shopId = shop._id;
-
     const [total, nouvelles, confirmées, enLivraison, livrées, annulées] =
       await Promise.all([
         Order.countDocuments({ shopId }),
@@ -328,15 +343,7 @@ router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request,
 
     res.json({
       success: true,
-      data: {
-        total,
-        nouvelles,
-        confirmées,
-        enLivraison,
-        livrées,
-        annulées,
-        chiffreAffaires: ca[0]?.total ?? 0,
-      },
+      data: { total, nouvelles, confirmées, enLivraison, livrées, annulées, chiffreAffaires: ca[0]?.total ?? 0 },
     });
   } catch (error) {
     console.error('Erreur GET /orders/shop/me/stats :', error);
@@ -345,15 +352,13 @@ router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request,
 });
 
 // ---------------------------------------------------------------------------
-// GET /orders/client/me — Commandes du client connecté
-// ⚠️ DOIT être avant /:id
+// GET /orders/client/me
 // ---------------------------------------------------------------------------
 router.get('/client/me', authenticate, async (req: Request, res: Response) => {
   try {
     const orders = await Order.find({ customerId: req.user!.userId })
       .sort({ createdAt: -1 })
       .lean();
-
     res.json({ success: true, data: orders });
   } catch (error) {
     console.error('Erreur GET /orders/client/me :', error);
@@ -362,7 +367,7 @@ router.get('/client/me', authenticate, async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /orders/:id — Détail d'une commande
+// GET /orders/:id
 // ---------------------------------------------------------------------------
 router.get('/:id', async (req: Request, res: Response) => {
   try {
@@ -426,6 +431,22 @@ router.patch('/:id/status', authenticate, requireMerchant, async (req: Request, 
     order.status = status;
     order.statusHistory.push({ status, date: new Date(), note: note ?? '' });
     await order.save();
+
+    // Email au client si email fourni
+    try {
+      const customerEmail = order.customer?.email;
+      const customerName  = order.nomClient ?? order.customer?.name ?? '';
+      if (customerEmail) {
+        await sendOrderStatusEmail(customerEmail, customerName, {
+          orderNumber: order.orderNumber,
+          shopName:    shop.name,
+          status,
+          total:       order.total,
+        });
+      }
+    } catch (emailErr) {
+      console.error('Erreur email statut:', emailErr);
+    }
 
     res.json({ success: true, data: order, message: `Commande ${status}` });
   } catch (error) {
