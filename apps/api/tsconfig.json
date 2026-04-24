@@ -5,18 +5,16 @@
     "moduleResolution": "node",
     "lib": ["ES2020"],
     "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
+    "strict": false,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true,
+    "declaration": false,
     "sourceMap": true,
     "paths": {
       "@shopeasy/types": ["../../packages/types/src/index.ts"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../../packages/types/src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

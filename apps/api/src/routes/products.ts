@@ -43,8 +43,8 @@ const productSchema = z.object({
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-const calculerStockTotal = (stock: { quantity: number }[]): number =>
-  stock.reduce((sum, s) => sum + s.quantity, 0);
+const calculerStockTotal = (stock: { quantity?: number }[]): number =>
+  stock.reduce((sum, s) => sum + (s.quantity ?? 0), 0);
 
 const verifierLimitesPlan = (
   planType: 'basic' | 'premium',

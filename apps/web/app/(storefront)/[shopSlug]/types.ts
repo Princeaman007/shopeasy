@@ -1,9 +1,9 @@
-
 export interface ShopPublic {
   _id:            string;
   slug:           string;
   name:           string;
   logo?:          string;
+  heroImage?:     string;
   whatsapp:       string;
   planType:       'basic' | 'premium';
   selectedTheme:  string;
@@ -14,6 +14,7 @@ export interface ShopPublic {
     ownerPhoto:   string;
     location:     string;
     workingHours: string;
+    returnPolicy: string;
   };
 }
 
@@ -25,12 +26,12 @@ export type ThemeId =
   | 'stories-style';
 
 export interface ThemeConfig {
-  bg:       string;
-  surface:  string;
-  elevated: string;
-  border:   string;
-  text:     string;
-  muted:    string;
-  accent:   string;
+  bg:          string;
+  surface:     string;
+  elevated:    string;
+  border:      string;
+  text:        string;
+  muted:       string;
+  accent:      string;
   accentHover: string;
 }

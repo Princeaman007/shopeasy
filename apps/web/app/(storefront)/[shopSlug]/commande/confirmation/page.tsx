@@ -1,6 +1,6 @@
 import { notFound }       from 'next/navigation';
 import ThemeProvider      from '../../ThemeProvider';
-import ConfirmationClient from './ConfirmationClient.tsx';
+import ConfirmationClient from './ConfirmationClient';
 
 const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 

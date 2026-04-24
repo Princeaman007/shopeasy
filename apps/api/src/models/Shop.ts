@@ -22,6 +22,7 @@ export interface IShop extends Document {
   planType: 'basic' | 'premium';
   selectedTheme: string;
   logo?: string;
+  heroImage?: string;
   whatsapp: string;
   whatsappOrderNotif: boolean;
   isVerified: boolean;
@@ -80,6 +81,7 @@ const ShopSchema = new Schema<IShop>(
       type: String,
       default: null,
     },
+    heroImage: { type: String, default: null },
     whatsapp: {
       type: String,
       required: [true, 'Numéro WhatsApp obligatoire'],

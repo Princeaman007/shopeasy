@@ -45,6 +45,12 @@ export interface IOrder extends Document {
   discount: number;
   subtotal: number;
   total: number;
+  nomClient?: string;
+  telephone?: string;
+  adresse?: string;
+  ville?: string;
+  modeLivraison?: string;
+  notes?: string;
   customer: IOrderCustomer;
   status: 'new' | 'confirmed' | 'shipping' | 'delivered' | 'cancelled';
   statusHistory: IStatusHistory[];
@@ -61,22 +67,22 @@ const OrderItemSchema = new Schema<IOrderItem>(
       ref: 'Product',
       required: true,
     },
-    name:     { type: String, required: true },
-    price:    { type: Number, required: true, min: 0 },
+    name: { type: String, required: true },
+    price: { type: Number, required: true, min: 0 },
     quantity: { type: Number, required: true, min: 1 },
-    variant:  { type: String, default: null },
-    image:    { type: String, default: null },
+    variant: { type: String, default: null },
+    image: { type: String, default: null },
   },
   { _id: false }
 );
 
 const OrderCustomerSchema = new Schema<IOrderCustomer>(
   {
-    name:    { type: String, required: true, trim: true },
-    phone:   { type: String, required: true, trim: true },
-    email:   { type: String, required: false, default: '', lowercase: true, trim: true },
+    name: { type: String, required: true, trim: true },
+    phone: { type: String, required: true, trim: true },
+    email: { type: String, required: false, default: '', lowercase: true, trim: true },
     address: { type: String, required: true, trim: true },
-    city:    { type: String, required: true, trim: true },
+    city: { type: String, required: true, trim: true },
     isGuest: { type: Boolean, default: true },
   },
   { _id: false }
@@ -85,8 +91,8 @@ const OrderCustomerSchema = new Schema<IOrderCustomer>(
 const StatusHistorySchema = new Schema<IStatusHistory>(
   {
     status: { type: String, required: true },
-    date:   { type: Date, default: () => new Date() },
-    note:   { type: String, default: null },
+    date: { type: Date, default: () => new Date() },
+    note: { type: String, default: null },
   },
   { _id: false }
 );
@@ -135,6 +141,12 @@ const OrderSchema = new Schema<IOrder>(
       required: true,
       min: 0,
     },
+    nomClient: { type: String, default: '' },
+    telephone: { type: String, default: '' },
+    adresse: { type: String, default: '' },
+    ville: { type: String, default: '' },
+    modeLivraison: { type: String, default: 'livraison' },
+    notes: { type: String, default: '' },
     customer: {
       type: OrderCustomerSchema,
       required: true,
