@@ -1,0 +1,86 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.koffiLimiter = exports.orderLimiter = exports.uploadLimiter = exports.authLimiter = exports.generalLimiter = void 0;
+const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
+/**
+ * Rate limiter general
+ * 100 requetes par 15 minutes par IP
+ */
+exports.generalLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    message: {
+        success: false,
+        message: 'Trop de requetes — reessayez dans 15 minutes',
+        code: 'RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+/**
+ * Rate limiter strict pour l'auth
+ * 10 tentatives par heure par IP
+ * Protege contre le brute force
+ */
+exports.authLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 60 * 60 * 1000, // 1 heure
+    max: 10,
+    message: {
+        success: false,
+        message: 'Trop de tentatives de connexion — reessayez dans 1 heure',
+        code: 'AUTH_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Uniquement sur les echecs (status >= 400)
+    skipSuccessfulRequests: true,
+});
+/**
+ * Rate limiter pour l'upload
+ * 20 uploads par heure par IP
+ */
+exports.uploadLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 60 * 60 * 1000, // 1 heure
+    max: 20,
+    message: {
+        success: false,
+        message: 'Trop d uploads — reessayez dans 1 heure',
+        code: 'UPLOAD_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+/**
+ * Rate limiter pour les commandes
+ * 30 commandes par heure par IP
+ */
+exports.orderLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 60 * 60 * 1000, // 1 heure
+    max: 30,
+    message: {
+        success: false,
+        message: 'Trop de commandes — reessayez dans 1 heure',
+        code: 'ORDER_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+/**
+ * Rate limiter pour l'agent Koffi
+ * 20 messages par heure par IP
+ */
+exports.koffiLimiter = (0, express_rate_limit_1.default)({
+    windowMs: 60 * 60 * 1000, // 1 heure
+    max: 20,
+    message: {
+        success: false,
+        message: 'Trop de messages a Koffi — reessayez dans 1 heure',
+        code: 'KOFFI_RATE_LIMIT_EXCEEDED',
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+//# sourceMappingURL=rateLimit.js.map
