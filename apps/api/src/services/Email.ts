@@ -326,3 +326,96 @@ export const sendLeadNotificationEmail = async (lead: {
     html:    baseTemplate(contenu),
   });
 };
+
+/**
+ * Email de confirmation d'inscription
+ */
+export const sendEmailConfirmation = async (
+  email: string,
+  name: string,
+  token: string
+): Promise<void> => {
+  const confirmUrl = `${env.FRONTEND_URL}/confirmer-email?token=${token}`;
+
+  const contenu = `
+    <h2>Confirmez votre adresse email 📧</h2>
+    <p>Bonjour <strong>${name}</strong>,</p>
+    <p>Merci de vous être inscrit sur ShopEasy CI ! Pour activer votre compte, cliquez sur le bouton ci-dessous :</p>
+    <a href="${confirmUrl}" class="btn">Confirmer mon email →</a>
+    <p style="color:#888;font-size:13px;">
+      Ce lien expire dans <strong>24 heures</strong>.<br/>
+      Si vous n'avez pas créé de compte, ignorez cet email.
+    </p>
+  `;
+
+  await transporter.sendMail({
+    from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
+    to:      email,
+    subject: '📧 Confirmez votre adresse email — ShopEasy CI',
+    html:    baseTemplate(contenu),
+  });
+};
+
+/**
+ * Email de changement de statut commande — pour le client
+ */
+export const sendOrderStatusEmail = async (
+  email: string,
+  customerName: string,
+  order: {
+    orderNumber: string;
+    shopName:    string;
+    status:      string;
+    total:       number;
+  }
+): Promise<void> => {
+  const statuts: Record<string, { label: string; emoji: string; message: string }> = {
+    confirmed: {
+      label:   'Confirmée',
+      emoji:   '✅',
+      message: 'Votre commande a été confirmée par le marchand. Elle sera bientôt en préparation.',
+    },
+    shipping: {
+      label:   'En livraison',
+      emoji:   '🚚',
+      message: 'Votre commande est en route ! Le livreur vous contactera pour la livraison.',
+    },
+    delivered: {
+      label:   'Livrée',
+      emoji:   '🎉',
+      message: 'Votre commande a été livrée. Merci pour votre confiance !',
+    },
+    cancelled: {
+      label:   'Annulée',
+      emoji:   '❌',
+      message: 'Votre commande a été annulée. Contactez la boutique pour plus d\'informations.',
+    },
+  };
+
+  const statut = statuts[order.status] ?? {
+    label:   order.status,
+    emoji:   '📦',
+    message: 'Le statut de votre commande a été mis à jour.',
+  };
+
+  const contenu = `
+    <h2>${statut.emoji} Commande ${statut.label}</h2>
+    <p>Bonjour <strong>${customerName}</strong>,</p>
+    <p>${statut.message}</p>
+    <div style="background:#f0fdf4;padding:16px;border-radius:8px;margin:16px 0;">
+      <p style="margin:0;"><strong>Commande :</strong> <span style="color:#06C167;font-weight:bold;">${order.orderNumber}</span></p>
+      <p style="margin:8px 0 0;"><strong>Boutique :</strong> ${order.shopName}</p>
+      <p style="margin:8px 0 0;"><strong>Total :</strong> ${order.total.toLocaleString('fr-FR')} FCFA</p>
+    </div>
+    <p style="color:#888;font-size:13px;">
+      Pour toute question, contactez directement la boutique ${order.shopName}.
+    </p>
+  `;
+
+  await transporter.sendMail({
+    from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
+    to:      email,
+    subject: `${statut.emoji} Commande ${order.orderNumber} — ${statut.label}`,
+    html:    baseTemplate(contenu),
+  });
+};

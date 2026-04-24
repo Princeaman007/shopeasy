@@ -23,6 +23,7 @@ export interface IUser extends Document {
   savedAddresses: ISavedAddress[];
   favorites: mongoose.Types.ObjectId[];
   shopId?: mongoose.Types.ObjectId;
+  emailVerified: boolean;
   createdAt: Date;
   // Méthode utilitaire
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -83,6 +84,10 @@ const UserSchema = new Schema<IUser>(
       ref: 'Shop',
       default: null,
     },
+    emailVerified: {
+  type:    Boolean,
+  default: false,
+},
   },
   {
     timestamps: true, // createdAt + updatedAt automatiques

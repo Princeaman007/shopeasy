@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import { getRedis } from '../config/redis';
 import { sendPasswordResetEmail } from '../services/Email';
 import { rattacherCommandesInvite } from '../services/OrderAttachment';
+import { sendWelcomeEmail, sendEmailConfirmation } from '../services/Email';
 
 const router = Router();
 
