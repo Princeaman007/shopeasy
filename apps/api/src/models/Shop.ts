@@ -9,6 +9,7 @@ export interface IAbout {
   ownerPhoto?: string;
   location: string;
   workingHours: string;
+  returnPolicy: string;
 }
 
 /**
@@ -41,6 +42,7 @@ const AboutSchema = new Schema<IAbout>(
     ownerPhoto:   { type: String, default: null },
     location:     { type: String, default: '' },
     workingHours: { type: String, default: '' },
+    returnPolicy: { type: String, default: '' },
   },
   { _id: false } // pas besoin d'_id sur ce sous-document
 );
@@ -103,6 +105,7 @@ const ShopSchema = new Schema<IShop>(
         ownerPhoto: null,
         location: '',
         workingHours: '',
+        returnPolicy: '',
       }),
     },
     admins: [
