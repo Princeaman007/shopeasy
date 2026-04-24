@@ -1,6 +1,6 @@
 import Link  from 'next/link';
 import Image from 'next/image';
-import { ShoppingBag, BadgeCheck, MapPin } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 interface Boutique {
   _id:           string;
@@ -45,41 +45,21 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
       className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1">
 
       {/* Hero */}
-      <div className="relative h-40 overflow-hidden">
+      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/5' }}>
         {boutique.heroImage ? (
-          <Image src={boutique.heroImage} alt={boutique.name} fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500" />
+          <Image
+            src={boutique.heroImage}
+            alt={boutique.name}
+            fill
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+            sizes="100vw"
+          />
         ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-elevated" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-elevated" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-
-        {boutique.isVerified && (
-          <div className="absolute top-3 right-3 bg-primary rounded-lg px-2 py-1 flex items-center gap-1">
-            <BadgeCheck size={12} className="text-black" />
-            <span className="text-black text-xs font-bold">Verifie</span>
-          </div>
-        )}
-
-        <div className="absolute bottom-3 left-3 flex items-center gap-2">
-          {boutique.logo ? (
-            <Image src={boutique.logo} alt={boutique.name} width={36} height={36}
-              className="rounded-xl object-cover border-2 border-white/20 shadow-lg" />
-          ) : (
-            <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shadow-lg border-2 border-white/20">
-              <span className="text-black font-bold text-base">
-                {boutique.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-          )}
-          <div>
-            <p className="text-white font-bold text-sm drop-shadow-lg">{boutique.name}</p>
-            {boutique.about?.location && (
-              <p className="text-white/70 text-xs flex items-center gap-1">
-                <MapPin size={9} /> {boutique.about.location}
-              </p>
-            )}
-          </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        <div className="absolute bottom-3 left-3">
+          <p className="text-white font-bold text-sm drop-shadow-lg">{boutique.name}</p>
         </div>
       </div>
 

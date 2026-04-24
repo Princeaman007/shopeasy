@@ -139,7 +139,7 @@ export default function BoutiquesPage() {
                   className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1">
 
                   {/* Hero */}
-                  <div className="relative h-44 overflow-hidden">
+                  <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/7' }}>
                     {boutique.heroImage ? (
                       <Image src={boutique.heroImage} alt={boutique.name} fill
                         className="object-cover group-hover:scale-105 transition-transform duration-500" />
