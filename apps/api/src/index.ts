@@ -19,6 +19,7 @@ import leadRoutes from './routes/leads';
 import adminRoutes from './routes/admin';
 import uploadRoutes from './routes/uploads';
 import usersRouter from './routes/users';
+import reviewsRouter from './routes/reviews';
 const app = express();
 
 app.use(express.json());
@@ -49,6 +50,7 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/users', usersRouter);
+app.use('/api/reviews', reviewsRouter);
 
 // Route de santé
 app.get('/health', (_req, res) => {

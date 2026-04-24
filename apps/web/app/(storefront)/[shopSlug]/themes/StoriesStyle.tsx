@@ -12,6 +12,8 @@ import type { ShopPublic } from '../types';
 import BoutonPanier from '@/components/storefront/BoutonPanier';
 import HeroBoutique from '@/components/storefront/HeroBoutique';
 import BoutonFavori from '@/components/storefront/BoutonFavori';
+import FormulaireAvis from '@/components/storefront/FormulaireAvis';
+import ListeAvis from '@/components/storefront/ListeAvis';
 
 interface Props { shop: ShopPublic; produits: any[]; }
 
@@ -21,6 +23,8 @@ const formatFcfa = (n: number) =>
 export default function StoriesStyle({ shop, produits }: Props) {
   const t = getThemeConfig('stories-style');
   const [menuOuvert, setMenuOuvert] = useState(false);
+  const [refreshAvis, setRefreshAvis] = useState(0);
+
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
@@ -230,6 +234,41 @@ export default function StoriesStyle({ shop, produits }: Props) {
         )}
       </div>
 
+
+      {/* ── AVIS BOUTIQUE ── */}
+      <div style={{ borderTop: `1px solid ${t.border}` }}>
+        <div className="max-w-6xl mx-auto px-4 py-14 space-y-8">
+          <h2 className="text-2xl font-bold" style={{ color: t.text }}>
+            Avis sur {shop.name}
+          </h2>
+          <div className="grid md:grid-cols-2 gap-8">
+            <ListeAvis
+              shopSlug={shop.slug}
+              type="boutique"
+              accent={t.accent}
+              surface={t.surface}
+              border={t.border}
+              text={t.text}
+              muted={t.muted}
+              refresh={refreshAvis}
+            />
+            <div className="p-5 rounded-2xl border"
+              style={{ backgroundColor: t.surface, borderColor: t.border }}>
+              <FormulaireAvis
+                shopSlug={shop.slug}
+                type="boutique"
+                accent={t.accent}
+                bg={t.bg}
+                surface={t.surface}
+                border={t.border}
+                text={t.text}
+                muted={t.muted}
+                onSuccess={() => setRefreshAvis(r => r + 1)}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
       {shop.about?.description && (
         <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}>
           <div className="max-w-6xl mx-auto px-4 py-14 space-y-6">
