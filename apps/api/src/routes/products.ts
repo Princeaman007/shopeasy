@@ -16,6 +16,7 @@ const variantSchema = z.object({
   type:    z.string(),
   label:   z.string(),
   options: z.array(z.string()),
+  images:  z.record(z.array(z.string())).optional(),
 });
 
 const stockSchema = z.object({

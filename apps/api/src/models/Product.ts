@@ -5,9 +5,10 @@ import mongoose, { Document, Schema } from 'mongoose';
  * ex: { type: "Taille", label: "Taille", options: ["S", "M", "L", "XL"] }
  */
 export interface IVariantType {
-  type: string;
-  label: string;
+  type:    string;
+  label:   string;
   options: string[];
+  images:  Record<string, string[]>;
 }
 
 /**
@@ -48,6 +49,7 @@ const VariantTypeSchema = new Schema<IVariantType>(
     type:    { type: String, required: true, trim: true },
     label:   { type: String, required: true, trim: true },
     options: [{ type: String, trim: true }],
+    images:  { type: Map, of: [String], default: {} },
   },
   { _id: false }
 );
