@@ -1,19 +1,20 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import Image                 from 'next/image';
-import Link                  from 'next/link';
+import Image from 'next/image';
+import Link from 'next/link';
 import {
   Search, X, SlidersHorizontal, ChevronLeft,
   ShoppingCart, ChevronRight, Grid3X3, List,
 } from 'lucide-react';
-import { getThemeConfig }    from '../theme.config';
-import type { ShopPublic }   from '../types';
+import { getThemeConfig } from '../theme.config';
+import type { ShopPublic } from '../types';
+import BoutonFavori from '@/components/storefront/BoutonFavori';
 
 interface Props {
-  shop:       ShopPublic;
+  shop: ShopPublic;
   categories: any[];
-  produits:   any[];
+  produits: any[];
 }
 
 const formatFcfa = (n: number) =>
@@ -24,12 +25,12 @@ const PAR_PAGE = 12;
 export default function CatalogueClient({ shop, categories, produits }: Props) {
   const t = getThemeConfig(shop.selectedTheme);
 
-  const [recherche,      setRecherche]      = useState('');
-  const [categorie,      setCategorie]      = useState('');
-  const [tri,            setTri]            = useState<'recent' | 'prix-asc' | 'prix-desc' | 'nom'>('recent');
-  const [filtrePrix,     setFiltrePrix]     = useState<[number, number]>([0, 500000]);
-  const [grille,         setGrille]         = useState<'grid' | 'list'>('grid');
-  const [page,           setPage]           = useState(1);
+  const [recherche, setRecherche] = useState('');
+  const [categorie, setCategorie] = useState('');
+  const [tri, setTri] = useState<'recent' | 'prix-asc' | 'prix-desc' | 'nom'>('recent');
+  const [filtrePrix, setFiltrePrix] = useState<[number, number]>([0, 500000]);
+  const [grille, setGrille] = useState<'grid' | 'list'>('grid');
+  const [page, setPage] = useState(1);
   const [filtresOuverts, setFiltresOuverts] = useState(false);
 
   const prixMax = useMemo(
@@ -46,15 +47,15 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
     if (categorie) liste = liste.filter(p => p.categoryId === categorie);
     liste = liste.filter(p => p.price >= filtrePrix[0] && p.price <= filtrePrix[1]);
     switch (tri) {
-      case 'prix-asc':  liste.sort((a, b) => a.price - b.price); break;
+      case 'prix-asc': liste.sort((a, b) => a.price - b.price); break;
       case 'prix-desc': liste.sort((a, b) => b.price - a.price); break;
-      case 'nom':       liste.sort((a, b) => a.name.localeCompare(b.name)); break;
+      case 'nom': liste.sort((a, b) => a.name.localeCompare(b.name)); break;
       default: liste.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     return liste;
   }, [produits, recherche, categorie, filtrePrix, tri]);
 
-  const totalPages    = Math.ceil(produitsFiltres.length / PAR_PAGE);
+  const totalPages = Math.ceil(produitsFiltres.length / PAR_PAGE);
   const produitsPaged = produitsFiltres.slice((page - 1) * PAR_PAGE, page * PAR_PAGE);
 
   const changerPage = (n: number) => { setPage(n); window.scrollTo({ top: 0, behavior: 'smooth' }); };
@@ -74,7 +75,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         <h3 className="font-semibold text-sm" style={{ color: t.text }}>Filtres</h3>
         {filtresActifs && (
           <button onClick={reinitialiserFiltres} className="text-xs hover:underline"
-                  style={{ color: t.accent }}>
+            style={{ color: t.accent }}>
             Reinitialiser
           </button>
         )}
@@ -90,8 +91,8 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors"
               style={{
                 backgroundColor: !categorie ? `${t.accent}20` : 'transparent',
-                color:           !categorie ? t.accent : t.muted,
-                fontWeight:      !categorie ? 600 : 400,
+                color: !categorie ? t.accent : t.muted,
+                fontWeight: !categorie ? 600 : 400,
               }}>
               Tous ({produits.length})
             </button>
@@ -103,8 +104,8 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                   className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between"
                   style={{
                     backgroundColor: categorie === cat._id ? `${t.accent}20` : 'transparent',
-                    color:           categorie === cat._id ? t.accent : t.muted,
-                    fontWeight:      categorie === cat._id ? 600 : 400,
+                    color: categorie === cat._id ? t.accent : t.muted,
+                    fontWeight: categorie === cat._id ? 600 : 400,
                   }}>
                   <span>{cat.icon} {cat.name}</span>
                   <span className="text-xs">{count}</span>
@@ -137,13 +138,13 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
       {filtresOuverts && (
         <>
           <div className="fixed inset-0 z-50 bg-black/60 lg:hidden"
-               onClick={() => setFiltresOuverts(false)} />
+            onClick={() => setFiltresOuverts(false)} />
           <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden rounded-t-3xl p-6 max-h-[80vh] overflow-y-auto"
-               style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+            style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-bold text-lg" style={{ color: t.text }}>Filtres</h2>
               <button onClick={() => setFiltresOuverts(false)}
-                      className="p-2 rounded-xl" style={{ backgroundColor: t.elevated }}>
+                className="p-2 rounded-xl" style={{ backgroundColor: t.elevated }}>
                 <X size={18} style={{ color: t.text }} />
               </button>
             </div>
@@ -154,7 +155,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
 
       {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
-           className="sticky top-0 z-40">
+        className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
           <Link href={`/${shop.slug}`}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70 flex-shrink-0"
@@ -163,7 +164,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
             <span className="hidden sm:inline">{shop.name}</span>
           </Link>
           <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border"
-               style={{ backgroundColor: t.elevated, borderColor: t.border }}>
+            style={{ backgroundColor: t.elevated, borderColor: t.border }}>
             <Search size={15} style={{ color: t.muted }} />
             <input value={recherche}
               onChange={e => { setRecherche(e.target.value); setPage(1); }}
@@ -177,7 +178,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
             )}
           </div>
           <Link href={`/${shop.slug}/panier`} className="p-2 rounded-xl flex-shrink-0"
-                style={{ backgroundColor: t.elevated }}>
+            style={{ backgroundColor: t.elevated }}>
             <ShoppingCart size={20} style={{ color: t.text }} />
           </Link>
         </div>
@@ -201,8 +202,8 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors lg:hidden"
               style={{
                 backgroundColor: filtresActifs ? `${t.accent}15` : t.surface,
-                borderColor:     filtresActifs ? t.accent : t.border,
-                color:           filtresActifs ? t.accent : t.text,
+                borderColor: filtresActifs ? t.accent : t.border,
+                color: filtresActifs ? t.accent : t.text,
               }}>
               <SlidersHorizontal size={15} />
               Filtres
@@ -236,7 +237,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
           {/* ── SIDEBAR FILTRES DESKTOP ── */}
           <aside className="hidden lg:block flex-shrink-0 w-56">
             <div className="rounded-2xl border p-5 sticky top-20"
-                 style={{ backgroundColor: t.surface, borderColor: t.border }}>
+              style={{ backgroundColor: t.surface, borderColor: t.border }}>
               <ContenuFiltres />
             </div>
           </aside>
@@ -247,7 +248,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               <div className="flex flex-col items-center justify-center py-20 space-y-3">
                 <p className="font-semibold" style={{ color: t.text }}>Aucun produit trouve</p>
                 <button onClick={reinitialiserFiltres} className="text-sm hover:underline"
-                        style={{ color: t.accent }}>
+                  style={{ color: t.accent }}>
                   Reinitialiser les filtres
                 </button>
               </div>
@@ -258,23 +259,37 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                     className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
                     style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                     <div className="aspect-square relative overflow-hidden"
-                         style={{ backgroundColor: t.elevated }}>
+                      style={{ backgroundColor: t.elevated }}>
                       {produit.images?.[0]
                         ? <Image src={produit.images[0]} alt={produit.name} fill
-                            className="object-cover group-hover:scale-105 transition-transform" />
+                          className="object-cover group-hover:scale-105 transition-transform" />
                         : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
                       }
                       {produit.comparePrice > produit.price && (
                         <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
-                             style={{ backgroundColor: t.accent }}>
+                          style={{ backgroundColor: t.accent }}>
                           -{Math.round((1 - produit.price / produit.comparePrice) * 100)}%
                         </div>
                       )}
+
+                      {/* Bouton favori */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <BoutonFavori
+                          shopSlug={shop.slug}
+                          produitId={produit._id}
+                          nom={produit.name}
+                          prix={produit.price}
+                          image={produit.images?.[0] ?? null}
+                          accent={t.accent}
+                          className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
+                        />
+                      </div>
+
                       {produit.totalStock === 0 && (
                         <div className="absolute inset-0 flex items-center justify-center"
-                             style={{ backgroundColor: `${t.bg}bb` }}>
+                          style={{ backgroundColor: `${t.bg}bb` }}>
                           <span className="text-xs font-semibold px-2 py-1 rounded-full"
-                                style={{ backgroundColor: t.elevated, color: t.muted }}>
+                            style={{ backgroundColor: t.elevated, color: t.muted }}>
                             Rupture
                           </span>
                         </div>
@@ -305,7 +320,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                     className="flex gap-4 p-4 rounded-2xl border transition-all hover:shadow-md"
                     style={{ backgroundColor: t.surface, borderColor: t.border }}>
                     <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 relative"
-                         style={{ backgroundColor: t.elevated }}>
+                      style={{ backgroundColor: t.elevated }}>
                       {produit.images?.[0]
                         ? <Image src={produit.images[0]} alt={produit.name} fill className="object-cover" />
                         : <div className="w-full h-full flex items-center justify-center text-2xl">...</div>
@@ -340,18 +355,18 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                 {Array.from({ length: totalPages }, (_, i) => i + 1)
                   .filter(n => n === 1 || n === totalPages || Math.abs(n - page) <= 1)
                   .reduce((acc: (number | '...')[], n, i, arr) => {
-                    if (i > 0 && n - (arr[i-1] as number) > 1) acc.push('...');
+                    if (i > 0 && n - (arr[i - 1] as number) > 1) acc.push('...');
                     acc.push(n); return acc;
                   }, [])
                   .map((n, i) => n === '...'
                     ? <span key={`dot-${i}`} style={{ color: t.muted }}>...</span>
                     : <button key={n} onClick={() => changerPage(n as number)}
-                        className="w-9 h-9 rounded-xl border text-sm font-semibold transition-colors"
-                        style={{
-                          backgroundColor: page === n ? t.accent : t.surface,
-                          borderColor:     page === n ? t.accent : t.border,
-                          color:           page === n ? '#fff'   : t.text,
-                        }}>{n}</button>
+                      className="w-9 h-9 rounded-xl border text-sm font-semibold transition-colors"
+                      style={{
+                        backgroundColor: page === n ? t.accent : t.surface,
+                        borderColor: page === n ? t.accent : t.border,
+                        color: page === n ? '#fff' : t.text,
+                      }}>{n}</button>
                   )
                 }
                 <button onClick={() => changerPage(page + 1)} disabled={page === totalPages}
@@ -367,12 +382,12 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
 
       {/* WhatsApp flottant */}
       {shop.whatsapp && (
-        <Link href={`https://wa.me/${shop.whatsapp.replace(/\D/g,'')}?text=Bonjour, je suis interesse par vos produits`}
+        <Link href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}
           target="_blank" rel="noopener noreferrer"
           className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
           style={{ backgroundColor: '#25D366' }}>
           <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
           </svg>
         </Link>
       )}
