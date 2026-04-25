@@ -23,6 +23,17 @@ const uploads_1 = __importDefault(require("./routes/uploads"));
 const users_1 = __importDefault(require("./routes/users"));
 const reviews_1 = __importDefault(require("./routes/reviews"));
 const app = (0, express_1.default)();
+// Headers CORS manuels — avant cors()
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'https://shopeasy-1-kahg.onrender.com');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
 // ✅ 1. CORS en premier — avant tout le reste
 app.use((0, cors_1.default)({
     origin: [
