@@ -21,7 +21,7 @@ import reviewsRouter from './routes/reviews';
 const app = express();
 // Headers CORS manuels — avant cors()
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://shopeasy-1-kahg.onrender.com');
+  res.header('Access-Control-Allow-Origin', 'https://shopeasy-web.vercel.app',);
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
@@ -37,7 +37,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://shopeasy-1-kahg.onrender.com',
+    'https://shopeasy-web.vercel.app',
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -88,8 +88,8 @@ const start = async (): Promise<void> => {
   connectRedis();
 
   app.listen(Number(env.PORT), () => {
-    console.log(`🚀 API ShopEasy CI démarrée sur le port ${env.PORT}`);
-    console.log(`📍 Health check : http://localhost:${env.PORT}/health`);
+    console.log(` API ShopEasy CI démarrée sur le port ${env.PORT}`);
+    console.log(` Health check : http://localhost:${env.PORT}/health`);
   });
 };
 
