@@ -19,6 +19,18 @@ import usersRouter from './routes/users';
 import reviewsRouter from './routes/reviews';
 
 const app = express();
+// Headers CORS manuels — avant cors()
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://shopeasy-1-kahg.onrender.com');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // ✅ 1. CORS en premier — avant tout le reste
 app.use(cors({

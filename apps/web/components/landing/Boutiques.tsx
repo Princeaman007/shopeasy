@@ -1,6 +1,7 @@
 import Link  from 'next/link';
 import Image from 'next/image';
 import { ShoppingBag } from 'lucide-react';
+import { API_URL } from '@/lib/api-url';
 
 interface Boutique {
   _id:           string;
@@ -27,8 +28,10 @@ const formatFcfa = (n: number) =>
 
 async function fetchBoutiques(): Promise<Boutique[]> {
   try {
+    async function fetchBoutiques(): Promise<Boutique[]> {
+  try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/shops/annuaire?page=1`,
+      `${API_URL}/shops/annuaire?page=1`,
       { next: { revalidate: 60 } }
     );
     if (!res.ok) return [];
