@@ -1,6 +1,3 @@
-
-
-
 import express from 'express';
 import cors from 'cors';
 import { connectDB } from './config/db';
@@ -9,7 +6,7 @@ import { syncIndexes } from './config/indexes';
 import { env } from './config/env';
 import authRoutes from './routes/auth';
 import { generalLimiter, authLimiter } from './middleware/rateLimit';
-import shopRoutes    from './routes/shops';
+import shopRoutes from './routes/shops';
 import categoryRoutes from './routes/categories';
 import productRoutes from './routes/products';
 import orderRoutes from './routes/orders';
@@ -20,31 +17,37 @@ import adminRoutes from './routes/admin';
 import uploadRoutes from './routes/uploads';
 import usersRouter from './routes/users';
 import reviewsRouter from './routes/reviews';
+
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Middlewares globaux
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// ✅ 1. CORS en premier — avant tout le reste
 app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:3001',
-    'https://shopeasy-1-kahg.onrender.com', 
+    'https://shopeasy-1-kahg.onrender.com',
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// ✅ 2. Preflight OPTIONS global
 app.options('*', cors());
 
+// ✅ 3. Body parsers (une seule fois)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ✅ 4. Rate limiter général
 app.use(generalLimiter);
-app.use('/api/auth', authRoutes);
+
+// ✅ 5. Routes auth (limiter spécifique AVANT les routes)
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth', authRoutes);
+
+// ✅ 6. Autres routes
 app.use('/api/shops', shopRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
@@ -68,16 +71,10 @@ app.get('/health', (_req, res) => {
 
 // Démarrage du serveur
 const start = async (): Promise<void> => {
-  // 1. Connexion MongoDB
   await connectDB();
-
-  // 2. Synchronisation des index
   await syncIndexes();
-
-  // 3. Connexion Redis
   connectRedis();
 
-  // 4. Démarrage serveur
   app.listen(Number(env.PORT), () => {
     console.log(`🚀 API ShopEasy CI démarrée sur le port ${env.PORT}`);
     console.log(`📍 Health check : http://localhost:${env.PORT}/health`);
