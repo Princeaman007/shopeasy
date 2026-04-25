@@ -1,7 +1,6 @@
 import Link  from 'next/link';
 import Image from 'next/image';
 import { ShoppingBag } from 'lucide-react';
-import { API_URL } from '@/lib/api-url';
 
 interface Boutique {
   _id:           string;
