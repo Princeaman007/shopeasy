@@ -28,7 +28,7 @@ const formatFcfa = (n: number) =>
 async function fetchBoutiques(): Promise<Boutique[]> {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/shops/annuaire?page=1`,
+      `${process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL}/shops/annuaire?page=1`,
       { next: { revalidate: 60 } }
     );
     if (!res.ok) return [];
