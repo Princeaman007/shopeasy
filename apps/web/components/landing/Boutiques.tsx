@@ -1,6 +1,7 @@
 import Link  from 'next/link';
 import Image from 'next/image';
 import { ShoppingBag } from 'lucide-react';
+import { API_URL } from '@/lib/api-url';
 
 interface Boutique {
   _id:           string;
@@ -27,9 +28,8 @@ const formatFcfa = (n: number) =>
 
 async function fetchBoutiques(): Promise<Boutique[]> {
   try {
-    const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL;
     const res = await fetch(
-      `${API}/shops/annuaire?page=1`,
+      `${process.env.NEXT_PUBLIC_API_URL}/shops/annuaire?page=1`,
       { next: { revalidate: 60 } }
     );
     if (!res.ok) return [];
@@ -44,11 +44,17 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
   return (
     <Link href={`/${boutique.slug}`}
       className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1">
+
+      {/* Hero */}
       <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/5' }}>
         {boutique.heroImage ? (
-          <Image src={boutique.heroImage} alt={boutique.name} fill
+          <Image
+            src={boutique.heroImage}
+            alt={boutique.name}
+            fill
             className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
-            sizes="100vw" />
+            sizes="100vw"
+          />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-elevated" />
         )}
@@ -58,12 +64,14 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         </div>
       </div>
 
+      {/* Description */}
       {boutique.about?.description && (
         <div className="px-4 pt-3">
           <p className="text-muted text-xs line-clamp-2">{boutique.about.description}</p>
         </div>
       )}
 
+      {/* Apercu produits */}
       {boutique.produits?.length > 0 && (
         <div className="p-4 space-y-2">
           <p className="text-muted text-xs font-medium uppercase tracking-wide">Quelques produits</p>
@@ -88,6 +96,7 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         </div>
       )}
 
+      {/* Footer carte */}
       <div className="px-4 pb-4 flex items-center justify-between">
         <span className="text-muted text-xs">
           {boutique.produits?.length > 0 ? `${boutique.produits.length}+ produits` : 'Boutique premium'}
@@ -104,6 +113,7 @@ export default async function Boutiques() {
   return (
     <section id="boutiques" className="py-20 bg-surface">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         <div className="text-center mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2">
             <span className="text-primary text-sm font-medium">Boutiques du moment</span>
@@ -112,7 +122,8 @@ export default async function Boutiques() {
             Rejoignez des centaines de vendeurs
           </h2>
           <p className="text-muted text-lg max-w-2xl mx-auto">
-            Ces boutiques ont ete creees avec ShopEasy CI. La votre pourrait etre la prochaine.
+            Ces boutiques ont ete creees avec ShopEasy CI. La votre pourrait etre
+            la prochaine a apparaitre ici.
           </p>
         </div>
 
