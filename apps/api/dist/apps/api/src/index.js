@@ -23,11 +23,7 @@ const uploads_1 = __importDefault(require("./routes/uploads"));
 const users_1 = __importDefault(require("./routes/users"));
 const reviews_1 = __importDefault(require("./routes/reviews"));
 const app = (0, express_1.default)();
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
-// Middlewares globaux
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
+// ✅ 1. CORS en premier — avant tout le reste
 app.use((0, cors_1.default)({
     origin: [
         'http://localhost:3000',
@@ -35,11 +31,21 @@ app.use((0, cors_1.default)({
         'https://shopeasy-1-kahg.onrender.com',
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+// ✅ 2. Preflight OPTIONS global
+app.options('*', (0, cors_1.default)());
+// ✅ 3. Body parsers (une seule fois)
+app.use(express_1.default.json());
+app.use(express_1.default.urlencoded({ extended: true }));
+// ✅ 4. Rate limiter général
 app.use(rateLimit_1.generalLimiter);
-app.use('/api/auth', auth_1.default);
+// ✅ 5. Routes auth (limiter spécifique AVANT les routes)
 app.use('/api/auth/login', rateLimit_1.authLimiter);
 app.use('/api/auth/register', rateLimit_1.authLimiter);
+app.use('/api/auth', auth_1.default);
+// ✅ 6. Autres routes
 app.use('/api/shops', shops_1.default);
 app.use('/api/categories', categories_1.default);
 app.use('/api/products', products_1.default);
@@ -61,13 +67,9 @@ app.get('/health', (_req, res) => {
 });
 // Démarrage du serveur
 const start = async () => {
-    // 1. Connexion MongoDB
     await (0, db_1.connectDB)();
-    // 2. Synchronisation des index
     await (0, indexes_1.syncIndexes)();
-    // 3. Connexion Redis
     (0, redis_1.connectRedis)();
-    // 4. Démarrage serveur
     app.listen(Number(env_1.env.PORT), () => {
         console.log(`🚀 API ShopEasy CI démarrée sur le port ${env_1.env.PORT}`);
         console.log(`📍 Health check : http://localhost:${env_1.env.PORT}/health`);
