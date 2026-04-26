@@ -1,1 +1,0 @@
-{"version":3,"file":"ShareImage.d.ts","sourceRoot":"","sources":["../../src/services/ShareImage.ts"],"names":[],"mappings":"AAGA;;GAEG;AACH,UAAU,iBAAiB;IACzB,WAAW,EAAG,MAAM,CAAC;IACrB,KAAK,EAAS,MAAM,CAAC;IACrB,QAAQ,EAAM,MAAM,CAAC;IACrB,YAAY,EAAE,MAAM,CAAC;IACrB,UAAU,EAAI,OAAO,CAAC;CACvB;AAYD;;;GAGG;AACH,eAAO,MAAM,kBAAkB,GAC7B,SAAS,iBAAiB,KACzB,OAAO,CAAC,MAAM,CAoGhB,CAAC"}
