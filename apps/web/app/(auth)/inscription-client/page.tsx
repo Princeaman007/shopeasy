@@ -36,7 +36,7 @@ export default function InscriptionClientPage() {
     setErreurServeur('');
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/register-client`,
+        `/api/auth/register-client`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -92,7 +92,7 @@ export default function InscriptionClientPage() {
             Pas recu l'email ?{' '}
             <button
               onClick={async () => {
-                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-confirmation`, {
+                await fetch(`/api/auth/resend-confirmation`, {
                   method:  'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body:    JSON.stringify({ email: emailEnvoye }),

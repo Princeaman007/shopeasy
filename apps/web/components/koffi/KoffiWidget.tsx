@@ -57,7 +57,7 @@ export default function KoffiWidget() {
   const saveLead = async (lead: Lead) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/leads`,
+        `/api/api/leads`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -73,9 +73,9 @@ export default function EditProduitPage() {
       if (!token || !id) return;
       try {
         const [prodRes, catRes] = await Promise.all([
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`,
+          fetch(`/api/products/${id}`,
             { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/shop/me`,
+          fetch(`/api/categories/shop/me`,
             { headers: { Authorization: `Bearer ${token}` } }),
         ]);
         const prodResult = await prodRes.json();
@@ -126,7 +126,7 @@ export default function EditProduitPage() {
       const formData = new FormData();
       files.slice(0, isPremium ? files.length : 5 - images.length)
            .forEach((f) => formData.append('files', f));
-      const res    = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads/products`,
+      const res    = await fetch(`/api/uploads/products`,
         { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
       const result = await res.json();
       if (result.success) setImages((prev) => [...prev, ...result.data.urls]);
@@ -161,7 +161,7 @@ export default function EditProduitPage() {
     setErreur('');
     setIsSaving(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`,
+      const response = await fetch(`/api/products/${id}`,
         {
           method:  'PATCH',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
@@ -380,7 +380,7 @@ export default function EditProduitPage() {
                                   try {
                                     const formData = new FormData();
                                     files.forEach((f) => formData.append('files', f));
-                                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads/products`,
+                                    const res = await fetch(`/api/uploads/products`,
                                       { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
                                     const result = await res.json();
                                     if (result.success) {

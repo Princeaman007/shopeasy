@@ -47,7 +47,7 @@ export function useClientOrders() {
             try {
                 const token = localStorage.getItem('token');
                 const res = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/orders/mes-commandes`,
+                    `/api/orders/mes-commandes`,
                     {
                         credentials: 'include',
                         headers: {

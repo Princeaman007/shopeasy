@@ -47,7 +47,7 @@ export default function CommandeDetailPage() {
       if (!token || !id) return;
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/orders/${id}`,
+          `/api/orders/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const result = await response.json();
@@ -65,7 +65,7 @@ export default function CommandeDetailPage() {
     setIsUpdating(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/orders/${id}/status`,
+        `/api/orders/${id}/status`,
         {
           method:  'PATCH',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },

@@ -38,7 +38,7 @@ export default function ConnexionPage() {
     setRenvoyeSucces(false);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+        `/api/auth/login`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -80,7 +80,7 @@ export default function ConnexionPage() {
   const renvoyer = async () => {
     setRenvoyeLoading(true);
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-confirmation`, {
+      await fetch(`/api/auth/resend-confirmation`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: emailNonVerifie }),

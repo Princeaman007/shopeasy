@@ -26,7 +26,7 @@ export function useClientFavorites() {
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/favoris`,
+        `/api/users/favoris`,
         {
           credentials: 'include',
           headers: { Authorization: `Bearer ${token}` },
@@ -49,7 +49,7 @@ export function useClientFavorites() {
     try {
       const token = localStorage.getItem('token');
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/users/favoris/${productId}`,
+        `/api/users/favoris/${productId}`,
         {
           method: 'DELETE',
           credentials: 'include',
