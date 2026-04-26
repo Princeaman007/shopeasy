@@ -67,7 +67,7 @@ export default function CommandesPage() {
       });
 
       const response = await fetch(
-        `/backend/orders/shop/me?${params}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/orders/shop/me?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const result = await response.json();

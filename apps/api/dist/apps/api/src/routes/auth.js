@@ -15,7 +15,7 @@ const Email_1 = require("../services/Email");
 const OrderAttachment_1 = require("../services/OrderAttachment");
 const router = (0, express_1.Router)();
 // ---------------------------------------------------------------------------
-// POST /backend/auth/register — Inscription marchand
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/register — Inscription marchand
 // ---------------------------------------------------------------------------
 router.post('/register', async (req, res) => {
     try {
@@ -79,7 +79,7 @@ router.post('/register', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// GET /backend/auth/confirm-email?token=xxx
+// GET ${process.env.NEXT_PUBLIC_API_URL}/auth/confirm-email?token=xxx
 // ---------------------------------------------------------------------------
 router.get('/confirm-email', async (req, res) => {
     try {
@@ -119,7 +119,7 @@ router.get('/confirm-email', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /backend/auth/resend-confirmation — Renvoyer l'email de confirmation
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/resend-confirmation — Renvoyer l'email de confirmation
 // ---------------------------------------------------------------------------
 router.post('/resend-confirmation', async (req, res) => {
     try {
@@ -154,7 +154,7 @@ router.post('/resend-confirmation', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /backend/auth/login
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/login
 // ---------------------------------------------------------------------------
 router.post('/login', async (req, res) => {
     try {
@@ -221,7 +221,7 @@ router.post('/login', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /backend/auth/refresh
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/refresh
 // ---------------------------------------------------------------------------
 router.post('/refresh', async (req, res) => {
     try {
@@ -252,7 +252,7 @@ router.post('/refresh', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /backend/auth/logout
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/logout
 // ---------------------------------------------------------------------------
 router.post('/logout', (_req, res) => {
     res.clearCookie('token');
@@ -260,7 +260,7 @@ router.post('/logout', (_req, res) => {
     res.json({ success: true, message: 'Deconnecte avec succes' });
 });
 // ---------------------------------------------------------------------------
-// GET /backend/auth/me
+// GET ${process.env.NEXT_PUBLIC_API_URL}/auth/me
 // ---------------------------------------------------------------------------
 router.get('/me', async (req, res) => {
     try {
@@ -286,7 +286,7 @@ router.get('/me', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /backend/auth/register-client
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/register-client
 // ---------------------------------------------------------------------------
 router.post('/register-client', async (req, res) => {
     try {
@@ -329,7 +329,7 @@ router.post('/register-client', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /backend/auth/forgot-password
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password
 // ---------------------------------------------------------------------------
 router.post('/forgot-password', async (req, res) => {
     try {
@@ -355,7 +355,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /backend/auth/reset-password
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password
 // ---------------------------------------------------------------------------
 router.post('/reset-password', async (req, res) => {
     try {

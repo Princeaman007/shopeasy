@@ -46,7 +46,7 @@ function NavContenu({
 }) {
   const deconnecter = async () => {
   try {
-    await fetch(`/backend/auth/logout`, {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
       method:      'POST',
       credentials: 'include',
     });

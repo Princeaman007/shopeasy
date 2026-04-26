@@ -7,7 +7,7 @@ const auth_1 = require("../middleware/auth");
 const OrderAttachment_1 = require("../services/OrderAttachment");
 const router = (0, express_1.Router)();
 /**
- * GET /backend/users/favoris
+ * GET ${process.env.NEXT_PUBLIC_API_URL}/users/favoris
  * Retourne les produits favoris du client connecté
  */
 router.get('/favoris', auth_1.authenticate, async (req, res) => {
@@ -31,7 +31,7 @@ router.get('/favoris', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * POST /backend/users/favoris/:productId
+ * POST ${process.env.NEXT_PUBLIC_API_URL}/users/favoris/:productId
  * Ajoute un produit aux favoris
  */
 router.post('/favoris/:productId', auth_1.authenticate, async (req, res) => {
@@ -44,7 +44,7 @@ router.post('/favoris/:productId', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * DELETE /backend/users/favoris/:productId
+ * DELETE ${process.env.NEXT_PUBLIC_API_URL}/users/favoris/:productId
  * Retire un produit des favoris
  */
 router.delete('/favoris/:productId', auth_1.authenticate, async (req, res) => {
@@ -57,7 +57,7 @@ router.delete('/favoris/:productId', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * GET /backend/users/adresses
+ * GET ${process.env.NEXT_PUBLIC_API_URL}/users/adresses
  */
 router.get('/adresses', auth_1.authenticate, async (req, res) => {
     try {
@@ -69,7 +69,7 @@ router.get('/adresses', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * POST /backend/users/adresses
+ * POST ${process.env.NEXT_PUBLIC_API_URL}/users/adresses
  */
 router.post('/adresses', auth_1.authenticate, async (req, res) => {
     try {
@@ -82,7 +82,7 @@ router.post('/adresses', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * PUT /backend/users/adresses/:id
+ * PUT ${process.env.NEXT_PUBLIC_API_URL}/users/adresses/:id
  */
 router.put('/adresses/:id', auth_1.authenticate, async (req, res) => {
     try {
@@ -102,7 +102,7 @@ router.put('/adresses/:id', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * DELETE /backend/users/adresses/:id
+ * DELETE ${process.env.NEXT_PUBLIC_API_URL}/users/adresses/:id
  */
 router.delete('/adresses/:id', auth_1.authenticate, async (req, res) => {
     try {
@@ -114,7 +114,7 @@ router.delete('/adresses/:id', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * PUT /backend/users/profil
+ * PUT ${process.env.NEXT_PUBLIC_API_URL}/users/profil
  * Mise à jour nom et téléphone
  */
 router.put('/profil', auth_1.authenticate, async (req, res) => {
@@ -133,7 +133,7 @@ router.put('/profil', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * PUT /backend/users/changer-mot-de-passe
+ * PUT ${process.env.NEXT_PUBLIC_API_URL}/users/changer-mot-de-passe
  */
 router.put('/changer-mot-de-passe', auth_1.authenticate, async (req, res) => {
     try {
@@ -165,7 +165,7 @@ router.put('/changer-mot-de-passe', auth_1.authenticate, async (req, res) => {
     }
 });
 /**
- * POST /backend/users/rattacher-commandes
+ * POST ${process.env.NEXT_PUBLIC_API_URL}/users/rattacher-commandes
  * Rattachement manuel — utile si le client se connecte après avoir commandé
  */
 router.post('/rattacher-commandes', auth_1.authenticate, async (req, res) => {

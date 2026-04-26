@@ -51,7 +51,7 @@ RÈGLES STRICTES :
 - Tu es Koffi, point final.`;
 
 /**
- * POST /backend/chat
+ * POST ${process.env.NEXT_PUBLIC_API_URL}/chat
  * Endpoint principal pour l'agent Koffi
  */
 export async function POST(req: NextRequest) {

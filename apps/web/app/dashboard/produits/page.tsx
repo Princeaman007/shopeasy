@@ -63,7 +63,7 @@ export default function ProduitsPage() {
       });
 
       const response = await fetch(
-        `/backend/products/shop/me?${params}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/products/shop/me?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const result = await response.json();
@@ -87,7 +87,7 @@ export default function ProduitsPage() {
     setSuppression(id);
     try {
       await fetch(
-        `/backend/products/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`,
         {
           method:  'DELETE',
           headers: { Authorization: `Bearer ${token}` },
@@ -106,7 +106,7 @@ export default function ProduitsPage() {
     const nouveauStatut = produit.status === 'active' ? 'draft' : 'active';
     try {
       await fetch(
-        `/backend/products/${produit._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/products/${produit._id}`,
         {
           method:  'PATCH',
           headers: {

@@ -38,7 +38,7 @@ export default function ListeAvis({
         const params = new URLSearchParams({ type });
         if (productId) params.set('productId', productId);
         const res  = await fetch(
-          `/backend/reviews/public/${shopSlug}?${params}`
+          `${process.env.NEXT_PUBLIC_API_URL}/reviews/public/${shopSlug}?${params}`
         );
         const data = await res.json();
         if (data.success) {

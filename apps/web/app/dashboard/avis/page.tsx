@@ -25,7 +25,7 @@ export default function AvisPage() {
     setLoading(true);
     try {
       const params = filtre !== 'all' ? `?statut=${filtre}` : '';
-      const res    = await fetch(`/backend/reviews/me${params}`,
+      const res    = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/me${params}`,
         { headers: { Authorization: `Bearer ${token}` } });
       const data   = await res.json();
       if (data.success) setAvis(data.data);
@@ -35,14 +35,14 @@ export default function AvisPage() {
   useEffect(() => { charger(); }, [token, filtre]);
 
   const action = async (id: string, statut: 'approved' | 'rejected') => {
-    await fetch(`/backend/reviews/${id}`,
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/${id}`,
       { method: 'PATCH', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ statut }) });
     charger();
   };
 
   const supprimer = async (id: string) => {
-    await fetch(`/backend/reviews/${id}`,
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/${id}`,
       { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
     charger();
   };

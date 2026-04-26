@@ -36,20 +36,20 @@ app.use((0, cors_1.default)({
     credentials: true,
 }));
 app.use(rateLimit_1.generalLimiter);
-app.use('/backend/auth', auth_1.default);
-app.use('/backend/auth/login', rateLimit_1.authLimiter);
-app.use('/backend/auth/register', rateLimit_1.authLimiter);
-app.use('/backend/shops', shops_1.default);
-app.use('/backend/categories', categories_1.default);
-app.use('/backend/products', products_1.default);
-app.use('/backend/orders', orders_1.default);
-app.use('/backend/promos', promos_1.default);
-app.use('/backend/analytics', analytics_1.default);
-app.use('/backend/leads', leads_1.default);
-app.use('/backend/admin', admin_1.default);
-app.use('/backend/uploads', uploads_1.default);
-app.use('/backend/users', users_1.default);
-app.use('/backend/reviews', reviews_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/auth', auth_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/auth/login', rateLimit_1.authLimiter);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/auth/register', rateLimit_1.authLimiter);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/shops', shops_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/categories', categories_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/products', products_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/orders', orders_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/promos', promos_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/analytics', analytics_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/leads', leads_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/admin', admin_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/uploads', uploads_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/users', users_1.default);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/reviews', reviews_1.default);
 // Route de santé
 app.get('/health', (_req, res) => {
     res.json({

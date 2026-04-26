@@ -6,7 +6,7 @@ import { ArrowRight, ShoppingBag, Star, Users } from 'lucide-react';
 async function fetchStats() {
   try {
     const res = await fetch(
-      `/backend/admin/stats/public`,
+      `${process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL}/admin/stats/public`,
       { next: { revalidate: 300 } }
     );
     if (!res.ok) return null;

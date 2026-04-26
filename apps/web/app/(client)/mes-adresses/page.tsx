@@ -36,7 +36,7 @@ export default function MesAdressesPage() {
     const fetch_ = async () => {
       try {
         const res = await fetch(
-          `/backend/users/adresses`,
+          `${process.env.NEXT_PUBLIC_API_URL}/users/adresses`,
           { credentials: 'include', headers }
         );
         const data = await res.json();
@@ -60,14 +60,14 @@ export default function MesAdressesPage() {
     try {
       if (enEdition) {
         const res = await fetch(
-          `/backend/users/adresses/${enEdition}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/users/adresses/${enEdition}`,
           { method: 'PUT', credentials: 'include', headers, body: JSON.stringify(form) }
         );
         const data = await res.json();
         setAdresses(data.adresses || []);
       } else {
         const res = await fetch(
-          `/backend/users/adresses`,
+          `${process.env.NEXT_PUBLIC_API_URL}/users/adresses`,
           { method: 'POST', credentials: 'include', headers, body: JSON.stringify(form) }
         );
         const data = await res.json();
@@ -85,7 +85,7 @@ export default function MesAdressesPage() {
   const supprimer = async (id: string) => {
     try {
       const res = await fetch(
-        `/backend/users/adresses/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/users/adresses/${id}`,
         { method: 'DELETE', credentials: 'include', headers }
       );
       const data = await res.json();

@@ -12,7 +12,7 @@ import { rattacherCommandesInvite } from '../services/OrderAttachment';
 const router = Router();
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/register — Inscription marchand
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/register — Inscription marchand
 // ---------------------------------------------------------------------------
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -87,7 +87,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /backend/auth/confirm-email?token=xxx
+// GET ${process.env.NEXT_PUBLIC_API_URL}/auth/confirm-email?token=xxx
 // ---------------------------------------------------------------------------
 router.get('/confirm-email', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -135,7 +135,7 @@ router.get('/confirm-email', async (req: Request, res: Response): Promise<void> 
 });
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/resend-confirmation — Renvoyer l'email de confirmation
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/resend-confirmation — Renvoyer l'email de confirmation
 // ---------------------------------------------------------------------------
 router.post('/resend-confirmation', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -174,7 +174,7 @@ router.post('/resend-confirmation', async (req: Request, res: Response): Promise
 });
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/login
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/login
 // ---------------------------------------------------------------------------
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -253,7 +253,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/refresh
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/refresh
 // ---------------------------------------------------------------------------
 router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -288,7 +288,7 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/logout
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/logout
 // ---------------------------------------------------------------------------
 router.post('/logout', (_req: Request, res: Response): void => {
   res.clearCookie('token');
@@ -297,7 +297,7 @@ router.post('/logout', (_req: Request, res: Response): void => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /backend/auth/me
+// GET ${process.env.NEXT_PUBLIC_API_URL}/auth/me
 // ---------------------------------------------------------------------------
 router.get('/me', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -328,7 +328,7 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/register-client
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/register-client
 // ---------------------------------------------------------------------------
 router.post('/register-client', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -376,7 +376,7 @@ router.post('/register-client', async (req: Request, res: Response): Promise<voi
 });
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/forgot-password
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/forgot-password
 // ---------------------------------------------------------------------------
 router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -405,7 +405,7 @@ router.post('/forgot-password', async (req: Request, res: Response): Promise<voi
 });
 
 // ---------------------------------------------------------------------------
-// POST /backend/auth/reset-password
+// POST ${process.env.NEXT_PUBLIC_API_URL}/auth/reset-password
 // ---------------------------------------------------------------------------
 router.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
   try {

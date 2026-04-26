@@ -4,7 +4,7 @@
   "/(client)/mes-commandes/page": "app/(client)/mes-commandes/page.js",
   "/(client)/mes-favoris/page": "app/(client)/mes-favoris/page.js",
   "/(client)/profil/page": "app/(client)/profil/page.js",
-  "/backend/chat/route": "app/backend/chat/route.js",
+  "${process.env.NEXT_PUBLIC_API_URL}/chat/route": "app${process.env.NEXT_PUBLIC_API_URL}/chat/route.js",
   "/confirmer-email/page": "app/confirmer-email/page.js",
   "/(admin)/admin/commandes/[id]/page": "app/(admin)/admin/commandes/[id]/page.js",
   "/(admin)/admin/abonnements/page": "app/(admin)/admin/abonnements/page.js",

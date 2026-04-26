@@ -62,7 +62,7 @@ export default function InscriptionPage() {
     setErreurServeur('');
     try {
       const response = await fetch(
-        `/backend/auth/register`,
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -126,7 +126,7 @@ export default function InscriptionPage() {
             Pas recu l'email ?{' '}
             <button
               onClick={async () => {
-                await fetch(`/backend/auth/resend-confirmation`, {
+                await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/resend-confirmation`, {
                   method:  'POST',
                   headers: { 'Content-Type': 'application/json' },
                   body:    JSON.stringify({ email: emailEnvoye }),

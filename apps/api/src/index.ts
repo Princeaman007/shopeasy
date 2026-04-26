@@ -38,22 +38,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(generalLimiter);
 
 // Routes auth
-app.use('/backend/auth/login', authLimiter);
-app.use('/backend/auth/register', authLimiter);
-app.use('/backend/auth', authRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/auth/login', authLimiter);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/auth/register', authLimiter);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/auth', authRoutes);
 
 // Autres routes
-app.use('/backend/shops', shopRoutes);
-app.use('/backend/categories', categoryRoutes);
-app.use('/backend/products', productRoutes);
-app.use('/backend/orders', orderRoutes);
-app.use('/backend/promos', promoRoutes);
-app.use('/backend/analytics', analyticsRoutes);
-app.use('/backend/leads', leadRoutes);
-app.use('/backend/admin', adminRoutes);
-app.use('/backend/uploads', uploadRoutes);
-app.use('/backend/users', usersRouter);
-app.use('/backend/reviews', reviewsRouter);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/shops', shopRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/categories', categoryRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/products', productRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/orders', orderRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/promos', promoRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/analytics', analyticsRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/leads', leadRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/admin', adminRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/uploads', uploadRoutes);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/users', usersRouter);
+app.use('${process.env.NEXT_PUBLIC_API_URL}/reviews', reviewsRouter);
 
 // Route de santé
 app.get('/health', (_req, res) => {

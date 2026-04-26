@@ -1,4 +1,4 @@
-// apps/backend/src/models/Notification.ts
+// apps${process.env.NEXT_PUBLIC_API_URL}/src/models/Notification.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface INotification extends Document {
