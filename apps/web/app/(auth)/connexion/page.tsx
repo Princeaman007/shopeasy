@@ -38,7 +38,7 @@ export default function ConnexionPage() {
     setRenvoyeSucces(false);
     try {
       const response = await fetch(
-        `/api/auth/login`,
+        `/backend/auth/login`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -80,7 +80,7 @@ export default function ConnexionPage() {
   const renvoyer = async () => {
     setRenvoyeLoading(true);
     try {
-      await fetch(`/api/auth/resend-confirmation`, {
+      await fetch(`/backend/auth/resend-confirmation`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ email: emailNonVerifie }),

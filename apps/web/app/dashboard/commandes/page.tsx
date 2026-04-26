@@ -67,7 +67,7 @@ export default function CommandesPage() {
       });
 
       const response = await fetch(
-        `/api/orders/shop/me?${params}`,
+        `/backend/orders/shop/me?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const result = await response.json();

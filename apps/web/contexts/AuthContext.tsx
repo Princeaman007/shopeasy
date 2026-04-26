@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // -- Déconnexion --
   const logout = useCallback(async () => {
     try {
-      await fetch(`/api/auth/logout`, {
+      await fetch(`/backend/auth/logout`, {
         method:      'POST',
         credentials: 'include',
       });
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) return;
     try {
       const response = await fetch(
-        `/api/shops/me`,
+        `/backend/shops/me`,
         {
           headers:     { Authorization: `Bearer ${token}` },
           credentials: 'include',

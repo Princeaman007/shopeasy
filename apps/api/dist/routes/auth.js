@@ -15,7 +15,7 @@ const Email_1 = require("../services/Email");
 const OrderAttachment_1 = require("../services/OrderAttachment");
 const router = (0, express_1.Router)();
 // ---------------------------------------------------------------------------
-// POST /api/auth/register — Inscription marchand
+// POST /backend/auth/register — Inscription marchand
 // ---------------------------------------------------------------------------
 router.post('/register', async (req, res) => {
     try {
@@ -79,7 +79,7 @@ router.post('/register', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// GET /api/auth/confirm-email?token=xxx
+// GET /backend/auth/confirm-email?token=xxx
 // ---------------------------------------------------------------------------
 router.get('/confirm-email', async (req, res) => {
     try {
@@ -119,7 +119,7 @@ router.get('/confirm-email', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /api/auth/resend-confirmation — Renvoyer l'email de confirmation
+// POST /backend/auth/resend-confirmation — Renvoyer l'email de confirmation
 // ---------------------------------------------------------------------------
 router.post('/resend-confirmation', async (req, res) => {
     try {
@@ -154,7 +154,7 @@ router.post('/resend-confirmation', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /api/auth/login
+// POST /backend/auth/login
 // ---------------------------------------------------------------------------
 router.post('/login', async (req, res) => {
     try {
@@ -221,7 +221,7 @@ router.post('/login', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /api/auth/refresh
+// POST /backend/auth/refresh
 // ---------------------------------------------------------------------------
 router.post('/refresh', async (req, res) => {
     try {
@@ -252,7 +252,7 @@ router.post('/refresh', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /api/auth/logout
+// POST /backend/auth/logout
 // ---------------------------------------------------------------------------
 router.post('/logout', (_req, res) => {
     res.clearCookie('token');
@@ -260,7 +260,7 @@ router.post('/logout', (_req, res) => {
     res.json({ success: true, message: 'Deconnecte avec succes' });
 });
 // ---------------------------------------------------------------------------
-// GET /api/auth/me
+// GET /backend/auth/me
 // ---------------------------------------------------------------------------
 router.get('/me', async (req, res) => {
     try {
@@ -286,7 +286,7 @@ router.get('/me', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /api/auth/register-client
+// POST /backend/auth/register-client
 // ---------------------------------------------------------------------------
 router.post('/register-client', async (req, res) => {
     try {
@@ -329,7 +329,7 @@ router.post('/register-client', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /api/auth/forgot-password
+// POST /backend/auth/forgot-password
 // ---------------------------------------------------------------------------
 router.post('/forgot-password', async (req, res) => {
     try {
@@ -355,7 +355,7 @@ router.post('/forgot-password', async (req, res) => {
     }
 });
 // ---------------------------------------------------------------------------
-// POST /api/auth/reset-password
+// POST /backend/auth/reset-password
 // ---------------------------------------------------------------------------
 router.post('/reset-password', async (req, res) => {
     try {

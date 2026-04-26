@@ -48,7 +48,7 @@ export default function BoutiquesPage() {
     try {
       const params = new URLSearchParams({ page: String(p) });
       if (q.trim()) params.set('q', q.trim());
-      const res  = await fetch(`/api/shops/annuaire?${params}`);
+      const res  = await fetch(`/backend/shops/annuaire?${params}`);
       const data = await res.json();
       setBoutiques(prev => append ? [...prev, ...(data.boutiques || [])] : (data.boutiques || []));
       setPagination(data.pagination || null);

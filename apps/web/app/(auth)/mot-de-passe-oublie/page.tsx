@@ -52,7 +52,7 @@ export default function MotDePasseOubliePage() {
     setErreur('');
     try {
       await fetch(
-        `/api/api/auth/forgot-password`,
+        `/backend/api/auth/forgot-password`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -73,7 +73,7 @@ export default function MotDePasseOubliePage() {
     setErreur('');
     try {
       const response = await fetch(
-        `/api/api/auth/reset-password`,
+        `/backend/api/auth/reset-password`,
         {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },

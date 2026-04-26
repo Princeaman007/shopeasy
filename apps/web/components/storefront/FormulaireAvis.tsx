@@ -35,7 +35,7 @@ export default function FormulaireAvis({
     setLoading(true);
     setErreur('');
     try {
-      const res = await fetch(`/api/reviews`, {
+      const res = await fetch(`/backend/reviews`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({

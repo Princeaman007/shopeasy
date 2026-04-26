@@ -23,7 +23,7 @@ export default function ConfirmerEmailClient() {
     const confirmer = async () => {
       try {
         const res  = await fetch(
-          `/api/auth/confirm-email?token=${token}`
+          `/backend/auth/confirm-email?token=${token}`
         );
         const data = await res.json();
 

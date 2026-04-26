@@ -64,21 +64,21 @@ app.use(express_1.default.urlencoded({ extended: true }));
 // ✅ 4. Rate limiter général
 app.use(rateLimit_1.generalLimiter);
 // ✅ 5. Routes auth (limiter spécifique AVANT les routes)
-app.use('/api/auth/login', rateLimit_1.authLimiter);
-app.use('/api/auth/register', rateLimit_1.authLimiter);
-app.use('/api/auth', auth_1.default);
+app.use('/backend/auth/login', rateLimit_1.authLimiter);
+app.use('/backend/auth/register', rateLimit_1.authLimiter);
+app.use('/backend/auth', auth_1.default);
 // ✅ 6. Autres routes
-app.use('/api/shops', shops_1.default);
-app.use('/api/categories', categories_1.default);
-app.use('/api/products', products_1.default);
-app.use('/api/orders', orders_1.default);
-app.use('/api/promos', promos_1.default);
-app.use('/api/analytics', analytics_1.default);
-app.use('/api/leads', leads_1.default);
-app.use('/api/admin', admin_1.default);
-app.use('/api/uploads', uploads_1.default);
-app.use('/api/users', users_1.default);
-app.use('/api/reviews', reviews_1.default);
+app.use('/backend/shops', shops_1.default);
+app.use('/backend/categories', categories_1.default);
+app.use('/backend/products', products_1.default);
+app.use('/backend/orders', orders_1.default);
+app.use('/backend/promos', promos_1.default);
+app.use('/backend/analytics', analytics_1.default);
+app.use('/backend/leads', leads_1.default);
+app.use('/backend/admin', admin_1.default);
+app.use('/backend/uploads', uploads_1.default);
+app.use('/backend/users', users_1.default);
+app.use('/backend/reviews', reviews_1.default);
 // Route de santé
 app.get('/health', (_req, res) => {
     res.json({

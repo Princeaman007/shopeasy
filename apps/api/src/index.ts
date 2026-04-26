@@ -38,22 +38,22 @@ app.use(express.urlencoded({ extended: true }));
 app.use(generalLimiter);
 
 // Routes auth
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/register', authLimiter);
-app.use('/api/auth', authRoutes);
+app.use('/backend/auth/login', authLimiter);
+app.use('/backend/auth/register', authLimiter);
+app.use('/backend/auth', authRoutes);
 
 // Autres routes
-app.use('/api/shops', shopRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/promos', promoRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/leads', leadRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/uploads', uploadRoutes);
-app.use('/api/users', usersRouter);
-app.use('/api/reviews', reviewsRouter);
+app.use('/backend/shops', shopRoutes);
+app.use('/backend/categories', categoryRoutes);
+app.use('/backend/products', productRoutes);
+app.use('/backend/orders', orderRoutes);
+app.use('/backend/promos', promoRoutes);
+app.use('/backend/analytics', analyticsRoutes);
+app.use('/backend/leads', leadRoutes);
+app.use('/backend/admin', adminRoutes);
+app.use('/backend/uploads', uploadRoutes);
+app.use('/backend/users', usersRouter);
+app.use('/backend/reviews', reviewsRouter);
 
 // Route de santé
 app.get('/health', (_req, res) => {

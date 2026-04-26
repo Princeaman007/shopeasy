@@ -12,7 +12,7 @@ import { rattacherCommandesInvite } from '../services/OrderAttachment';
 const router = Router();
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/register — Inscription marchand
+// POST /backend/auth/register — Inscription marchand
 // ---------------------------------------------------------------------------
 router.post('/register', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -87,7 +87,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/auth/confirm-email?token=xxx
+// GET /backend/auth/confirm-email?token=xxx
 // ---------------------------------------------------------------------------
 router.get('/confirm-email', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -135,7 +135,7 @@ router.get('/confirm-email', async (req: Request, res: Response): Promise<void> 
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/resend-confirmation — Renvoyer l'email de confirmation
+// POST /backend/auth/resend-confirmation — Renvoyer l'email de confirmation
 // ---------------------------------------------------------------------------
 router.post('/resend-confirmation', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -174,7 +174,7 @@ router.post('/resend-confirmation', async (req: Request, res: Response): Promise
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/login
+// POST /backend/auth/login
 // ---------------------------------------------------------------------------
 router.post('/login', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -253,7 +253,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/refresh
+// POST /backend/auth/refresh
 // ---------------------------------------------------------------------------
 router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -288,7 +288,7 @@ router.post('/refresh', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/logout
+// POST /backend/auth/logout
 // ---------------------------------------------------------------------------
 router.post('/logout', (_req: Request, res: Response): void => {
   res.clearCookie('token');
@@ -297,7 +297,7 @@ router.post('/logout', (_req: Request, res: Response): void => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/auth/me
+// GET /backend/auth/me
 // ---------------------------------------------------------------------------
 router.get('/me', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -328,7 +328,7 @@ router.get('/me', async (req: Request, res: Response): Promise<void> => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/register-client
+// POST /backend/auth/register-client
 // ---------------------------------------------------------------------------
 router.post('/register-client', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -376,7 +376,7 @@ router.post('/register-client', async (req: Request, res: Response): Promise<voi
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/forgot-password
+// POST /backend/auth/forgot-password
 // ---------------------------------------------------------------------------
 router.post('/forgot-password', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -405,7 +405,7 @@ router.post('/forgot-password', async (req: Request, res: Response): Promise<voi
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/auth/reset-password
+// POST /backend/auth/reset-password
 // ---------------------------------------------------------------------------
 router.post('/reset-password', async (req: Request, res: Response): Promise<void> => {
   try {

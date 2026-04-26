@@ -34,7 +34,7 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Notification = void 0;
-// apps/api/src/models/Notification.ts
+// apps/backend/src/models/Notification.ts
 const mongoose_1 = __importStar(require("mongoose"));
 const NotificationSchema = new mongoose_1.Schema({
     titre: { type: String, required: true },

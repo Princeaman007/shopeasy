@@ -7,7 +7,7 @@ import { rattacherCommandesInvite } from '../services/OrderAttachment';
 const router = Router();
 
 /**
- * GET /api/users/favoris
+ * GET /backend/users/favoris
  * Retourne les produits favoris du client connecté
  */
 router.get('/favoris', authenticate, async (req: Request, res: Response): Promise<void> => {
@@ -33,7 +33,7 @@ router.get('/favoris', authenticate, async (req: Request, res: Response): Promis
 });
 
 /**
- * POST /api/users/favoris/:productId
+ * POST /backend/users/favoris/:productId
  * Ajoute un produit aux favoris
  */
 router.post('/favoris/:productId', authenticate, async (req: Request, res: Response): Promise<void> => {
@@ -49,7 +49,7 @@ router.post('/favoris/:productId', authenticate, async (req: Request, res: Respo
 });
 
 /**
- * DELETE /api/users/favoris/:productId
+ * DELETE /backend/users/favoris/:productId
  * Retire un produit des favoris
  */
 router.delete('/favoris/:productId', authenticate, async (req: Request, res: Response): Promise<void> => {
@@ -65,7 +65,7 @@ router.delete('/favoris/:productId', authenticate, async (req: Request, res: Res
 });
 
 /**
- * GET /api/users/adresses
+ * GET /backend/users/adresses
  */
 router.get('/adresses', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -77,7 +77,7 @@ router.get('/adresses', authenticate, async (req: Request, res: Response): Promi
 });
 
 /**
- * POST /api/users/adresses
+ * POST /backend/users/adresses
  */
 router.post('/adresses', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -94,7 +94,7 @@ router.post('/adresses', authenticate, async (req: Request, res: Response): Prom
 });
 
 /**
- * PUT /api/users/adresses/:id
+ * PUT /backend/users/adresses/:id
  */
 router.put('/adresses/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -118,7 +118,7 @@ router.put('/adresses/:id', authenticate, async (req: Request, res: Response): P
 });
 
 /**
- * DELETE /api/users/adresses/:id
+ * DELETE /backend/users/adresses/:id
  */
 router.delete('/adresses/:id', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -134,7 +134,7 @@ router.delete('/adresses/:id', authenticate, async (req: Request, res: Response)
 });
 
 /**
- * PUT /api/users/profil
+ * PUT /backend/users/profil
  * Mise à jour nom et téléphone
  */
 router.put('/profil', authenticate, async (req: Request, res: Response): Promise<void> => {
@@ -157,7 +157,7 @@ router.put('/profil', authenticate, async (req: Request, res: Response): Promise
 });
 
 /**
- * PUT /api/users/changer-mot-de-passe
+ * PUT /backend/users/changer-mot-de-passe
  */
 router.put('/changer-mot-de-passe', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -187,7 +187,7 @@ router.put('/changer-mot-de-passe', authenticate, async (req: Request, res: Resp
   }
 });
 /**
- * POST /api/users/rattacher-commandes
+ * POST /backend/users/rattacher-commandes
  * Rattachement manuel — utile si le client se connecte après avoir commandé
  */
 router.post('/rattacher-commandes', authenticate, async (req: Request, res: Response): Promise<void> => {

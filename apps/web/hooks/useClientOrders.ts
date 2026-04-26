@@ -47,7 +47,7 @@ export function useClientOrders() {
             try {
                 const token = localStorage.getItem('token');
                 const res = await fetch(
-                    `/api/orders/mes-commandes`,
+                    `/backend/orders/mes-commandes`,
                     {
                         credentials: 'include',
                         headers: {

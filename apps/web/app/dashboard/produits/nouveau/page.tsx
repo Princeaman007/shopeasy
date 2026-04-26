@@ -68,7 +68,7 @@ export default function NouveauProduitPage() {
       if (!token) return;
       try {
         const response = await fetch(
-          `/api/categories/shop/me`,
+          `/backend/categories/shop/me`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const result = await response.json();
@@ -100,7 +100,7 @@ export default function NouveauProduitPage() {
     try {
       const formData = new FormData();
       filesToUpload.forEach((file) => formData.append('files', file));
-      const response = await fetch(`/api/uploads/products`,
+      const response = await fetch(`/backend/uploads/products`,
         { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
       const result = await response.json();
       if (result.success) setImages((prev) => [...prev, ...result.data.urls]);
@@ -158,7 +158,7 @@ export default function NouveauProduitPage() {
           ? skus.reduce((s, sku) => s + sku.quantity, 0)
           : Number(stock),
       };
-      const response = await fetch(`/api/products`,
+      const response = await fetch(`/backend/products`,
         { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const result = await response.json();
       if (!response.ok) { setErreur(result.message ?? 'Erreur creation produit'); return; }
@@ -356,7 +356,7 @@ export default function NouveauProduitPage() {
                                   try {
                                     const formData = new FormData();
                                     files.forEach((f) => formData.append('files', f));
-                                    const res = await fetch(`/api/uploads/products`,
+                                    const res = await fetch(`/backend/uploads/products`,
                                       { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
                                     const result = await res.json();
                                     if (result.success) {

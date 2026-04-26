@@ -1,8 +1,8 @@
 // File: C:\Users\princ\mes_projets\rest-api\shopeasyci\shopeasy-ci\apps\web\app\api\chat\route.ts
-import * as entry from '../../../../../app/api/chat/route.js'
+import * as entry from '../../../../../app/backend/chat/route.js'
 import type { NextRequest } from 'next/server.js'
 
-type TEntry = typeof import('../../../../../app/api/chat/route.js')
+type TEntry = typeof import('../../../../../app/backend/chat/route.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{

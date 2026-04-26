@@ -41,7 +41,7 @@ export default function ProfilPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/users/profil`,
+        `/backend/users/profil`,
         {
           method: 'PUT',
           credentials: 'include',
@@ -82,7 +82,7 @@ export default function ProfilPage() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/users/changer-mot-de-passe`,
+        `/backend/users/changer-mot-de-passe`,
         {
           method: 'PUT',
           credentials: 'include',

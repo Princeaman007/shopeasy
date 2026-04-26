@@ -47,7 +47,7 @@ export default function CommandeDetailPage() {
       if (!token || !id) return;
       try {
         const response = await fetch(
-          `/api/orders/${id}`,
+          `/backend/orders/${id}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const result = await response.json();
@@ -65,7 +65,7 @@ export default function CommandeDetailPage() {
     setIsUpdating(true);
     try {
       const response = await fetch(
-        `/api/orders/${id}/status`,
+        `/backend/orders/${id}/status`,
         {
           method:  'PATCH',
           headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },

@@ -1,4 +1,4 @@
-// apps/api/src/models/Notification.ts
+// apps/backend/src/models/Notification.ts
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface INotification extends Document {
