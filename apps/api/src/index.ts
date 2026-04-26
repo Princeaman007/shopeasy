@@ -20,27 +20,9 @@ import reviewsRouter from './routes/reviews';
 
 const app = express();
 
-// Headers CORS manuels — avant cors()
-app.use((req, res, next) => {
-  const origin = req.headers.origin || '';
-  if (
-    origin.includes('localhost') ||
-    origin.includes('vercel.app') ||
-    origin.includes('onrender.com')
-  ) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// Supprime complètement le middleware manuel (les app.use avec res.header)
+// et remplace tout par ça :
 
-// CORS
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
@@ -59,6 +41,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// Preflight global
 app.options('*', cors());
 
 // ✅ 3. Body parsers (une seule fois)
