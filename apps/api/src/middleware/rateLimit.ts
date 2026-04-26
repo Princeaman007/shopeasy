@@ -8,6 +8,7 @@ import { getRedis } from '../config/redis';
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
+  skip: (req) => req.method === 'OPTIONS',
   message: {
     success: false,
     message: 'Trop de requetes — reessayez dans 15 minutes',
@@ -25,6 +26,7 @@ export const generalLimiter = rateLimit({
 export const authLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 heure
   max: 10,
+  skip: (req) => req.method === 'OPTIONS',
   message: {
     success: false,
     message: 'Trop de tentatives de connexion — reessayez dans 1 heure',
