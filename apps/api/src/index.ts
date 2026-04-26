@@ -1,5 +1,4 @@
 import express from 'express';
-import cors from 'cors';
 import { connectDB } from './config/db';
 import { connectRedis } from './config/redis';
 import { syncIndexes } from './config/indexes';
@@ -20,6 +19,7 @@ import reviewsRouter from './routes/reviews';
 
 const app = express();
 
+// CORS temporaire — autorise tout
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
@@ -30,22 +30,19 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors(corsConfig));
-app.options('*', cors(corsConfig)); // ← même config !
-
-// ✅ 3. Body parsers (une seule fois)
+// Body parsers
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ 4. Rate limiter général
+// Rate limiter général
 app.use(generalLimiter);
 
-// ✅ 5. Routes auth (limiter spécifique AVANT les routes)
+// Routes auth
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth', authRoutes);
 
-// ✅ 6. Autres routes
+// Autres routes
 app.use('/api/shops', shopRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
@@ -74,8 +71,8 @@ const start = async (): Promise<void> => {
   connectRedis();
 
   app.listen(Number(env.PORT), () => {
-    console.log(` API ShopEasy CI démarrée sur le port ${env.PORT}`);
-    console.log(` Health check : http://localhost:${env.PORT}/health`);
+    console.log(`🚀 API ShopEasy CI démarrée sur le port ${env.PORT}`);
+    console.log(`📍 Health check : http://localhost:${env.PORT}/health`);
   });
 };
 
