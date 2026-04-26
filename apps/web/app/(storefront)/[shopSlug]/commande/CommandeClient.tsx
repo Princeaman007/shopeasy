@@ -70,55 +70,60 @@ export default function CommandeClient({ shop }: Props) {
   };
 
   const soumettre = async () => {
-    const err = valider();
-    if (err) { setErreur(err); return; }
-    setLoading(true);
-    setErreur('');
-    try {
-      const API  = process.env.NEXT_PUBLIC_API_URL;
-      const items = articles.map(a => ({
-        productId: a.produitId,
-        name:      a.nom,
-        price:     a.prix,
-        quantity:  a.quantite,
-        variants:  a.variantes,
-        image:     a.image,
-      }));
-      const res  = await fetch(`${API}/orders`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          shopId:        shop._id,
-          nomClient:     form.nomClient.trim(),
-          telephone:     form.telephone.trim(),
-          adresse:       form.adresse.trim(),
-          ville:         form.ville.trim(),
-          modeLivraison: form.modeLivraison,
-          notes:         form.notes.trim(),
-          items,
-          subtotal:      sousTotal,
-          total:         sousTotal,
-          customer: {
-            name:    form.nomClient.trim(),
-            phone:   form.telephone.trim(),
-            email:   form.email.trim() || undefined,
-            address: form.adresse.trim(),
-            city:    form.ville.trim(),
-          },
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? 'Erreur serveur');
+  const err = valider();
+  if (err) { setErreur(err); return; }
+  setLoading(true);
+  setErreur('');
+  try {
+    const API   = process.env.NEXT_PUBLIC_API_URL;
+    const token = localStorage.getItem('token');
+    const items = articles.map(a => ({
+      productId: a.produitId,
+      name:      a.nom,
+      price:     a.prix,
+      quantity:  a.quantite,
+      variants:  a.variantes,
+      image:     a.image,
+    }));
+    const res = await fetch(`${API}/orders`, {
+      method:  'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify({
+        shopId:        shop._id,
+        nomClient:     form.nomClient.trim(),
+        telephone:     form.telephone.trim(),
+        adresse:       form.adresse.trim(),
+        ville:         form.ville.trim(),
+        modeLivraison: form.modeLivraison,
+        notes:         form.notes.trim(),
+        items,
+        subtotal:      sousTotal,
+        total:         sousTotal,
+        customer: {
+          name:    form.nomClient.trim(),
+          phone:   form.telephone.trim(),
+          email:   form.email.trim() || undefined,
+          address: form.adresse.trim(),
+          city:    form.ville.trim(),
+        },
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message ?? 'Erreur serveur');
 
-      localStorage.removeItem(`panier_${shop.slug}`);
-      window.dispatchEvent(new Event('panier-updated'));
-      setCommandeCreee({ _id: data.data._id, orderNumber: data.data.orderNumber });
-    } catch (err: any) {
-      setErreur(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    localStorage.removeItem(`panier_${shop.slug}`);
+    window.dispatchEvent(new Event('panier-updated'));
+    setCommandeCreee({ _id: data.data._id, orderNumber: data.data.orderNumber });
+  } catch (err: any) {
+    setErreur(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
