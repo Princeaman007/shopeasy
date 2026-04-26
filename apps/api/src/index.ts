@@ -41,8 +41,27 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Preflight global
-app.options('*', cors());
+// ✅ Utilise la même config
+const corsConfig = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true);
+    if (
+      origin.includes('localhost') ||
+      origin.includes('vercel.app') ||
+      origin.includes('onrender.com')
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS bloqué: ${origin}`));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+app.use(cors(corsConfig));
+app.options('*', cors(corsConfig)); // ← même config !
 
 // ✅ 3. Body parsers (une seule fois)
 app.use(express.json());
