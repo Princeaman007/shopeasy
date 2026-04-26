@@ -20,45 +20,15 @@ import reviewsRouter from './routes/reviews';
 
 const app = express();
 
-// Supprime complètement le middleware manuel (les app.use avec res.header)
-// et remplace tout par ça :
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (
-      origin.includes('localhost') ||
-      origin.includes('vercel.app') ||
-      origin.includes('onrender.com')
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS bloqué: ${origin}`));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-// ✅ Utilise la même config
-const corsConfig = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin) return callback(null, true);
-    if (
-      origin.includes('localhost') ||
-      origin.includes('vercel.app') ||
-      origin.includes('onrender.com')
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error(`CORS bloqué: ${origin}`));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(cors(corsConfig));
 app.options('*', cors(corsConfig)); // ← même config !
