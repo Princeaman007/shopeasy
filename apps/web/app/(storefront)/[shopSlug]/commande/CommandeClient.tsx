@@ -5,7 +5,7 @@ import Image                   from 'next/image';
 import Link                    from 'next/link';
 import { useRouter }           from 'next/navigation';
 import {
-  ChevronLeft, User, Phone, MapPin,
+  ChevronLeft, User, Phone, MapPin, Mail,
   Package, Check, Loader2, ShoppingCart,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
@@ -40,6 +40,7 @@ export default function CommandeClient({ shop }: Props) {
   const [form, setForm] = useState({
     nomClient:     '',
     telephone:     '',
+    email:         '',
     adresse:       '',
     ville:         '',
     modeLivraison: 'livraison' as 'livraison' | 'retrait',
@@ -97,6 +98,13 @@ export default function CommandeClient({ shop }: Props) {
           items,
           subtotal:      sousTotal,
           total:         sousTotal,
+          customer: {
+            name:    form.nomClient.trim(),
+            phone:   form.telephone.trim(),
+            email:   form.email.trim() || undefined,
+            address: form.adresse.trim(),
+            city:    form.ville.trim(),
+          },
         }),
       });
       const data = await res.json();
@@ -242,6 +250,7 @@ export default function CommandeClient({ shop }: Props) {
             Tes coordonnees
           </h2>
 
+          {/* Nom */}
           <div className="space-y-1.5">
             <label className="text-sm" style={{ color: t.muted }}>Nom complet *</label>
             <div className="relative">
@@ -255,6 +264,7 @@ export default function CommandeClient({ shop }: Props) {
             </div>
           </div>
 
+          {/* Telephone */}
           <div className="space-y-1.5">
             <label className="text-sm" style={{ color: t.muted }}>Telephone *</label>
             <div className="relative">
@@ -268,12 +278,29 @@ export default function CommandeClient({ shop }: Props) {
             </div>
           </div>
 
+          {/* Email */}
+          <div className="space-y-1.5">
+            <label className="text-sm" style={{ color: t.muted }}>
+              Email (pour recevoir la confirmation)
+            </label>
+            <div className="relative">
+              <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
+                    style={{ color: t.muted }} />
+              <input value={form.email} type="email"
+                onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+                placeholder="votre@email.com"
+                className="w-full border rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
+                style={{ backgroundColor: t.elevated, borderColor: t.border, color: t.text }} />
+            </div>
+          </div>
+
+          {/* Mode de recuperation */}
           <div className="space-y-2">
             <label className="text-sm" style={{ color: t.muted }}>Mode de recuperation *</label>
             <div className="grid grid-cols-2 gap-2">
               {([
-                { val: 'livraison', label: 'Livraison', desc: 'A domicile'   },
-                { val: 'retrait',   label: 'Retrait',   desc: 'En boutique'  },
+                { val: 'livraison', label: 'Livraison', desc: 'A domicile'  },
+                { val: 'retrait',   label: 'Retrait',   desc: 'En boutique' },
               ] as const).map(opt => (
                 <button key={opt.val}
                   onClick={() => setForm(p => ({ ...p, modeLivraison: opt.val }))}
@@ -289,6 +316,7 @@ export default function CommandeClient({ shop }: Props) {
             </div>
           </div>
 
+          {/* Adresse */}
           {form.modeLivraison === 'livraison' && (
             <>
               <div className="space-y-1.5">
@@ -314,6 +342,7 @@ export default function CommandeClient({ shop }: Props) {
             </>
           )}
 
+          {/* Notes */}
           <div className="space-y-1.5">
             <label className="text-sm" style={{ color: t.muted }}>
               Instructions speciales (optionnel)
