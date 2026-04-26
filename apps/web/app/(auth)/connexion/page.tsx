@@ -187,12 +187,20 @@ export default function ConnexionPage() {
             {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : 'Se connecter'}
           </button>
 
-          <p className="text-center text-muted text-sm">
-            Pas encore de compte ?{' '}
-            <Link href="/inscription" className="text-primary hover:underline font-medium">
-              Creer une boutique
-            </Link>
-          </p>
+          <div className="space-y-2 text-center">
+            <p className="text-muted text-sm">
+              Vendeur ?{' '}
+              <Link href="/inscription" className="text-primary hover:underline font-medium">
+                Créer une boutique
+              </Link>
+            </p>
+            <p className="text-muted text-sm">
+              Client ?{' '}
+              <Link href="/inscription-client" className="text-primary hover:underline font-medium">
+                Créer un compte client
+              </Link>
+            </p>
+          </div>
         </form>
 
         <div className="mt-6 text-center">
