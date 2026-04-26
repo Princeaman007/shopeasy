@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: '/backend/:path*',
+        source: '/proxy/:path*',
         destination: 'https://shopeasy-k4rb.onrender.com/api/:path*',
       },
     ];
