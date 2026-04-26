@@ -12,6 +12,7 @@ const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 exports.generalLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100,
+    skip: (req) => req.method === 'OPTIONS',
     message: {
         success: false,
         message: 'Trop de requetes — reessayez dans 15 minutes',
@@ -28,6 +29,7 @@ exports.generalLimiter = (0, express_rate_limit_1.default)({
 exports.authLimiter = (0, express_rate_limit_1.default)({
     windowMs: 60 * 60 * 1000, // 1 heure
     max: 10,
+    skip: (req) => req.method === 'OPTIONS',
     message: {
         success: false,
         message: 'Trop de tentatives de connexion — reessayez dans 1 heure',
