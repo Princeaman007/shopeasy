@@ -19,9 +19,17 @@ import usersRouter from './routes/users';
 import reviewsRouter from './routes/reviews';
 
 const app = express();
+
 // Headers CORS manuels — avant cors()
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', 'https://shopeasy-web.vercel.app',);
+  const origin = req.headers.origin || '';
+  if (
+    origin.includes('localhost') ||
+    origin.includes('vercel.app') ||
+    origin.includes('onrender.com')
+  ) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
   res.header('Access-Control-Allow-Credentials', 'true');
   res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
@@ -32,19 +40,25 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ 1. CORS en premier — avant tout le reste
+// CORS
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'https://shopeasy-web.vercel.app',
-  ],
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      origin.includes('localhost') ||
+      origin.includes('vercel.app') ||
+      origin.includes('onrender.com')
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS bloqué: ${origin}`));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// ✅ 2. Preflight OPTIONS global
 app.options('*', cors());
 
 // ✅ 3. Body parsers (une seule fois)

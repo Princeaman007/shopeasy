@@ -25,7 +25,12 @@ const reviews_1 = __importDefault(require("./routes/reviews"));
 const app = (0, express_1.default)();
 // Headers CORS manuels — avant cors()
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'https://shopeasy-web.vercel.app');
+    const origin = req.headers.origin || '';
+    if (origin.includes('localhost') ||
+        origin.includes('vercel.app') ||
+        origin.includes('onrender.com')) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Content-Type,Authorization');
@@ -34,18 +39,24 @@ app.use((req, res, next) => {
     }
     next();
 });
-// ✅ 1. CORS en premier — avant tout le reste
+// CORS
 app.use((0, cors_1.default)({
-    origin: [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'https://shopeasy-web.vercel.app',
-    ],
+    origin: (origin, callback) => {
+        if (!origin)
+            return callback(null, true);
+        if (origin.includes('localhost') ||
+            origin.includes('vercel.app') ||
+            origin.includes('onrender.com')) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error(`CORS bloqué: ${origin}`));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
-// ✅ 2. Preflight OPTIONS global
 app.options('*', (0, cors_1.default)());
 // ✅ 3. Body parsers (une seule fois)
 app.use(express_1.default.json());
@@ -82,8 +93,8 @@ const start = async () => {
     await (0, indexes_1.syncIndexes)();
     (0, redis_1.connectRedis)();
     app.listen(Number(env_1.env.PORT), () => {
-        console.log(`🚀 API ShopEasy CI démarrée sur le port ${env_1.env.PORT}`);
-        console.log(`📍 Health check : http://localhost:${env_1.env.PORT}/health`);
+        console.log(` API ShopEasy CI démarrée sur le port ${env_1.env.PORT}`);
+        console.log(` Health check : http://localhost:${env_1.env.PORT}/health`);
     });
 };
 start().catch((err) => {
