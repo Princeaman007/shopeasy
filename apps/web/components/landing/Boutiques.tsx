@@ -58,6 +58,32 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
           <p className="text-white font-bold text-sm">{boutique.name}</p>
         </div>
       </div>
+
+      {/* ── Aperçu produits ── */}
+      {boutique.produits?.length > 0 && (
+        <div className="p-4 space-y-2">
+          <p className="text-muted text-xs font-medium uppercase tracking-wide">Quelques produits</p>
+          <div className="grid grid-cols-3 gap-2">
+            {boutique.produits.slice(0, 3).map((produit) => (
+              <div key={produit._id}
+                className="aspect-square rounded-xl overflow-hidden bg-elevated border border-border relative">
+                {produit.images?.[0] ? (
+                  <Image src={produit.images[0]} alt={produit.name} fill
+                    className="object-cover group-hover:scale-105 transition-transform" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ShoppingBag size={16} className="text-muted" />
+                  </div>
+                )}
+                <div className="absolute bottom-0 inset-x-0 bg-black/60 px-1.5 py-1">
+                  <p className="text-primary text-xs font-bold truncate">{formatFcfa(produit.price)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="px-4 pb-4 pt-3 flex items-center justify-between">
         <span className="text-muted text-xs">
           {boutique.produits?.length > 0 ? `${boutique.produits.length}+ produits` : 'Boutique premium'}
