@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { getThemeConfig } from '../../theme.config';
 import type { ShopPublic } from '../../types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Props {
   shop:     ShopPublic;
@@ -25,6 +26,7 @@ const formatDate = (date: string) =>
 
 export default function ConfirmationClient({ shop, commande }: Props) {
   const t = getThemeConfig(shop.selectedTheme);
+  const { isConnecte } = useAuth();
 
   if (!commande) {
     return (
@@ -211,32 +213,34 @@ export default function ConfirmationClient({ shop, commande }: Props) {
             </p>
           </div>
         </div>
-{/* ── Bandeau création compte client ── */}
-{commande?.customer?.isGuest && (
-  <div className="rounded-2xl border p-5 space-y-3"
-       style={{ backgroundColor: `${t.accent}10`, borderColor: `${t.accent}30` }}>
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
-           style={{ backgroundColor: `${t.accent}20` }}>
-        <CheckCircle size={20} style={{ color: t.accent }} />
-      </div>
-      <div>
-        <p className="font-semibold text-sm" style={{ color: t.text }}>
-          Suivez vos commandes facilement !
-        </p>
-        <p className="text-xs mt-0.5" style={{ color: t.muted }}>
-          Créez un compte gratuit pour accéder à l'historique de vos commandes.
-        </p>
-      </div>
-    </div>
-    <Link
-      href={`/inscription-client?email=${commande?.customer?.email ?? ''}`}
-      className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 text-sm"
-      style={{ backgroundColor: t.accent, color: '#fff' }}>
-      Créer mon compte client
-    </Link>
-  </div>
-)}
+
+        {/* ── Bandeau création compte client — uniquement si invité et non connecté ── */}
+        {commande?.customer?.isGuest && !isConnecte && (
+          <div className="rounded-2xl border p-5 space-y-3"
+               style={{ backgroundColor: `${t.accent}10`, borderColor: `${t.accent}30` }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                   style={{ backgroundColor: `${t.accent}20` }}>
+                <CheckCircle size={20} style={{ color: t.accent }} />
+              </div>
+              <div>
+                <p className="font-semibold text-sm" style={{ color: t.text }}>
+                  Suivez vos commandes facilement !
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: t.muted }}>
+                  Créez un compte gratuit pour accéder à l'historique de vos commandes.
+                </p>
+              </div>
+            </div>
+            <Link
+              href={`/inscription-client?email=${commande?.customer?.email ?? ''}`}
+              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 text-sm"
+              style={{ backgroundColor: t.accent, color: '#fff' }}>
+              Créer mon compte client
+            </Link>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="space-y-3">
           {shop.whatsapp && (
