@@ -26,7 +26,6 @@ export default function ConnexionPage() {
   const {
     register,
     handleSubmit,
-    getValues,
     formState: { errors, isSubmitting },
   } = useForm<ConnexionForm>({
     resolver: zodResolver(connexionSchema),
@@ -49,7 +48,6 @@ export default function ConnexionPage() {
       const result = await response.json();
 
       if (!response.ok) {
-        // Cas email non verifie
         if (result.code === 'EMAIL_NOT_VERIFIED') {
           setEmailNonVerifie(data.email);
           return;
@@ -69,13 +67,11 @@ export default function ConnexionPage() {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const role = result.data.user.role;
-        if (role === 'admin')              window.location.href = '/admin';
-        else if (role === 'merchant')      window.location.href = '/dashboard';
-        const role = result.data.user.role;
-          if (role === 'admin')         window.location.href = '/admin';
-          else if (role === 'merchant') window.location.href = '/dashboard';
-          else if (result.data.shop)    window.location.href = '/dashboard';
-          else                          window.location.href = '/mes-commandes';                              window.location.href = '/mes-commandes';                         window.location.href = '/mes-commandes';
+      if (role === 'admin')         window.location.href = '/admin';
+      else if (role === 'merchant') window.location.href = '/dashboard';
+      else if (result.data.shop)    window.location.href = '/dashboard';
+      else                          window.location.href = '/mes-commandes';
+
     } catch {
       setErreurServeur('Erreur réseau — vérifiez votre connexion');
     }
@@ -113,7 +109,7 @@ export default function ConnexionPage() {
           <p className="text-muted mt-2">Connectez-vous à votre compte</p>
         </div>
 
-        {/* ── Bandeau email non verifie ── */}
+        {/* Bandeau email non vérifié */}
         {emailNonVerifie && (
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-5 mb-5 space-y-3">
             <div className="flex items-center gap-3">
@@ -121,15 +117,12 @@ export default function ConnexionPage() {
                 <Mail size={20} className="text-yellow-400" />
               </div>
               <div>
-                <p className="text-yellow-400 font-semibold text-sm">
-                  Email non confirme
-                </p>
+                <p className="text-yellow-400 font-semibold text-sm">Email non confirme</p>
                 <p className="text-muted text-xs mt-0.5">
                   Verifiez votre boite email et cliquez sur le lien de confirmation.
                 </p>
               </div>
             </div>
-
             {renvoyeSucces ? (
               <p className="text-green-400 text-xs text-center py-1">
                 ✅ Nouveau lien envoye a {emailNonVerifie}
@@ -139,7 +132,7 @@ export default function ConnexionPage() {
                 className="w-full py-2.5 rounded-xl text-sm font-semibold border border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
                 {renvoyeLoading
                   ? <><Loader2 size={14} className="animate-spin" /> Envoi...</>
-                  : 'Renvoyer l\'email de confirmation'
+                  : "Renvoyer l'email de confirmation"
                 }
               </button>
             )}
