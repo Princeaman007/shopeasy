@@ -15,7 +15,7 @@ export default function TopBar() {
         <div className="md:hidden w-8" />
         {shop && (
           <Link
-            href={`http://${slug}.shopeasyci.store`}
+            href={`http://${shop.slug}.shopeasyci.store`}
             target="_blank"
             rel="noopener noreferrer"
             className="hidden sm:flex items-center gap-1.5 text-muted hover:text-primary transition-colors text-sm"
