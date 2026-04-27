@@ -54,7 +54,7 @@ export default function PagePartage() {
     const [copieSlug, setCopieSlug] = useState(false);
     const [qrDataUrl, setQrDataUrl] = useState('');
 
-    const urlBoutique = `https://${slug}.shopeasyci.ci`;
+    const urlBoutique = `https://${slug}.shopeasyci.store`;
 
     // -- Chargement --
     useEffect(() => {
