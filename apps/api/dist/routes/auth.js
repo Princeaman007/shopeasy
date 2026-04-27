@@ -187,10 +187,18 @@ router.post('/login', async (req, res) => {
         if (user.role === 'merchant' && user.shopId) {
             shop = await Shop_1.Shop.findById(user.shopId).select('slug name planType subscriptionStatus trialEndsAt selectedTheme');
         }
+        // ✅ Vérifie si l'user est équipier d'une boutique
+        if (!shop) {
+            shop = await Shop_1.Shop.findOne({ admins: user._id }).select('slug name planType subscriptionStatus trialEndsAt selectedTheme');
+        }
         const tokenPayload = {
             userId: String(user._id),
             role: user.role,
-            shopId: user.shopId ? String(user.shopId) : undefined,
+            shopId: user.shopId
+                ? String(user.shopId)
+                : shop
+                    ? String(shop._id)
+                    : undefined,
         };
         const token = (0, jwt_1.signToken)(tokenPayload);
         const refreshToken = (0, jwt_1.signRefreshToken)(tokenPayload);

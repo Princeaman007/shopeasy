@@ -69,9 +69,10 @@ export default function ConnexionPage() {
       await new Promise(resolve => setTimeout(resolve, 100));
 
       const role = result.data.user.role;
-      if (role === 'admin')         window.location.href = '/admin';
-      else if (role === 'merchant') window.location.href = '/dashboard';
-      else                          window.location.href = '/mes-commandes';
+        if (role === 'admin')              window.location.href = '/admin';
+        else if (role === 'merchant')      window.location.href = '/dashboard';
+        else if (result.data.shop)         window.location.href = '/dashboard';
+        else                               window.location.href = '/mes-commandes';                         window.location.href = '/mes-commandes';
     } catch {
       setErreurServeur('Erreur réseau — vérifiez votre connexion');
     }

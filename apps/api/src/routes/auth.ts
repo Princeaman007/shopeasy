@@ -209,17 +209,28 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
     }
 
     let shop = null;
-    if (user.role === 'merchant' && user.shopId) {
-      shop = await Shop.findById(user.shopId).select(
-        'slug name planType subscriptionStatus trialEndsAt selectedTheme'
-      );
-    }
+if (user.role === 'merchant' && user.shopId) {
+  shop = await Shop.findById(user.shopId).select(
+    'slug name planType subscriptionStatus trialEndsAt selectedTheme'
+  );
+}
 
-    const tokenPayload: IJwtPayload = {
-      userId: String(user._id),
-      role: user.role,
-      shopId: user.shopId ? String(user.shopId) : undefined,
-    };
+// ✅ Vérifie si l'user est équipier d'une boutique
+if (!shop) {
+  shop = await Shop.findOne({ admins: user._id }).select(
+    'slug name planType subscriptionStatus trialEndsAt selectedTheme'
+  );
+}
+
+const tokenPayload: IJwtPayload = {
+  userId: String(user._id),
+  role:   user.role,
+  shopId: user.shopId
+    ? String(user.shopId)
+    : shop
+    ? String((shop as any)._id)
+    : undefined,
+};
 
     const token = signToken(tokenPayload);
     const refreshToken = signRefreshToken(tokenPayload);
