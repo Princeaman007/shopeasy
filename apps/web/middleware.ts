@@ -17,17 +17,17 @@ export function middleware(req: NextRequest) {
   const hostname     = req.headers.get('host') || '';
 
   // ✅ Détection sous-domaine boutique
-  const isMainDomain = MAIN_DOMAINS.includes(hostname);
+  const isMainDomain = MAIN_DOMAINS.some(d => hostname === d || hostname.endsWith(d));
   const isSubdomain  = !isMainDomain && (
     hostname.endsWith('.shopeasyci.store') ||
     hostname.endsWith('.shopeasyci.ci')
   );
 
+  // ✅ Rewrite sous-domaine → /[shopSlug]/...
   if (isSubdomain) {
     const shopSlug = hostname.split('.')[0];
     const url      = req.nextUrl.clone();
 
-    // Évite la double application du slug
     const cleanPath = pathname.startsWith(`/${shopSlug}`)
       ? pathname.slice(shopSlug.length + 1) || '/'
       : pathname;
@@ -35,10 +35,11 @@ export function middleware(req: NextRequest) {
     url.pathname = cleanPath === '/'
       ? `/${shopSlug}`
       : `/${shopSlug}${cleanPath}`;
+
     return NextResponse.rewrite(url);
   }
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
+  // ── Auth (domaine principal uniquement) ───────────────────────────────────
   const token = req.cookies.get('token')?.value;
   let payload: { userId: string; role: string; exp?: number; shopId?: string } | null = null;
 
