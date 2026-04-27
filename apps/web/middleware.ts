@@ -5,38 +5,36 @@ const ROUTES_ADMIN     = ['/admin'];
 const ROUTES_CLIENT    = ['/mes-commandes', '/mes-favoris', '/mes-adresses', '/profil'];
 const ROUTES_AUTH      = ['/connexion', '/inscription', '/inscription-client', '/mot-de-passe-oublie'];
 
+const MAIN_DOMAINS = [
+  'shopeasyci.store',
+  'www.shopeasyci.store',
+  'shopeasy-web.vercel.app',
+  'localhost:3000',
+];
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hostname     = req.headers.get('host') || '';
 
-  // ✅ Gestion des sous-domaines boutique
-  // ex: ma-boutique.shopeasyci.store → /ma-boutique
-  const mainDomains = [
-    'shopeasyci.store',
-    'www.shopeasyci.store',
-    'shopeasy-web.vercel.app',
-    'localhost:3000',
-  ];
-
-  const isMainDomain = mainDomains.some(d => hostname === d || hostname.endsWith(d));
+  // ✅ Détection sous-domaine boutique
+  const isMainDomain = MAIN_DOMAINS.includes(hostname);
   const isSubdomain  = !isMainDomain && (
     hostname.endsWith('.shopeasyci.store') ||
     hostname.endsWith('.shopeasyci.ci')
   );
 
- if (isSubdomain) {
-  const shopSlug = hostname.split('.')[0];
-  const url      = req.nextUrl.clone();
-  url.pathname   = pathname === '/' 
-    ? `/${shopSlug}` 
-    : `/${shopSlug}${pathname}`;
-  return NextResponse.rewrite(url);
-}
+  if (isSubdomain) {
+    const shopSlug = hostname.split('.')[0];
+    const url      = req.nextUrl.clone();
+    url.pathname   = pathname === '/'
+      ? `/${shopSlug}`
+      : `/${shopSlug}${pathname}`;
+    console.log(`🔀 Rewrite: ${hostname}${pathname} → ${url.pathname}`);
+    return NextResponse.rewrite(url);
+  }
 
   // ── Auth ──────────────────────────────────────────────────────────────────
-
   const token = req.cookies.get('token')?.value;
-
   let payload: { userId: string; role: string; exp?: number; shopId?: string } | null = null;
 
   if (token) {
@@ -47,9 +45,7 @@ export function middleware(req: NextRequest) {
       if (parsed.exp && parsed.exp * 1000 > Date.now()) {
         payload = parsed;
       }
-    } catch {
-      // Token malformé
-    }
+    } catch { }
   }
 
   const isConnecte = !!payload;
@@ -81,7 +77,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };
