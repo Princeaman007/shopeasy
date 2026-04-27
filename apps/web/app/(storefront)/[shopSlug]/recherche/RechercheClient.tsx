@@ -196,7 +196,7 @@ export default function RechercheClient({ shop, produits, queryInitiale }: Props
                 {suggestions.map(p => (
                   <Link
                     key={p._id}
-                    href={` /produits/${p._id}`}
+                    href={`/produits/${p._id}`}
                     className="flex items-center gap-3 p-3 rounded-xl border
                                transition-all hover:border-opacity-50"
                     style={{ backgroundColor: t.surface, borderColor: t.border }}
@@ -264,7 +264,7 @@ export default function RechercheClient({ shop, produits, queryInitiale }: Props
                 {resultats.map(p => (
                   <Link
                     key={p._id}
-                    href={` /produits/${p._id}`}
+                    href={`/produits/${p._id}`}
                     className="flex gap-4 p-4 rounded-2xl border transition-all
                                hover:border-opacity-60"
                     style={{ backgroundColor: t.surface, borderColor: t.border }}

@@ -159,7 +159,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {produits.map(produit => (
-              <Link key={produit._id} href={` /produits/${produit._id}`}
+              <Link key={produit._id} href={`/produits/${produit._id}`}
                 className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
                 style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                 <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>

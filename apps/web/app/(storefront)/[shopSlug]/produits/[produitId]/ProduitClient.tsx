@@ -385,7 +385,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             <h2 className="text-xl font-bold" style={{ color: t.text }}>Produits similaires</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {similaires.map(p => (
-                <Link key={p._id} href={` /produits/${p._id}`}
+                <Link key={p._id} href={`/produits/${p._id}`}
                   className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02]"
                   style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                   <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>

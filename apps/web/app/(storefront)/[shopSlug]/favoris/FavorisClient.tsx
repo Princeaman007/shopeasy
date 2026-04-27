@@ -125,7 +125,7 @@ export default function FavorisClient({ shop }: Props) {
                 style={{ backgroundColor: t.surface, borderColor: t.border }}>
 
                 {/* Image */}
-                <Link href={` /produits/${favori._id}`}
+                <Link href={`/produits/${favori._id}`}
                   className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 relative"
                   style={{ backgroundColor: t.elevated }}>
                   {favori.image
@@ -136,7 +136,7 @@ export default function FavorisClient({ shop }: Props) {
 
                 {/* Infos */}
                 <div className="flex-1 min-w-0 space-y-1">
-                  <Link href={` /produits/${favori._id}`}>
+                  <Link href={`/produits/${favori._id}`}>
                     <p className="font-semibold text-sm truncate hover:opacity-70" style={{ color: t.text }}>
                       {favori.nom}
                     </p>

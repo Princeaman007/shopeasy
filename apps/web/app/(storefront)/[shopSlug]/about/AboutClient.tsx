@@ -187,7 +187,7 @@ export default function AboutClient({ shop, produits }: Props) {
 
             <div className="grid grid-cols-3 gap-3">
               {produits.map(p => (
-                <Link key={p._id} href={` /produits/${p._id}`}
+                <Link key={p._id} href={`/produits/${p._id}`}
                   className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
                   style={{ backgroundColor: t.elevated, border: `1px solid ${t.border}` }}>
                   <div className="aspect-square relative overflow-hidden">

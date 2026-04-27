@@ -255,7 +255,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
             ) : grille === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 {produitsPaged.map(produit => (
-                  <Link key={produit._id} href={` /produits/${produit._id}`}
+                  <Link key={produit._id} href={`/produits/${produit._id}`}
                     className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
                     style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                     <div className="aspect-square relative overflow-hidden"
@@ -316,7 +316,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
             ) : (
               <div className="space-y-3">
                 {produitsPaged.map(produit => (
-                  <Link key={produit._id} href={` /produits/${produit._id}`}
+                  <Link key={produit._id} href={`/produits/${produit._id}`}
                     className="flex gap-4 p-4 rounded-2xl border transition-all hover:shadow-md"
                     style={{ backgroundColor: t.surface, borderColor: t.border }}>
                     <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 relative"

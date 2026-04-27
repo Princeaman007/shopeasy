@@ -193,7 +193,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {produits.map(produit => (
-              <Link key={produit._id} href={` /produits/${produit._id}`}
+              <Link key={produit._id} href={`/produits/${produit._id}`}
                 className="group rounded-3xl overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1"
                 style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                 <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>

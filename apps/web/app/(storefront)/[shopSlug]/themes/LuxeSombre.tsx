@@ -173,7 +173,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {produits.map(produit => (
-              <Link key={produit._id} href={` /produits/${produit._id}`}
+              <Link key={produit._id} href={`/produits/${produit._id}`}
                 className="group space-y-3">
                 <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
                   {produit.images?.[0]
