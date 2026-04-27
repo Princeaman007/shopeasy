@@ -275,13 +275,13 @@ export default function InscriptionPage() {
                 <label className="text-white text-sm font-medium">URL de votre boutique</label>
                 <div className="flex items-center bg-elevated border border-border rounded-xl overflow-hidden focus-within:border-primary transition-colors">
                   <span className="text-muted text-sm px-3 py-3 border-r border-border bg-bg whitespace-nowrap">
-                    shopeasyci.ci/
+                     shopeasyci.store/
                   </span>
                   <input {...register('shopSlug')} type="text" placeholder="aya-fashion"
                     className="flex-1 bg-transparent px-3 py-3 text-white placeholder-muted focus:outline-none text-sm" />
                 </div>
                 {shopSlug && (
-                  <p className="text-primary text-xs">✓ Votre boutique : {shopSlug}.shopeasyci.ci</p>
+                  <p className="text-primary text-xs">✓ Votre boutique : {shopSlug}.shopeasyci.store</p>
                 )}
                 {errors.shopSlug && <p className="text-red-400 text-xs">{errors.shopSlug.message}</p>}
               </div>
