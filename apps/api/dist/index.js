@@ -23,6 +23,7 @@ const uploads_1 = __importDefault(require("./routes/uploads"));
 const users_1 = __importDefault(require("./routes/users"));
 const reviews_1 = __importDefault(require("./routes/reviews"));
 const app = (0, express_1.default)();
+app.set('trust proxy', 1);
 // ✅ CORS — autorise vercel.app, onrender.com, localhost
 app.use((req, res, next) => {
     const origin = req.headers.origin || '';

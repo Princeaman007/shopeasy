@@ -19,6 +19,7 @@ import usersRouter from './routes/users';
 import reviewsRouter from './routes/reviews';
 
 const app = express();
+app.set('trust proxy', 1);
 
 // ✅ CORS — autorise vercel.app, onrender.com, localhost
 app.use((req, res, next) => {
