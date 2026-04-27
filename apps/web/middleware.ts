@@ -24,14 +24,19 @@ export function middleware(req: NextRequest) {
   );
 
   if (isSubdomain) {
-    const shopSlug = hostname.split('.')[0];
-    const url      = req.nextUrl.clone();
-    url.pathname   = pathname === '/'
-      ? `/${shopSlug}`
-      : `/${shopSlug}${pathname}`;
-    console.log(`🔀 Rewrite: ${hostname}${pathname} → ${url.pathname}`);
-    return NextResponse.rewrite(url);
-  }
+  const shopSlug = hostname.split('.')[0];
+  const url      = req.nextUrl.clone();
+  
+  // Évite la double application du slug
+  const cleanPath = pathname.startsWith(`/${shopSlug}`)
+    ? pathname.slice(shopSlug.length + 1) || '/'
+    : pathname;
+
+  url.pathname = cleanPath === '/'
+    ? `/${shopSlug}`
+    : `/${shopSlug}${cleanPath}`;
+  return NextResponse.rewrite(url);
+}
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const token = req.cookies.get('token')?.value;
