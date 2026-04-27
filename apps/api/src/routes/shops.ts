@@ -145,6 +145,13 @@ router.post('/me/equipe', authenticate, requireMerchant, async (req: Request, re
 
     shop.admins.push(userToAdd._id as any);
     await shop.save();
+
+    // ✅ Change le rôle de l'équipier en merchant et assigne le shopId
+    await User.findByIdAndUpdate(userToAdd._id, {
+      role:   'merchant',
+      shopId: shop._id,
+    });
+
     await shop.populate('admins', 'name email');
     res.json({ success: true, membres: shop.admins });
   } catch {
