@@ -12,6 +12,9 @@ const MAIN_DOMAINS = [
   'localhost:3000',
 ];
 
+// Pages storefront qui doivent rester sur le sous-domaine
+const STOREFRONT_PATHS = ['/produits', '/catalogue', '/panier', '/commande', '/about', '/recherche', '/favoris'];
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const hostname     = req.headers.get('host') || '';
@@ -36,10 +39,30 @@ export function middleware(req: NextRequest) {
       ? `/${shopSlug}`
       : `/${shopSlug}${cleanPath}`;
 
-    return NextResponse.rewrite(url);
+    // ✅ Stocke le slug dans un cookie pour la navigation côté client
+    const response = NextResponse.rewrite(url);
+    response.cookies.set('shopSlug', shopSlug, {
+      path:     '/',
+      maxAge:   60 * 60,
+      sameSite: 'none',
+      secure:   true,
+    });
+    return response;
   }
 
-  // ── Auth (domaine principal uniquement) ───────────────────────────────────
+  // ✅ Sur domaine principal — redirige vers sous-domaine si cookie shopSlug présent
+  const shopSlugCookie = req.cookies.get('shopSlug')?.value;
+  if (
+    isMainDomain &&
+    shopSlugCookie &&
+    STOREFRONT_PATHS.some(p => pathname.startsWith(p))
+  ) {
+    const redirectUrl    = new URL(req.url);
+    redirectUrl.hostname = `${shopSlugCookie}.shopeasyci.store`;
+    return NextResponse.redirect(redirectUrl);
+  }
+
+  // ── Auth ─────────────────────────────────────────────────────────────────
   const token = req.cookies.get('token')?.value;
   let payload: { userId: string; role: string; exp?: number; shopId?: string } | null = null;
 
