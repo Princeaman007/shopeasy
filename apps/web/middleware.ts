@@ -7,6 +7,31 @@ const ROUTES_AUTH      = ['/connexion', '/inscription', '/inscription-client', '
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const hostname     = req.headers.get('host') || '';
+
+  // ✅ Gestion des sous-domaines boutique
+  // ex: ma-boutique.shopeasyci.store → /ma-boutique
+  const mainDomains = [
+    'shopeasyci.store',
+    'www.shopeasyci.store',
+    'shopeasy-web.vercel.app',
+    'localhost:3000',
+  ];
+
+  const isMainDomain = mainDomains.some(d => hostname === d || hostname.endsWith(d));
+  const isSubdomain  = !isMainDomain && (
+    hostname.endsWith('.shopeasyci.store') ||
+    hostname.endsWith('.shopeasyci.ci')
+  );
+
+  if (isSubdomain) {
+    const shopSlug = hostname.split('.')[0];
+    const url      = req.nextUrl.clone();
+    url.pathname   = `/${shopSlug}${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  // ── Auth ──────────────────────────────────────────────────────────────────
 
   const token = req.cookies.get('token')?.value;
 
@@ -17,12 +42,9 @@ export function middleware(req: NextRequest) {
       const base64Payload = token.split('.')[1];
       const decoded       = Buffer.from(base64Payload, 'base64').toString('utf-8');
       const parsed        = JSON.parse(decoded);
-
-      // ⚠️ Vérifie l'expiration
       if (parsed.exp && parsed.exp * 1000 > Date.now()) {
         payload = parsed;
       }
-      // Si expiré → payload reste null
     } catch {
       // Token malformé
     }
@@ -58,15 +80,6 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/admin/:path*',
-    '/mes-commandes/:path*',
-    '/mes-favoris/:path*',
-    '/mes-adresses/:path*',
-    '/profil/:path*',
-    '/connexion',
-    '/inscription',
-    '/inscription-client',
-    '/mot-de-passe-oublie',
+    '/((?!_next/static|_next/image|favicon.ico|api).*)',
   ],
 };
