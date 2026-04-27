@@ -23,12 +23,6 @@ export function middleware(req: NextRequest) {
     hostname.endsWith('.shopeasyci.ci')
   );
 
-  const isMainDomain = MAIN_DOMAINS.includes(hostname);
-  const isSubdomain  = !isMainDomain && (
-    hostname.endsWith('.shopeasyci.store') ||
-    hostname.endsWith('.shopeasyci.ci')
-  );
-
   // ✅ Redirect www → sous-domaine via referer
   const referer = req.headers.get('referer') || '';
   if (isMainDomain && referer.includes('.shopeasyci.store')) {
@@ -40,21 +34,21 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl);
     } catch {}
   }
-  
-  if (isSubdomain) {
-  const shopSlug = hostname.split('.')[0];
-  const url      = req.nextUrl.clone();
-  
-  // Évite la double application du slug
-  const cleanPath = pathname.startsWith(`/${shopSlug}`)
-    ? pathname.slice(shopSlug.length + 1) || '/'
-    : pathname;
 
-  url.pathname = cleanPath === '/'
-    ? `/${shopSlug}`
-    : `/${shopSlug}${cleanPath}`;
-  return NextResponse.rewrite(url);
-}
+  if (isSubdomain) {
+    const shopSlug = hostname.split('.')[0];
+    const url      = req.nextUrl.clone();
+
+    // Évite la double application du slug
+    const cleanPath = pathname.startsWith(`/${shopSlug}`)
+      ? pathname.slice(shopSlug.length + 1) || '/'
+      : pathname;
+
+    url.pathname = cleanPath === '/'
+      ? `/${shopSlug}`
+      : `/${shopSlug}${cleanPath}`;
+    return NextResponse.rewrite(url);
+  }
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const token = req.cookies.get('token')?.value;
