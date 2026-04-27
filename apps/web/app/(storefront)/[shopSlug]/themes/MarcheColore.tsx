@@ -71,7 +71,7 @@ export default function MarcheColore({ shop, produits }: Props) {
           <div className="hidden md:flex items-center gap-6">
             {(['Catalogue', 'A propos'] as const).map(lien => (
               <Link key={lien}
-                href={lien === 'Catalogue' ? `/${shop.slug}/catalogue` : `/${shop.slug}/about`}
+                href={lien === 'Catalogue' ? ` /catalogue` : ` /about`}
                 className="text-sm font-semibold hover:opacity-70 transition-opacity"
                 style={{ color: t.text }}>
                 {lien}
@@ -97,7 +97,7 @@ export default function MarcheColore({ shop, produits }: Props) {
             className="md:hidden px-4 py-4 space-y-2">
             {(['Catalogue', 'A propos'] as const).map(lien => (
               <Link key={lien}
-                href={lien === 'Catalogue' ? `/${shop.slug}/catalogue` : `/${shop.slug}/about`}
+                href={lien === 'Catalogue' ? ` /catalogue` : ` /about`}
                 className="block text-sm font-semibold py-2"
                 style={{ color: t.text }}
                 onClick={() => setMenuOuvert(false)}>
@@ -132,7 +132,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                 </p>
               )}
               <div className="flex flex-wrap gap-3 justify-center">
-                <Link href={`/${shop.slug}/catalogue`}
+                <Link href={` /catalogue`}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90"
                   style={{ backgroundColor: t.accent, color: '#fff' }}>
                   Explorer la boutique <ChevronRight size={16} />
@@ -152,7 +152,7 @@ export default function MarcheColore({ shop, produits }: Props) {
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <Link href={`/${shop.slug}/recherche`}
+        <Link href={` /recherche`}
           className="flex items-center gap-3 px-4 py-3 rounded-full border-2 w-full"
           style={{ backgroundColor: t.surface, borderColor: t.accent }}>
           <Search size={18} style={{ color: t.accent }} />
@@ -163,7 +163,7 @@ export default function MarcheColore({ shop, produits }: Props) {
       <div className="max-w-6xl mx-auto px-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-extrabold" style={{ color: t.text }}>Nos produits</h2>
-          <Link href={`/${shop.slug}/catalogue`}
+          <Link href={` /catalogue`}
             className="text-sm font-bold flex items-center gap-1 hover:opacity-80 px-3 py-1.5 rounded-full border-2"
             style={{ borderColor: t.accent, color: t.accent }}>
             Tout voir <ChevronRight size={14} />
@@ -178,7 +178,7 @@ export default function MarcheColore({ shop, produits }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {produits.map(produit => (
-              <Link key={produit._id} href={`/${shop.slug}/produits/${produit._id}`}
+              <Link key={produit._id} href={` /produits/${produit._id}`}
                 className="group rounded-2xl overflow-hidden transition-all hover:-translate-y-1 hover:shadow-xl"
                 style={{ backgroundColor: t.surface, border: `2px solid ${t.border}` }}>
                 <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>

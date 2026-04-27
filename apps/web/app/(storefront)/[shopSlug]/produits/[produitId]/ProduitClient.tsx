@@ -138,7 +138,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }} className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={`/${shop.slug}/catalogue`}
+          <Link href={` /catalogue`}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} /> Retour au catalogue
@@ -385,7 +385,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             <h2 className="text-xl font-bold" style={{ color: t.text }}>Produits similaires</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {similaires.map(p => (
-                <Link key={p._id} href={`/${shop.slug}/produits/${p._id}`}
+                <Link key={p._id} href={` /produits/${p._id}`}
                   className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02]"
                   style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                   <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>

@@ -51,10 +51,10 @@ export default function CommandeClient({ shop }: Props) {
     const data = localStorage.getItem(`panier_${shop.slug}`);
     if (data) {
       const parsed = JSON.parse(data);
-      if (parsed.length === 0) router.push(`/${shop.slug}/panier`);
+      if (parsed.length === 0) router.push(` /panier`);
       else setArticles(parsed);
     } else {
-      router.push(`/${shop.slug}/panier`);
+      router.push(` /panier`);
     }
   }, [shop.slug]);
 
@@ -166,7 +166,7 @@ export default function CommandeClient({ shop }: Props) {
 
             <div className="space-y-2 pt-2">
               <button
-                onClick={() => router.push(`/${shop.slug}/commande/confirmation?id=${commandeCreee._id}`)}
+                onClick={() => router.push(` /commande/confirmation?id=${commandeCreee._id}`)}
                 className="w-full py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
                 style={{ backgroundColor: t.accent, color: '#fff' }}>
                 Voir le detail de ma commande
@@ -186,7 +186,7 @@ export default function CommandeClient({ shop }: Props) {
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
            className="sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <Link href={`/${shop.slug}/panier`}
+          <Link href={` /panier`}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />

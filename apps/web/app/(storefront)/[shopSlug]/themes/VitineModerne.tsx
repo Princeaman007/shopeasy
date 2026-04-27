@@ -60,10 +60,10 @@ export default function VitrinModerne({ shop, produits }: Props) {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link href={`/${shop.slug}/catalogue`}
+            <Link href={` /catalogue`}
               className="text-sm font-medium hover:opacity-80 transition-opacity"
               style={{ color: t.muted }}>Catalogue</Link>
-            <Link href={`/${shop.slug}/about`}
+            <Link href={` /about`}
               className="text-sm font-medium hover:opacity-80 transition-opacity"
               style={{ color: t.muted }}>A propos</Link>
           </div>
@@ -81,9 +81,9 @@ export default function VitrinModerne({ shop, produits }: Props) {
         {menuOuvert && (
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-4 py-4 space-y-3">
-            <Link href={`/${shop.slug}/catalogue`} className="block text-sm font-medium py-2"
+            <Link href={` /catalogue`} className="block text-sm font-medium py-2"
               style={{ color: t.muted }} onClick={() => setMenuOuvert(false)}>Catalogue</Link>
-            <Link href={`/${shop.slug}/about`} className="block text-sm font-medium py-2"
+            <Link href={` /about`} className="block text-sm font-medium py-2"
               style={{ color: t.muted }} onClick={() => setMenuOuvert(false)}>A propos</Link>
             <Link href="/" className="block text-sm font-medium py-2" style={{ color: t.accent }}>
               ShopEasy CI
@@ -113,7 +113,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
                 </p>
               )}
               <div className="flex flex-wrap gap-3 justify-center">
-                <Link href={`/${shop.slug}/catalogue`}
+                <Link href={` /catalogue`}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90"
                   style={{ backgroundColor: t.accent, color: '#fff' }}>
                   Explorer la boutique <ChevronRight size={16} />
@@ -133,7 +133,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
       )}
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <Link href={`/${shop.slug}/recherche`}
+        <Link href={` /recherche`}
           className="flex items-center gap-3 px-4 py-3 rounded-2xl border w-full"
           style={{ backgroundColor: t.surface, borderColor: t.border }}>
           <Search size={18} style={{ color: t.muted }} />
@@ -144,7 +144,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
       <div className="max-w-6xl mx-auto px-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold" style={{ color: t.text }}>Nos produits</h2>
-          <Link href={`/${shop.slug}/catalogue`}
+          <Link href={` /catalogue`}
             className="text-sm font-medium flex items-center gap-1 hover:opacity-80"
             style={{ color: t.accent }}>
             Tout voir <ChevronRight size={14} />
@@ -159,7 +159,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {produits.map(produit => (
-              <Link key={produit._id} href={`/${shop.slug}/produits/${produit._id}`}
+              <Link key={produit._id} href={` /produits/${produit._id}`}
                 className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
                 style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
                 <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>

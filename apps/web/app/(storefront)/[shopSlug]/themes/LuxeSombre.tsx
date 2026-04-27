@@ -66,8 +66,8 @@ export default function LuxeSombre({ shop, produits }: Props) {
 
           <div className="hidden md:flex items-center gap-8">
             {[
-              { label: 'Collection', href: `/${shop.slug}/catalogue` },
-              { label: 'A propos', href: `/${shop.slug}/about` },
+              { label: 'Collection', href: ` /catalogue` },
+              { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
                 className="text-xs tracking-[0.15em] uppercase font-light hover:opacity-60 transition-opacity"
@@ -78,7 +78,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
           </div>
 
           <div className="flex items-center gap-3">
-            <Link href={`/${shop.slug}/recherche`} className="p-2 hover:opacity-70 transition-opacity">
+            <Link href={` /recherche`} className="p-2 hover:opacity-70 transition-opacity">
               <Search size={18} style={{ color: t.muted }} />
             </Link>
             <BoutonPanier shopSlug={shop.slug} accent={t.accent} />
@@ -95,8 +95,8 @@ export default function LuxeSombre({ shop, produits }: Props) {
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-6 py-4 space-y-4">
             {[
-              { label: 'Collection', href: `/${shop.slug}/catalogue` },
-              { label: 'A propos', href: `/${shop.slug}/about` },
+              { label: 'Collection', href: ` /catalogue` },
+              { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
                 className="block text-xs tracking-[0.15em] uppercase font-light py-2"
@@ -132,7 +132,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
               </p>
             )}
             <div className="flex flex-wrap gap-4 justify-center pt-2">
-              <Link href={`/${shop.slug}/catalogue`}
+              <Link href={` /catalogue`}
                 className="inline-flex items-center gap-2 px-8 py-3 text-xs tracking-[0.2em] uppercase font-light transition-all hover:opacity-80"
                 style={{ backgroundColor: t.accent, color: t.bg }}>
                 Decouvrir <ChevronRight size={14} />
@@ -158,7 +158,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
             <p className="text-xs tracking-[0.3em] uppercase mb-2" style={{ color: t.accent }}>Selection</p>
             <h2 className="text-2xl font-thin tracking-[0.1em]" style={{ color: t.text }}>Nos pieces</h2>
           </div>
-          <Link href={`/${shop.slug}/catalogue`}
+          <Link href={` /catalogue`}
             className="text-xs tracking-[0.2em] uppercase hover:opacity-60 transition-opacity flex items-center gap-2"
             style={{ color: t.accent }}>
             Tout voir <ChevronRight size={14} />
@@ -173,7 +173,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {produits.map(produit => (
-              <Link key={produit._id} href={`/${shop.slug}/produits/${produit._id}`}
+              <Link key={produit._id} href={` /produits/${produit._id}`}
                 className="group space-y-3">
                 <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
                   {produit.images?.[0]

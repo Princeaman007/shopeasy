@@ -66,8 +66,8 @@ export default function BoutiquePro({ shop, produits }: Props) {
           {/* Nav desktop */}
           <div className="hidden md:flex items-center gap-6">
             {[
-              { label: 'Catalogue', href: `/${shop.slug}/catalogue` },
-              { label: 'A propos', href: `/${shop.slug}/about` },
+              { label: 'Catalogue', href: ` /catalogue` },
+              { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
                 className="text-sm font-semibold hover:opacity-70 transition-opacity"
@@ -79,7 +79,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            <Link href={`/${shop.slug}/recherche`}
+            <Link href={` /recherche`}
               className="p-2 rounded-xl transition-colors"
               style={{ backgroundColor: t.elevated }}>
               <Search size={18} style={{ color: t.muted }} />
@@ -100,8 +100,8 @@ export default function BoutiquePro({ shop, produits }: Props) {
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-4 py-4 space-y-2">
             {[
-              { label: 'Catalogue', href: `/${shop.slug}/catalogue` },
-              { label: 'A propos', href: `/${shop.slug}/about` },
+              { label: 'Catalogue', href: ` /catalogue` },
+              { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
                 className="block text-sm font-semibold py-2"
@@ -145,7 +145,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
                 </p>
               )}
               <div className="flex flex-wrap gap-3 justify-center">
-                <Link href={`/${shop.slug}/catalogue`}
+                <Link href={` /catalogue`}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90"
                   style={{ backgroundColor: t.accent, color: '#fff' }}>
                   Explorer la boutique <ChevronRight size={16} />
@@ -166,7 +166,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
 
       {/* ── RECHERCHE ── */}
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <Link href={`/${shop.slug}/recherche`}
+        <Link href={` /recherche`}
           className="flex items-center gap-3 px-5 py-3.5 rounded-2xl border shadow-sm w-full"
           style={{ backgroundColor: t.surface, borderColor: t.border }}>
           <Search size={18} style={{ color: t.muted }} />
@@ -178,7 +178,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
       <div className="max-w-6xl mx-auto px-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold" style={{ color: t.text }}>Nos produits</h2>
-          <Link href={`/${shop.slug}/catalogue`}
+          <Link href={` /catalogue`}
             className="text-sm font-semibold flex items-center gap-1 hover:opacity-70 transition-opacity"
             style={{ color: t.accent }}>
             Tout voir <ChevronRight size={14} />
@@ -193,7 +193,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
             {produits.map(produit => (
-              <Link key={produit._id} href={`/${shop.slug}/produits/${produit._id}`}
+              <Link key={produit._id} href={` /produits/${produit._id}`}
                 className="group rounded-3xl overflow-hidden transition-all hover:shadow-xl hover:-translate-y-1"
                 style={{ backgroundColor: t.surface, border: `1px solid ${t.border}`, boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
                 <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>

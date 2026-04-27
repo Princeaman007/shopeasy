@@ -178,7 +178,7 @@ export default function AboutClient({ shop, produits }: Props) {
                 <Star size={14} />
                 Nos produits
               </h2>
-              <Link href={`/${shop.slug}/catalogue`}
+              <Link href={` /catalogue`}
                 className="text-sm flex items-center gap-1 hover:opacity-80 transition-opacity"
                 style={{ color: t.accent }}>
                 Tout voir <ChevronRight size={14} />
@@ -187,7 +187,7 @@ export default function AboutClient({ shop, produits }: Props) {
 
             <div className="grid grid-cols-3 gap-3">
               {produits.map(p => (
-                <Link key={p._id} href={`/${shop.slug}/produits/${p._id}`}
+                <Link key={p._id} href={` /produits/${p._id}`}
                   className="group rounded-xl overflow-hidden transition-all hover:scale-[1.02]"
                   style={{ backgroundColor: t.elevated, border: `1px solid ${t.border}` }}>
                   <div className="aspect-square relative overflow-hidden">
@@ -205,7 +205,7 @@ export default function AboutClient({ shop, produits }: Props) {
               ))}
             </div>
 
-            <Link href={`/${shop.slug}/catalogue`}
+            <Link href={` /catalogue`}
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border font-semibold text-sm transition-colors hover:opacity-80"
               style={{ borderColor: t.border, color: t.text }}>
               <ShoppingBag size={16} />
