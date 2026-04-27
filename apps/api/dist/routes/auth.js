@@ -185,11 +185,11 @@ router.post('/login', async (req, res) => {
         }
         let shop = null;
         if (user.role === 'merchant' && user.shopId) {
-            shop = await Shop_1.Shop.findById(user.shopId).select('slug name planType subscriptionStatus trialEndsAt selectedTheme');
+            shop = await Shop_1.Shop.findById(user.shopId).select('slug name planType subscriptionStatus trialEndsAt selectedTheme ownerId');
         }
         // ✅ Vérifie si l'user est équipier d'une boutique
         if (!shop) {
-            shop = await Shop_1.Shop.findOne({ admins: user._id }).select('slug name planType subscriptionStatus trialEndsAt selectedTheme');
+            shop = await Shop_1.Shop.findOne({ admins: user._id }).select('slug name planType subscriptionStatus trialEndsAt selectedTheme ownerId');
         }
         const tokenPayload = {
             userId: String(user._id),

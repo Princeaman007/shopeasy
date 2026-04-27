@@ -208,17 +208,17 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    let shop = null;
+  let shop = null;
 if (user.role === 'merchant' && user.shopId) {
   shop = await Shop.findById(user.shopId).select(
-    'slug name planType subscriptionStatus trialEndsAt selectedTheme'
+    'slug name planType subscriptionStatus trialEndsAt selectedTheme ownerId'
   );
 }
 
 // ✅ Vérifie si l'user est équipier d'une boutique
 if (!shop) {
   shop = await Shop.findOne({ admins: user._id }).select(
-    'slug name planType subscriptionStatus trialEndsAt selectedTheme'
+    'slug name planType subscriptionStatus trialEndsAt selectedTheme ownerId'
   );
 }
 
