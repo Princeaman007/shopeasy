@@ -217,7 +217,13 @@ router.post('/login', async (req, res) => {
             success: true,
             message: 'Connexion reussie',
             data: {
-                user: { id: user._id, name: user.name, email: user.email, role: user.role },
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                    isOwner: shop ? String(shop.ownerId ?? shop._id) === String(user._id) : false, // ← ajoute
+                },
                 shop,
                 token,
             },

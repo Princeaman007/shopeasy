@@ -248,15 +248,21 @@ const tokenPayload: IJwtPayload = {
       await rattacherCommandesInvite(String(user._id), user.email);
     }
 
-    res.json({
-      success: true,
-      message: 'Connexion reussie',
-      data: {
-        user: { id: user._id, name: user.name, email: user.email, role: user.role },
-        shop,
-        token,
-      },
-    });
+   res.json({
+  success: true,
+  message: 'Connexion reussie',
+  data: {
+    user: { 
+      id:      user._id, 
+      name:    user.name, 
+      email:   user.email, 
+      role:    user.role,
+      isOwner: shop ? String(shop.ownerId ?? shop._id) === String(user._id) : false, // ← ajoute
+    },
+    shop,
+    token,
+  },
+});
   } catch (error) {
     console.error('Erreur connexion :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });

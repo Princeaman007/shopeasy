@@ -12,10 +12,11 @@ import {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface User {
-  id:    string;
-  name:  string;
-  email: string;
-  role:  'merchant' | 'client' | 'admin';
+  id:       string;
+  name:     string;
+  email:    string;
+  role:     'merchant' | 'client' | 'admin';
+  isOwner?: boolean; // ← true si propriétaire de la boutique
 }
 
 interface Shop {
@@ -30,14 +31,15 @@ interface Shop {
 }
 
 interface AuthContextType {
-  user:        User | null;
-  shop:        Shop | null;
-  token:       string | null;
-  isLoading:   boolean;
-  isConnecte:  boolean;
-  login:       (token: string, user: User, shop?: Shop) => void;
-  logout:      () => Promise<void>;
-  refreshShop: () => Promise<void>;
+  user:              User | null;
+  shop:              Shop | null;
+  token:             string | null;
+  isLoading:         boolean;
+  isConnecte:        boolean;
+  estProprietaire:   boolean; // ← true si propriétaire de la boutique
+  login:             (token: string, user: User, shop?: Shop) => void;
+  logout:            () => Promise<void>;
+  refreshShop:       () => Promise<void>;
 }
 
 // ─── Contexte ─────────────────────────────────────────────────────────────────
@@ -107,7 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('user');
     localStorage.removeItem('shop');
 
-    // Supprime le cookie côté client aussi (au cas où)
     document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
     document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
 
@@ -155,7 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         shop,
         token,
         isLoading,
-        isConnecte: !!user,
+        isConnecte:      !!user,
+        estProprietaire: user?.isOwner ?? false,
         login,
         logout,
         refreshShop,
