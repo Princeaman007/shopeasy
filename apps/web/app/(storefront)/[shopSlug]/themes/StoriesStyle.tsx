@@ -35,7 +35,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
 
           <div className="flex items-center gap-3">
-            <Link href={`/${shop.slug}`} className="flex items-center gap-2">
+            <Link  href="/" className="flex items-center gap-2">
               {shop.logo
                 ? <Image src={shop.logo} alt={shop.name} width={36} height={36}
                   className="rounded-full object-cover"

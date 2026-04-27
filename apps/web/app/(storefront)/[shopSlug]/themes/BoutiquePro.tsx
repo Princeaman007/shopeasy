@@ -36,7 +36,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
 
           {/* Logo + nom + lien ShopEasy */}
           <div className="flex items-center gap-3">
-            <Link href={`/${shop.slug}`} className="flex items-center gap-3">
+            <Link  href="/" className="flex items-center gap-3">
               {shop.logo
                 ? <Image src={shop.logo} alt={shop.name} width={40} height={40}
                   className="rounded-2xl object-cover shadow-sm" />

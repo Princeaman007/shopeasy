@@ -35,7 +35,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
 
           <div className="flex items-center gap-3">
-            <Link href={`/${shop.slug}`} className="flex items-center gap-3">
+            <Link  href="/" className="flex items-center gap-3">
               {shop.logo
                 ? <Image src={shop.logo} alt={shop.name} width={40} height={40}
                   className="rounded-full object-cover"

@@ -172,7 +172,7 @@ export default function CommandeClient({ shop }: Props) {
                 Voir le detail de ma commande
               </button>
               <button
-                onClick={() => router.push(`/${shop.slug}`)}
+                onClick={() => router.push('/')}
                 className="w-full py-3 rounded-2xl font-semibold text-sm border transition-colors"
                 style={{ borderColor: t.border, color: t.muted }}>
                 Retour a la boutique

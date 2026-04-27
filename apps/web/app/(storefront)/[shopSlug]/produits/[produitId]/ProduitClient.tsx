@@ -344,7 +344,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             {/* Infos boutique */}
             <div className="p-4 rounded-2xl border space-y-2"
               style={{ backgroundColor: t.surface, borderColor: t.border }}>
-              <Link href={`/${shop.slug}`}
+              <Link  href="/"
                 className="flex items-center gap-2 font-semibold text-sm hover:opacity-80"
                 style={{ color: t.text }}>
                 {shop.name}

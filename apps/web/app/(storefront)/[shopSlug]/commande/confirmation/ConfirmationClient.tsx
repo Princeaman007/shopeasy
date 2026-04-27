@@ -39,7 +39,7 @@ export default function ConfirmationClient({ shop, commande }: Props) {
           <p className="text-sm" style={{ color: t.muted }}>
             Cette commande n'existe pas ou a expire.
           </p>
-          <Link href={`/${shop.slug}`}
+          <Link  href="/"
             className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-sm"
             style={{ backgroundColor: t.accent, color: '#fff' }}>
             <Home size={16} />
@@ -253,7 +253,7 @@ export default function ConfirmationClient({ shop, commande }: Props) {
               Suivre ma commande sur WhatsApp
             </Link>
           )}
-          <Link href={`/${shop.slug}`}
+          <Link  href="/"
             className="w-full py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 border transition-colors"
             style={{ borderColor: t.border, color: t.muted }}>
             <Home size={18} />
