@@ -114,7 +114,7 @@ export default function PanierClient({ shop }: Props) {
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
            className="sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href={` /catalogue`}
+          <Link href={"/catalogue"}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />
@@ -145,7 +145,7 @@ export default function PanierClient({ shop }: Props) {
             <ShoppingCart size={56} style={{ color: t.muted }} />
             <p className="font-semibold text-lg" style={{ color: t.text }}>Ton panier est vide</p>
             <p className="text-sm" style={{ color: t.muted }}>Ajoute des produits pour commencer</p>
-            <Link href={` /catalogue`}
+            <Link href={"/catalogue"}
               className="px-6 py-3 rounded-xl font-semibold text-sm transition-colors"
               style={{ backgroundColor: t.accent, color: '#fff' }}>
               Voir le catalogue
@@ -301,7 +301,7 @@ export default function PanierClient({ shop }: Props) {
               </div>
 
               {/* Bouton passer commande */}
-              <Link href={` /commande`}
+              <Link href={"/commande"}
                 className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 text-sm sm:text-base"
                 style={{ backgroundColor: t.accent, color: '#fff' }}>
                 <ShoppingCart size={18} />

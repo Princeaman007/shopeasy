@@ -71,7 +71,7 @@ export default function MarcheColore({ shop, produits }: Props) {
           <div className="hidden md:flex items-center gap-6">
             {(['Catalogue', 'A propos'] as const).map(lien => (
               <Link key={lien}
-                href={lien === 'Catalogue' ? ` /catalogue` : ` /about`}
+                href={lien === 'Catalogue' ? "/catalogue" : ` /about`}
                 className="text-sm font-semibold hover:opacity-70 transition-opacity"
                 style={{ color: t.text }}>
                 {lien}
@@ -97,7 +97,7 @@ export default function MarcheColore({ shop, produits }: Props) {
             className="md:hidden px-4 py-4 space-y-2">
             {(['Catalogue', 'A propos'] as const).map(lien => (
               <Link key={lien}
-                href={lien === 'Catalogue' ? ` /catalogue` : ` /about`}
+                href={lien === 'Catalogue' ? "/catalogue" : ` /about`}
                 className="block text-sm font-semibold py-2"
                 style={{ color: t.text }}
                 onClick={() => setMenuOuvert(false)}>
@@ -132,7 +132,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                 </p>
               )}
               <div className="flex flex-wrap gap-3 justify-center">
-                <Link href={` /catalogue`}
+                <Link href={"/catalogue"}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90"
                   style={{ backgroundColor: t.accent, color: '#fff' }}>
                   Explorer la boutique <ChevronRight size={16} />
@@ -163,7 +163,7 @@ export default function MarcheColore({ shop, produits }: Props) {
       <div className="max-w-6xl mx-auto px-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-extrabold" style={{ color: t.text }}>Nos produits</h2>
-          <Link href={` /catalogue`}
+          <Link href={"/catalogue"}
             className="text-sm font-bold flex items-center gap-1 hover:opacity-80 px-3 py-1.5 rounded-full border-2"
             style={{ borderColor: t.accent, color: t.accent }}>
             Tout voir <ChevronRight size={14} />

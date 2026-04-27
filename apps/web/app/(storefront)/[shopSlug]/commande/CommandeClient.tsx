@@ -51,10 +51,10 @@ export default function CommandeClient({ shop }: Props) {
     const data = localStorage.getItem(`panier_${shop.slug}`);
     if (data) {
       const parsed = JSON.parse(data);
-      if (parsed.length === 0) router.push(` /panier`);
+      if (parsed.length === 0) router.push("/panier");
       else setArticles(parsed);
     } else {
-      router.push(` /panier`);
+      router.push("/panier");
     }
   }, [shop.slug]);
 
@@ -186,7 +186,7 @@ export default function CommandeClient({ shop }: Props) {
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
            className="sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <Link href={` /panier`}
+          <Link href={"/panier"}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />

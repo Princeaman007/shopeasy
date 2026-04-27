@@ -74,7 +74,7 @@ export default function FavorisClient({ shop }: Props) {
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
            className="sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href={` /catalogue`}
+          <Link href={"/catalogue"}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />
@@ -111,7 +111,7 @@ export default function FavorisClient({ shop }: Props) {
             <p className="text-sm" style={{ color: t.muted }}>
               Clique sur ❤️ sur un produit pour le sauvegarder
             </p>
-            <Link href={` /catalogue`}
+            <Link href={"/catalogue"}
               className="px-6 py-3 rounded-xl font-semibold text-sm transition-colors"
               style={{ backgroundColor: t.accent, color: '#fff' }}>
               Voir le catalogue

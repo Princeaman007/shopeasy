@@ -66,7 +66,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
 
           <div className="hidden md:flex items-center gap-8">
             {[
-              { label: 'Collection', href: ` /catalogue` },
+              { label: 'Collection', href: "/catalogue" },
               { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
@@ -95,7 +95,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-6 py-4 space-y-4">
             {[
-              { label: 'Collection', href: ` /catalogue` },
+              { label: 'Collection', href: "/catalogue" },
               { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
@@ -132,7 +132,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
               </p>
             )}
             <div className="flex flex-wrap gap-4 justify-center pt-2">
-              <Link href={` /catalogue`}
+              <Link href={"/catalogue"}
                 className="inline-flex items-center gap-2 px-8 py-3 text-xs tracking-[0.2em] uppercase font-light transition-all hover:opacity-80"
                 style={{ backgroundColor: t.accent, color: t.bg }}>
                 Decouvrir <ChevronRight size={14} />
@@ -158,7 +158,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
             <p className="text-xs tracking-[0.3em] uppercase mb-2" style={{ color: t.accent }}>Selection</p>
             <h2 className="text-2xl font-thin tracking-[0.1em]" style={{ color: t.text }}>Nos pieces</h2>
           </div>
-          <Link href={` /catalogue`}
+          <Link href={"/catalogue"}
             className="text-xs tracking-[0.2em] uppercase hover:opacity-60 transition-opacity flex items-center gap-2"
             style={{ color: t.accent }}>
             Tout voir <ChevronRight size={14} />

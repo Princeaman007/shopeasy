@@ -178,7 +178,7 @@ export default function AboutClient({ shop, produits }: Props) {
                 <Star size={14} />
                 Nos produits
               </h2>
-              <Link href={` /catalogue`}
+              <Link href={"/catalogue"}
                 className="text-sm flex items-center gap-1 hover:opacity-80 transition-opacity"
                 style={{ color: t.accent }}>
                 Tout voir <ChevronRight size={14} />
@@ -205,7 +205,7 @@ export default function AboutClient({ shop, produits }: Props) {
               ))}
             </div>
 
-            <Link href={` /catalogue`}
+            <Link href={"/catalogue"}
               className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border font-semibold text-sm transition-colors hover:opacity-80"
               style={{ borderColor: t.border, color: t.text }}>
               <ShoppingBag size={16} />

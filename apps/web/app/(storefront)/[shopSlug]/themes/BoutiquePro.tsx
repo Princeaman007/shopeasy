@@ -66,7 +66,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
           {/* Nav desktop */}
           <div className="hidden md:flex items-center gap-6">
             {[
-              { label: 'Catalogue', href: ` /catalogue` },
+              { label: 'Catalogue', href: "/catalogue" },
               { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
@@ -100,7 +100,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-4 py-4 space-y-2">
             {[
-              { label: 'Catalogue', href: ` /catalogue` },
+              { label: 'Catalogue', href: "/catalogue" },
               { label: 'A propos', href: ` /about` },
             ].map(l => (
               <Link key={l.label} href={l.href}
@@ -145,7 +145,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
                 </p>
               )}
               <div className="flex flex-wrap gap-3 justify-center">
-                <Link href={` /catalogue`}
+                <Link href={"/catalogue"}
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90"
                   style={{ backgroundColor: t.accent, color: '#fff' }}>
                   Explorer la boutique <ChevronRight size={16} />
@@ -178,7 +178,7 @@ export default function BoutiquePro({ shop, produits }: Props) {
       <div className="max-w-6xl mx-auto px-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold" style={{ color: t.text }}>Nos produits</h2>
-          <Link href={` /catalogue`}
+          <Link href={"/catalogue"}
             className="text-sm font-semibold flex items-center gap-1 hover:opacity-70 transition-opacity"
             style={{ color: t.accent }}>
             Tout voir <ChevronRight size={14} />

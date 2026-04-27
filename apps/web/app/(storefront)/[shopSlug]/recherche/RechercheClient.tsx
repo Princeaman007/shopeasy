@@ -252,7 +252,7 @@ export default function RechercheClient({ shop, produits, queryInitiale }: Props
                   </p>
                 </div>
                 <Link
-                  href={` /catalogue`}
+                  href={"/catalogue"}
                   className="px-5 py-2.5 rounded-xl text-sm font-semibold"
                   style={{ backgroundColor: t.accent, color: '#fff' }}
                 >

@@ -177,7 +177,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               </button>
             )}
           </div>
-          <Link href={` /panier`} className="p-2 rounded-xl flex-shrink-0"
+          <Link href={"/panier"} className="p-2 rounded-xl flex-shrink-0"
             style={{ backgroundColor: t.elevated }}>
             <ShoppingCart size={20} style={{ color: t.text }} />
           </Link>
