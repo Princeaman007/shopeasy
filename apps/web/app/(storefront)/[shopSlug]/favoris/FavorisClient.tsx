@@ -130,7 +130,7 @@ export default function FavorisClient({ shop }: Props) {
                   style={{ backgroundColor: t.elevated }}>
                   {favori.image
                     ? <Image src={favori.image} alt={favori.nom} fill className="object-cover" />
-                    : <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
+                    : <div className="w-full h-full flex items-center justify-center text-2xl"></div>
                   }
                 </Link>
 

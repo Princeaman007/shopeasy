@@ -70,7 +70,7 @@ export default function AboutClient({ shop, produits }: Props) {
                 style={{ backgroundColor: t.elevated, borderColor: t.surface }}>
                 {shop.logo
                   ? <Image src={shop.logo} alt={shop.name} fill className="object-cover" />
-                  : <div className="w-full h-full flex items-center justify-center text-3xl">🛍️</div>
+                  : <div className="w-full h-full flex items-center justify-center text-3xl"></div>
                 }
               </div>
               {shop.isVerified && (
@@ -194,7 +194,7 @@ export default function AboutClient({ shop, produits }: Props) {
                     {p.images?.[0]
                       ? <Image src={p.images[0]} alt={p.name} fill
                         className="object-cover group-hover:scale-105 transition-transform" />
-                      : <div className="w-full h-full flex items-center justify-center text-2xl">🛍️</div>
+                      : <div className="w-full h-full flex items-center justify-center text-2xl"></div>
                     }
                   </div>
                   <div className="p-2 space-y-0.5">
@@ -219,7 +219,7 @@ export default function AboutClient({ shop, produits }: Props) {
           style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
           <p className="text-xs" style={{ color: t.muted }}>Boutique propulsée par</p>
           <Link href="/" className="font-bold text-sm hover:underline" style={{ color: t.accent }}>
-            ShopEasy CI 🛍️
+            ShopEasy CI 
           </Link>
           <p className="text-xs" style={{ color: t.muted }}>
             Crée ta propre boutique en ligne gratuitement

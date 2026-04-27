@@ -22,8 +22,7 @@ interface Categorie {
 // ---------------------------------------------------------------------------
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-const EMOJIS = ['📦','👗','👔','👟','👜','🕶️','💄','🧸','🏠','🍎',
-                 '💍','👒','🎒','🧴','🛍️','✨','🌸','🎀','🔥','💎'];
+
 
 // ---------------------------------------------------------------------------
 // Composant modal — créer / modifier une catégorie
@@ -40,7 +39,6 @@ function ModalCategorie({
   onSave: () => void;
 }) {
   const [nom,      setNom]      = useState(categorie?.name     ?? '');
-  const [icone,    setIcone]    = useState(categorie?.icon     ?? '📦');
   const [parentId, setParentId] = useState(categorie?.parentId ?? '');
   const [loading,  setLoading]  = useState(false);
   const [erreur,   setErreur]   = useState('');
@@ -65,9 +63,9 @@ function ModalCategorie({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
+       body: JSON.stringify({
           name:     nom.trim(),
-          icon:     icone,
+          icon:     '📦',
           parentId: parentId || null,
         }),
       });
@@ -105,24 +103,7 @@ function ModalCategorie({
           />
         </div>
 
-        {/* Icône */}
-        <div className="space-y-2">
-          <label className="text-muted text-sm">Icône</label>
-          <div className="flex flex-wrap gap-2">
-            {EMOJIS.map(e => (
-              <button
-                key={e}
-                onClick={() => setIcone(e)}
-                className={`w-9 h-9 rounded-lg text-lg flex items-center justify-center transition-all
-                            ${icone === e
-                              ? 'bg-primary/20 border-2 border-primary scale-110'
-                              : 'bg-elevated border border-border hover:border-primary/50'}`}
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-        </div>
+      
 
         {/* Catégorie parente (sous-catégorie) */}
         <div className="space-y-1">

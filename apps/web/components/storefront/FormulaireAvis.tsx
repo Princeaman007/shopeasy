@@ -61,7 +61,7 @@ export default function FormulaireAvis({
     return (
       <div className="p-4 rounded-2xl border text-center space-y-2"
            style={{ backgroundColor: `${accent}10`, borderColor: `${accent}30` }}>
-        <p className="text-2xl">🎉</p>
+        <p className="text-2xl"></p>
         <p className="font-semibold text-sm" style={{ color: accent }}>
           Merci pour votre avis !
         </p>

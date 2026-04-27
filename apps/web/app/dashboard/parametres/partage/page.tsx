@@ -111,16 +111,16 @@ export default function PagePartage() {
 
     // -- Messages partage --
     const msgWhatsApp = encodeURIComponent(
-        `Découvrez ma boutique en ligne "${nomShop}" 🛍️\n${urlBoutique}`
+        `Découvrez ma boutique en ligne "${nomShop}" \n${urlBoutique}`
     );
-    const msgInstagram = `Découvrez ma boutique en ligne "${nomShop}" 🛍️ ${urlBoutique}`;
-    const msgTikTok = `Boutique en ligne : ${urlBoutique} 🛍️`;
+    const msgInstagram = `Découvrez ma boutique en ligne "${nomShop}"  ${urlBoutique}`;
+    const msgTikTok = `Boutique en ligne : ${urlBoutique} `;
     const msgFacebook = encodeURIComponent(urlBoutique);
 
     const partagerWhatsApp = () => window.open(`https://wa.me/?text=${msgWhatsApp}`, '_blank');
     const partagerInstagram = () => {
         navigator.clipboard.writeText(msgInstagram);
-        alert("Lien copié ! Colle-le dans ta bio ou ta story Instagram 📸");
+        alert("Lien copié ! Colle-le dans ta bio ou ta story Instagram ");
     };
     const partagerTikTok = () => {
         navigator.clipboard.writeText(msgTikTok);

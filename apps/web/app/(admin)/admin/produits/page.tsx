@@ -239,7 +239,7 @@ export default function PageProduitsAdmin() {
                               ? <Image src={p.images[0]} alt={p.name}
                                        fill className="object-cover" />
                               : <div className="w-full h-full flex items-center
-                                                justify-center text-lg">🛍️</div>
+                                                justify-center text-lg"></div>
                             }
                           </div>
                           <p className="text-white text-sm font-medium truncate max-w-[180px]">

@@ -177,7 +177,7 @@ export default function PageDetailMarchand({
                          className="rounded-2xl object-cover flex-shrink-0" />
                 : <div className="w-16 h-16 rounded-2xl bg-elevated flex items-center
                                   justify-center text-2xl flex-shrink-0">
-                    🛍️
+              
                   </div>
               }
               <div className="space-y-1">
@@ -203,7 +203,7 @@ export default function PageDetailMarchand({
               {[
                 { label: 'Produits',  valeur: produits.length,                          icone: <Package     size={16} /> },
                 { label: 'Commandes', valeur: 0,                                         icone: <ShoppingBag size={16} /> },
-                { label: 'Thème',     valeur: boutique.selectedTheme ?? 'vitrine-moderne', icone: <span>🎨</span>         },
+                { label: 'Thème',     valeur: boutique.selectedTheme ?? 'vitrine-moderne', icone: <span></span>         },
               ].map(s => (
                 <div key={s.label}
                      className="bg-elevated rounded-xl p-3 border border-border">
@@ -268,7 +268,7 @@ export default function PageDetailMarchand({
                       {p.images?.[0]
                         ? <Image src={p.images[0]} alt={p.name} fill
                                  className="object-cover" />
-                        : <span>🛍️</span>
+                        : <span></span>
                       }
                     </div>
                     <div className="flex-1 min-w-0">

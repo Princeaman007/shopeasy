@@ -227,7 +227,7 @@ export default function PageDetailCommandeAdmin({
                           fill className="object-cover"
                         />
                       : <div className="w-full h-full flex items-center
-                                        justify-center text-xl">🛍️</div>
+                                        justify-center text-xl"></div>
                     }
                   </div>
                   <div className="flex-1 min-w-0">

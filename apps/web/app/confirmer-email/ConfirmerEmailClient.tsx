@@ -68,7 +68,7 @@ export default function ConfirmerEmailClient() {
         {statut === 'succes' && (
           <div className="space-y-4">
             <CheckCircle size={48} className="text-primary mx-auto" />
-            <h1 className="text-white font-bold text-xl">Email confirmé ! 🎉</h1>
+            <h1 className="text-white font-bold text-xl">Email confirmé !</h1>
             <p className="text-muted text-sm">{message}</p>
             <p className="text-muted text-xs">Redirection dans 3 secondes...</p>
             <Link href="/connexion"

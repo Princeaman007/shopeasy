@@ -87,7 +87,7 @@ export default function Themes() {
         {/* En-tête */}
         <div className="text-center mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2">
-            <span className="text-primary text-sm font-medium">🎨 5 thèmes disponibles</span>
+            <span className="text-primary text-sm font-medium"> 5 thèmes disponibles</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
             Une boutique à votre image
@@ -150,7 +150,7 @@ export default function Themes() {
                         className="h-10 flex items-center justify-center text-lg"
                         style={{ backgroundColor: theme.couleurPrimaire + '20' }}
                       >
-                        🛍️
+                        
                       </div>
                       <div className="p-1">
                         <p
@@ -173,7 +173,7 @@ export default function Themes() {
                     fontSize: '9px',
                   }}
                 >
-                  💬 Commander via WhatsApp
+                   Commander via WhatsApp
                 </div>
               </div>
 

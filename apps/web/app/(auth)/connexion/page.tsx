@@ -105,7 +105,7 @@ export default function ConnexionPage() {
               Shop<span className="text-primary">Easy</span> CI
             </span>
           </Link>
-          <h1 className="text-white font-bold text-2xl mt-6">Bon retour ! 👋</h1>
+          <h1 className="text-white font-bold text-2xl mt-6">Bon retour !</h1>
           <p className="text-muted mt-2">Connectez-vous à votre compte</p>
         </div>
 

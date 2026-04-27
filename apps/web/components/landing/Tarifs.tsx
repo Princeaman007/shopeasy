@@ -66,7 +66,7 @@ export default function Tarifs() {
         {/* En-tête */}
         <div className="text-center mb-16 space-y-4">
           <div className="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-full px-4 py-2">
-            <span className="text-primary text-sm font-medium">💰 Tarifs transparents</span>
+            <span className="text-primary text-sm font-medium"> Tarifs transparents</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white">
             Choisissez votre plan
@@ -90,7 +90,7 @@ export default function Tarifs() {
                 {plan.badge && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                     <span className="bg-primary text-black text-sm font-bold px-4 py-1.5 rounded-full">
-                      ⭐ {plan.badge}
+                       {plan.badge}
                     </span>
                   </div>
                 )}

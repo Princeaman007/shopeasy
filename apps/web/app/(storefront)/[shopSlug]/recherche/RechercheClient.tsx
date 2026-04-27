@@ -210,7 +210,7 @@ export default function RechercheClient({ shop, produits, queryInitiale }: Props
                         ? <Image src={p.images[0]} alt={p.name} fill
                                  className="object-cover" />
                         : <div className="w-full h-full flex items-center
-                                          justify-center text-xl">🛍️</div>
+                                          justify-center text-xl"></div>
                       }
                     </div>
                     <div className="min-w-0">
@@ -279,7 +279,7 @@ export default function RechercheClient({ shop, produits, queryInitiale }: Props
                         ? <Image src={p.images[0]} alt={p.name} fill
                                  className="object-cover" />
                         : <div className="w-full h-full flex items-center
-                                          justify-center text-2xl">🛍️</div>
+                                          justify-center text-2xl"></div>
                       }
                     </div>
 

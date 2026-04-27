@@ -371,7 +371,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           <div className="mt-6 p-4 rounded-2xl border space-y-2"
             style={{ backgroundColor: t.surface, borderColor: t.border }}>
             <p className="text-sm font-semibold" style={{ color: t.text }}>
-              🔄 Politique de retour
+               Politique de retour
             </p>
             <p className="text-xs leading-relaxed" style={{ color: t.muted }}>
               {shop.about.returnPolicy}

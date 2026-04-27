@@ -128,13 +128,13 @@ export default function Faq() {
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 bg-green-500/10 hover:bg-green-500/20 border border-green-500/30 text-green-400 font-semibold px-6 py-3 rounded-xl transition-colors"
             >
-              💬 WhatsApp
+               WhatsApp
             </Link>
             <Link
               href="mailto:info@shopeasyci.ci"
               className="inline-flex items-center justify-center gap-2 bg-elevated hover:bg-border border border-border text-white font-semibold px-6 py-3 rounded-xl transition-colors"
             >
-              ✉️ Email
+               Email
             </Link>
           </div>
         </div>
