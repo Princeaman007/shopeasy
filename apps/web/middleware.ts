@@ -23,18 +23,6 @@ export function middleware(req: NextRequest) {
     hostname.endsWith('.shopeasyci.ci')
   );
 
-  // ✅ Redirect www → sous-domaine via referer
-  const referer = req.headers.get('referer') || '';
-  if (isMainDomain && referer.includes('.shopeasyci.store')) {
-    try {
-      const refererUrl     = new URL(referer);
-      const shopSlug       = refererUrl.hostname.split('.')[0];
-      const redirectUrl    = new URL(req.url);
-      redirectUrl.hostname = `${shopSlug}.shopeasyci.store`;
-      return NextResponse.redirect(redirectUrl);
-    } catch {}
-  }
-
   if (isSubdomain) {
     const shopSlug = hostname.split('.')[0];
     const url      = req.nextUrl.clone();
