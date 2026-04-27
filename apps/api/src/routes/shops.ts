@@ -63,11 +63,23 @@ const uploadToCloudinary = (
     stream.end(buffer);
   });
 
+// ─── Helper — trouve la boutique du marchand ou de l'équipier ─────────────────
+
+const getMyShop = async (userId: string, shopId?: string) => {
+  // Propriétaire
+  let shop = await Shop.findOne({ ownerId: userId });
+  // Équipier — utilise le shopId du token JWT
+  if (!shop && shopId) {
+    shop = await Shop.findById(shopId);
+  }
+  return shop;
+};
+
 // ─── GET /shops/me ────────────────────────────────────────────────────────────
 
 router.get('/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shop = await Shop.findOne({ ownerId: req.user!.userId }).select('-__v').lean();
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
     res.json({ success: true, data: shop });
   } catch (error) {
@@ -80,7 +92,7 @@ router.get('/me', authenticate, requireMerchant, async (req: Request, res: Respo
 
 router.get('/me/stats', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
     const [totalProduits, totalCategories] = await Promise.all([
@@ -109,8 +121,9 @@ router.get('/me/stats', authenticate, requireMerchant, async (req: Request, res:
 
 router.get('/me/equipe', authenticate, requireMerchant, async (req: Request, res: Response): Promise<void> => {
   try {
-    const shop = await Shop.findOne({ ownerId: req.user!.userId }).populate('admins', 'name email');
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+    await shop.populate('admins', 'name email');
     res.json({ success: true, membres: shop.admins });
   } catch {
     res.status(500).json({ message: 'Erreur serveur' });
@@ -184,7 +197,7 @@ router.patch('/me', authenticate, requireMerchant, async (req: Request, res: Res
       return;
     }
 
-    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
     const { name, whatsapp, whatsappOrderNotif, logo } = parsed.data;
@@ -210,7 +223,7 @@ router.patch('/me', authenticate, requireMerchant, async (req: Request, res: Res
 router.patch('/me/theme', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
     const { selectedTheme } = req.body;
-    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
 
     const THEMES_BASIC   = ['vitrine-moderne', 'marche-colore'];
@@ -240,13 +253,12 @@ router.patch('/me/about', authenticate, requireMerchant, async (req: Request, re
       return;
     }
 
-    const shop = await Shop.findOneAndUpdate(
-      { ownerId: req.user!.userId },
-      { $set: { about: parsed.data } },
-      { new: true, select: '-__v' }
-    );
-
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
+
+    (shop as any).about = parsed.data;
+    await shop.save();
+
     res.json({ success: true, data: shop, message: 'A propos mis a jour' });
   } catch (error) {
     console.error('Erreur PATCH /shops/me/about :', error);
@@ -259,7 +271,7 @@ router.patch('/me/about', authenticate, requireMerchant, async (req: Request, re
 router.post('/me/logo', authenticate, requireMerchant, upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) { res.status(400).json({ success: false, message: 'Aucun fichier recu' }); return; }
-    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
     const result = await uploadToCloudinary(req.file.buffer, `shopeasy/${shop._id}/logo`,
       [{ width: 400, height: 400, crop: 'fill' }]);
@@ -275,7 +287,7 @@ router.post('/me/logo', authenticate, requireMerchant, upload.single('file'), as
 router.post('/me/owner-photo', authenticate, requireMerchant, upload.single('file'), async (req: Request, res: Response) => {
   try {
     if (!req.file) { res.status(400).json({ success: false, message: 'Aucun fichier recu' }); return; }
-    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
     const result = await uploadToCloudinary(req.file.buffer, `shopeasy/${shop._id}/owner`,
       [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }]);
@@ -299,7 +311,7 @@ router.post('/me/hero', authenticate, requireMerchant, (req, res, next) => {
 }, async (req: Request, res: Response) => {
   try {
     if (!req.file) { res.status(400).json({ success: false, message: 'Aucun fichier recu' }); return; }
-    const shop = await Shop.findOne({ ownerId: req.user!.userId });
+    const shop = await getMyShop(req.user!.userId, req.user!.shopId);
     if (!shop) { res.status(404).json({ success: false, message: 'Boutique introuvable' }); return; }
     const result = await uploadToCloudinary(req.file.buffer, `shopeasy/${shop._id}/hero`,
       [{ width: 1920, height: 600, crop: 'fill', gravity: 'auto' }]);
