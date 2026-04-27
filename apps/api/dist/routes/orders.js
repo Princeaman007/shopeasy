@@ -88,7 +88,7 @@ const genererNumeroCommande = async () => {
     const numero = String(count + 1).padStart(4, '0');
     return `SEC-${annee}-${numero}`;
 };
-const getShop = (userId) => Shop_1.Shop.findOne({ ownerId: userId });
+const getShop = (userId, shopId) => Shop_1.Shop.findOne({ ownerId: userId }).then(shop => shop ? shop : shopId ? Shop_1.Shop.findById(shopId) : null);
 // ---------------------------------------------------------------------------
 // POST /orders — Créer une commande (public, storefront)
 // ---------------------------------------------------------------------------
@@ -282,7 +282,7 @@ router.get('/mes-commandes', auth_1.authenticate, async (req, res) => {
 // ---------------------------------------------------------------------------
 router.get('/shop/me', auth_1.authenticate, auth_1.requireMerchant, async (req, res) => {
     try {
-        const shop = await getShop(req.user.userId);
+        const shop = await getShop(req.user.userId, req.user.shopId);
         if (!shop) {
             res.status(404).json({ success: false, message: 'Boutique introuvable' });
             return;
@@ -319,7 +319,7 @@ router.get('/shop/me', auth_1.authenticate, auth_1.requireMerchant, async (req, 
 // ---------------------------------------------------------------------------
 router.get('/shop/me/stats', auth_1.authenticate, auth_1.requireMerchant, async (req, res) => {
     try {
-        const shop = await getShop(req.user.userId);
+        const shop = await getShop(req.user.userId, req.user.shopId);
         if (!shop) {
             res.status(404).json({ success: false, message: 'Boutique introuvable' });
             return;
@@ -393,7 +393,7 @@ router.patch('/:id/status', auth_1.authenticate, auth_1.requireMerchant, async (
             });
             return;
         }
-        const shop = await getShop(req.user.userId);
+        const shop = await getShop(req.user.userId, req.user.shopId);
         if (!shop) {
             res.status(404).json({ success: false, message: 'Boutique introuvable' });
             return;

@@ -63,7 +63,10 @@ const genererNumeroCommande = async (): Promise<string> => {
   return `SEC-${annee}-${numero}`;
 };
 
-const getShop = (userId: string) => Shop.findOne({ ownerId: userId });
+const getShop = (userId: string, shopId?: string) =>
+  Shop.findOne({ ownerId: userId }).then(shop =>
+    shop ? shop : shopId ? Shop.findById(shopId) : null
+  );
 
 // ---------------------------------------------------------------------------
 // POST /orders — Créer une commande (public, storefront)
@@ -279,7 +282,7 @@ router.get('/mes-commandes', authenticate, async (req, res) => {
 // ---------------------------------------------------------------------------
 router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shop = await getShop(req.user!.userId);
+    const shop = await getShop(req.user!.userId, req.user!.shopId);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;
@@ -319,7 +322,7 @@ router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: 
 // ---------------------------------------------------------------------------
 router.get('/shop/me/stats', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shop = await getShop(req.user!.userId);
+    const shop = await getShop(req.user!.userId, req.user!.shopId);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;
@@ -398,7 +401,7 @@ router.patch('/:id/status', authenticate, requireMerchant, async (req: Request, 
       return;
     }
 
-    const shop = await getShop(req.user!.userId);
+    const shop = await getShop(req.user!.userId, req.user!.shopId);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;
