@@ -24,12 +24,14 @@ export function middleware(req: NextRequest) {
     hostname.endsWith('.shopeasyci.ci')
   );
 
-  if (isSubdomain) {
-    const shopSlug = hostname.split('.')[0];
-    const url      = req.nextUrl.clone();
-    url.pathname   = `/${shopSlug}${pathname}`;
-    return NextResponse.rewrite(url);
-  }
+ if (isSubdomain) {
+  const shopSlug = hostname.split('.')[0];
+  const url      = req.nextUrl.clone();
+  url.pathname   = pathname === '/' 
+    ? `/${shopSlug}` 
+    : `/${shopSlug}${pathname}`;
+  return NextResponse.rewrite(url);
+}
 
   // ── Auth ──────────────────────────────────────────────────────────────────
 
