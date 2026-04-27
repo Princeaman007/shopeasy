@@ -250,7 +250,7 @@ export default function PageParamsBoutique() {
           <label className="text-muted text-sm">URL de ta boutique</label>
           <div className="flex items-center bg-elevated border border-border rounded-xl px-4 py-3 gap-2">
             <Globe size={15} className="text-muted flex-shrink-0" />
-            <span className="text-muted text-sm">{slug}.shopeasyci.ci</span>
+            <span className="text-muted text-sm">{slug}.shopeasyci.store</span>
             <span className="ml-auto text-xs text-muted bg-border px-2 py-0.5 rounded-full">Non modifiable</span>
           </div>
         </div>
