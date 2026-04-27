@@ -71,8 +71,11 @@ export default function ConnexionPage() {
       const role = result.data.user.role;
         if (role === 'admin')              window.location.href = '/admin';
         else if (role === 'merchant')      window.location.href = '/dashboard';
-        else if (result.data.shop)         window.location.href = '/dashboard';
-        else                               window.location.href = '/mes-commandes';                         window.location.href = '/mes-commandes';
+        const role = result.data.user.role;
+          if (role === 'admin')         window.location.href = '/admin';
+          else if (role === 'merchant') window.location.href = '/dashboard';
+          else if (result.data.shop)    window.location.href = '/dashboard';
+          else                          window.location.href = '/mes-commandes';                              window.location.href = '/mes-commandes';                         window.location.href = '/mes-commandes';
     } catch {
       setErreurServeur('Erreur réseau — vérifiez votre connexion');
     }

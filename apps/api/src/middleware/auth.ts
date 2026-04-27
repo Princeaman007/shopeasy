@@ -80,15 +80,31 @@ export const requireMerchant = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  if (!req.user || req.user.role !== 'merchant') {
+  if (!req.user) {
+    res.status(403).json({ success: false, message: 'Non authentifie' });
+    return;
+  }
+
+  // ✅ Autorise marchands ET équipiers (client avec shopId)
+  const estMarchand = req.user.role === 'merchant';
+  const estEquipier = req.user.role === 'client' && !!req.user.shopId;
+
+  if (!estMarchand && !estEquipier) {
     res.status(403).json({
       success: false,
-      message: 'Acces reserve aux marchands',
+      message: 'Acces reserve aux marchands et equipiers',
     });
     return;
   }
 
-  if (!req.user.shopId) {
+  // ✅ Pour les équipiers, trouve la boutique via admins
+  let shopId = req.user.shopId;
+  if (estEquipier && !shopId) {
+    const shopAdmin = await Shop.findOne({ admins: req.user.userId }).select('_id');
+    if (shopAdmin) shopId = String(shopAdmin._id);
+  }
+
+  if (!shopId) {
     res.status(403).json({
       success: false,
       message: 'Aucune boutique associee a ce compte',
@@ -97,7 +113,7 @@ export const requireMerchant = async (
   }
 
   // Charge les infos de la boutique
-  const shop = await Shop.findById(req.user.shopId).select(
+  const shop = await Shop.findById(shopId).select(
     'planType subscriptionStatus trialEndsAt'
   );
 
