@@ -43,7 +43,7 @@ async function fetchBoutiques(): Promise<Boutique[]> {
 
 function CarteBoutique({ boutique }: { boutique: Boutique }) {
   return (
-    <Link href={`/${boutique.slug}`}
+    <Link href={`https://${boutique.slug}.shopeasyci.store`}
       className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all duration-300">
       <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/5' }}>
         {boutique.heroImage ? (
@@ -90,7 +90,7 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         </span>
         <span className="text-primary text-xs font-semibold">Visiter</span>
       </div>
-    </Link>
+    </>
   );
 }
 
