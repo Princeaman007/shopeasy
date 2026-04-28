@@ -23,7 +23,13 @@ export function middleware(req: NextRequest) {
   if (isSubdomain) {
     const shopSlug = hostname.replace(`.${ROOT_DOMAIN}`, '');
     const url = req.nextUrl.clone();
-    url.pathname = pathname === '/' ? `/${shopSlug}` : `/${shopSlug}${pathname}`;
+
+    // ✅ Évite le double slug
+    const cleanPath = pathname.startsWith(`/${shopSlug}`)
+      ? pathname.slice(shopSlug.length + 1) || '/'
+      : pathname;
+
+    url.pathname = cleanPath === '/' ? `/${shopSlug}` : `/${shopSlug}${cleanPath}`;
 
     const response = NextResponse.rewrite(url);
     response.cookies.set('currentShop', shopSlug, {
