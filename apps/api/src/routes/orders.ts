@@ -180,7 +180,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       }
     }
 
-    const total        = Math.max(0, (totalFront ?? subtotal) - discount);
+    const total = totalFront ?? Math.max(0, subtotal - discount);
     const orderNumber  = await genererNumeroCommande();
     const clientNom    = nomClient ?? customer?.name    ?? '';
     const clientTel    = telephone ?? customer?.phone   ?? '';
