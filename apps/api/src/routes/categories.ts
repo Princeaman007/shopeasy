@@ -15,7 +15,10 @@ const categorySchema = z.object({
   order:    z.number().optional(),
 });
 
-const getShop = (userId: string) => Shop.findOne({ ownerId: userId });
+const getShop = async (userId: string, shopId?: string) => {
+  if (shopId) return Shop.findById(shopId);
+  return Shop.findOne({ $or: [{ ownerId: userId }, { admins: userId }] });
+};
 
 // ---------------------------------------------------------------------------
 // GET /categories/shop/me — Catégories du marchand connecté
@@ -23,7 +26,7 @@ const getShop = (userId: string) => Shop.findOne({ ownerId: userId });
 // ---------------------------------------------------------------------------
 router.get('/shop/me', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shop = await getShop(req.user!.userId);
+    const shop = await getShop(req.user!.userId, req.shop?.id);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;
@@ -71,7 +74,7 @@ router.post('/', authenticate, requireMerchant, async (req: Request, res: Respon
       return;
     }
 
-    const shop = await getShop(req.user!.userId);
+    const shop = await getShop(req.user!.userId, req.shop?.id);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;
@@ -117,7 +120,7 @@ router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Re
       return;
     }
 
-    const shop = await getShop(req.user!.userId);
+    const shop = await getShop(req.user!.userId, req.shop?.id);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;
@@ -152,7 +155,7 @@ router.patch('/:id', authenticate, requireMerchant, async (req: Request, res: Re
 // ---------------------------------------------------------------------------
 router.delete('/:id', authenticate, requireMerchant, async (req: Request, res: Response) => {
   try {
-    const shop = await getShop(req.user!.userId);
+    const shop = await getShop(req.user!.userId, req.shop?.id);
     if (!shop) {
       res.status(404).json({ success: false, message: 'Boutique introuvable' });
       return;

@@ -17,14 +17,18 @@ const categorySchema = zod_1.z.object({
     parentId: zod_1.z.string().optional().nullable(),
     order: zod_1.z.number().optional(),
 });
-const getShop = (userId) => Shop_1.Shop.findOne({ ownerId: userId });
+const getShop = async (userId, shopId) => {
+    if (shopId)
+        return Shop_1.Shop.findById(shopId);
+    return Shop_1.Shop.findOne({ $or: [{ ownerId: userId }, { admins: userId }] });
+};
 // ---------------------------------------------------------------------------
 // GET /categories/shop/me — Catégories du marchand connecté
 // ⚠️ DOIT être avant /:id
 // ---------------------------------------------------------------------------
 router.get('/shop/me', auth_1.authenticate, auth_1.requireMerchant, async (req, res) => {
     try {
-        const shop = await getShop(req.user.userId);
+        const shop = await getShop(req.user.userId, req.shop?.id);
         if (!shop) {
             res.status(404).json({ success: false, message: 'Boutique introuvable' });
             return;
@@ -68,7 +72,7 @@ router.post('/', auth_1.authenticate, auth_1.requireMerchant, async (req, res) =
             });
             return;
         }
-        const shop = await getShop(req.user.userId);
+        const shop = await getShop(req.user.userId, req.shop?.id);
         if (!shop) {
             res.status(404).json({ success: false, message: 'Boutique introuvable' });
             return;
@@ -109,7 +113,7 @@ router.patch('/:id', auth_1.authenticate, auth_1.requireMerchant, async (req, re
             });
             return;
         }
-        const shop = await getShop(req.user.userId);
+        const shop = await getShop(req.user.userId, req.shop?.id);
         if (!shop) {
             res.status(404).json({ success: false, message: 'Boutique introuvable' });
             return;
@@ -143,7 +147,7 @@ router.patch('/:id', auth_1.authenticate, auth_1.requireMerchant, async (req, re
 // ---------------------------------------------------------------------------
 router.delete('/:id', auth_1.authenticate, auth_1.requireMerchant, async (req, res) => {
     try {
-        const shop = await getShop(req.user.userId);
+        const shop = await getShop(req.user.userId, req.shop?.id);
         if (!shop) {
             res.status(404).json({ success: false, message: 'Boutique introuvable' });
             return;
