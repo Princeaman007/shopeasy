@@ -3,11 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 const API_BASE = 'https://shopeasy-k4rb.onrender.com/api';
 
 // ✅ Désactive le body parser Next.js pour permettre les uploads
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export const maxDuration = 30;
 
 // ✅ Headers CORS pour autoriser tous les sous-domaines shopeasyci.store
 function corsHeaders(req: NextRequest): Record<string, string> {
