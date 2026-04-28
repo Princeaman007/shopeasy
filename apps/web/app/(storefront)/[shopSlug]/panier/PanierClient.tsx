@@ -11,13 +11,13 @@ import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
 
 interface ArticlePanier {
-  cle:       string;
+  cle: string;
   produitId: string;
-  nom:       string;
-  prix:      number;
-  image:     string | null;
+  nom: string;
+  prix: number;
+  image: string | null;
   variantes: Record<string, string>;
-  quantite:  number;
+  quantite: number;
 }
 
 interface Props { shop: ShopPublic; }
@@ -28,13 +28,13 @@ const formatFcfa = (n: number) =>
 export default function PanierClient({ shop }: Props) {
   const t = getThemeConfig(shop.selectedTheme);
 
-  const [articles,        setArticles]        = useState<ArticlePanier[]>([]);
-  const [codePromo,       setCodePromo]       = useState('');
-  const [promoApplique,   setPromoApplique]   = useState<{
+  const [articles, setArticles] = useState<ArticlePanier[]>([]);
+  const [codePromo, setCodePromo] = useState('');
+  const [promoApplique, setPromoApplique] = useState<{
     code: string; type: string; value: number; discount: number;
   } | null>(null);
-  const [promoLoading,    setPromoLoading]    = useState(false);
-  const [promoErreur,     setPromoErreur]     = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoErreur, setPromoErreur] = useState('');
   const [commandeEnvoyee, setCommandeEnvoyee] = useState(false);
 
   useEffect(() => {
@@ -60,10 +60,19 @@ export default function PanierClient({ shop }: Props) {
 
   const vider = () => { sauvegarder([]); setPromoApplique(null); };
 
-  const sousTotal  = articles.reduce((s, a) => s + a.prix * a.quantite, 0);
-  const reduction  = promoApplique?.discount ?? 0;
-  const total      = Math.max(0, sousTotal - reduction);
+  const sousTotal = articles.reduce((s, a) => s + a.prix * a.quantite, 0);
+  const reduction = promoApplique?.discount ?? 0;
+  const total = Math.max(0, sousTotal - reduction);
   const nbArticles = articles.reduce((s, a) => s + a.quantite, 0);
+
+  // ✅ Sauvegarde le promo dans localStorage avant de naviguer vers la commande
+  const allerALaCommande = () => {
+    if (promoApplique) {
+      localStorage.setItem(`promo_${shop.slug}`, JSON.stringify(promoApplique));
+    } else {
+      localStorage.removeItem(`promo_${shop.slug}`);
+    }
+  };
 
   const appliquerPromo = async () => {
     if (!codePromo.trim()) return;
@@ -72,11 +81,11 @@ export default function PanierClient({ shop }: Props) {
     try {
       const API = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API}/promos/verify`, {
-        method:  'POST',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          code:     codePromo.trim().toUpperCase(),
-          shopId:   shop._id,
+        body: JSON.stringify({
+          code: codePromo.trim().toUpperCase(),
+          shopId: shop._id,
           subtotal: sousTotal,
         }),
       });
@@ -112,7 +121,7 @@ export default function PanierClient({ shop }: Props) {
 
       {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
-           className="sticky top-0 z-40">
+        className="sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <Link href={"/catalogue"}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
@@ -157,11 +166,11 @@ export default function PanierClient({ shop }: Props) {
             <div className="space-y-3">
               {articles.map(article => (
                 <div key={article.cle} className="flex gap-3 p-3 sm:p-4 rounded-2xl border"
-                     style={{ backgroundColor: t.surface, borderColor: t.border }}>
+                  style={{ backgroundColor: t.surface, borderColor: t.border }}>
 
                   {/* Image */}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0 relative"
-                       style={{ backgroundColor: t.elevated }}>
+                    style={{ backgroundColor: t.elevated }}>
                     {article.image
                       ? <Image src={article.image} alt={article.nom} fill className="object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-2xl">...</div>
@@ -179,7 +188,7 @@ export default function PanierClient({ shop }: Props) {
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(article.variantes).map(([k, v]) => (
                           <span key={k} className="text-xs px-2 py-0.5 rounded-full border"
-                                style={{ borderColor: t.border, color: t.muted }}>
+                            style={{ borderColor: t.border, color: t.muted }}>
                             {k}: {v}
                           </span>
                         ))}
@@ -228,7 +237,7 @@ export default function PanierClient({ shop }: Props) {
             {/* ── CODE PROMO ── */}
             {shop.planType === 'premium' && (
               <div className="rounded-2xl border p-4 space-y-3"
-                   style={{ backgroundColor: t.surface, borderColor: t.border }}>
+                style={{ backgroundColor: t.surface, borderColor: t.border }}>
                 <p className="text-sm font-semibold flex items-center gap-2" style={{ color: t.text }}>
                   <Tag size={16} style={{ color: t.accent }} />
                   Code promo
@@ -236,7 +245,7 @@ export default function PanierClient({ shop }: Props) {
 
                 {promoApplique ? (
                   <div className="flex items-center justify-between px-4 py-3 rounded-xl border"
-                       style={{ backgroundColor: `${t.accent}10`, borderColor: `${t.accent}30` }}>
+                    style={{ backgroundColor: `${t.accent}10`, borderColor: `${t.accent}30` }}>
                     <div className="flex items-center gap-2">
                       <Check size={16} style={{ color: t.accent }} />
                       <span className="font-mono font-bold text-sm" style={{ color: t.accent }}>
@@ -273,7 +282,7 @@ export default function PanierClient({ shop }: Props) {
 
             {/* ── RECAPITULATIF ── */}
             <div className="rounded-2xl border p-5 space-y-4"
-                 style={{ backgroundColor: t.surface, borderColor: t.border }}>
+              style={{ backgroundColor: t.surface, borderColor: t.border }}>
               <h2 className="font-semibold" style={{ color: t.text }}>Recapitulatif</h2>
 
               <div className="space-y-2">
@@ -292,7 +301,7 @@ export default function PanierClient({ shop }: Props) {
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg pt-3 border-t"
-                     style={{ borderColor: t.border }}>
+                  style={{ borderColor: t.border }}>
                   <span style={{ color: t.text }}>Total</span>
                   <span className="whitespace-nowrap" style={{ color: t.accent }}>
                     {formatFcfa(total)}
@@ -302,6 +311,7 @@ export default function PanierClient({ shop }: Props) {
 
               {/* Bouton passer commande */}
               <Link href={"/commande"}
+                onClick={allerALaCommande}
                 className="w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 text-sm sm:text-base"
                 style={{ backgroundColor: t.accent, color: '#fff' }}>
                 <ShoppingCart size={18} />

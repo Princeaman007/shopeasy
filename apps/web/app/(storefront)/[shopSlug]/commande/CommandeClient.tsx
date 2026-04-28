@@ -6,7 +6,7 @@ import Link                    from 'next/link';
 import { useRouter }           from 'next/navigation';
 import {
   ChevronLeft, User, Phone, MapPin, Mail,
-  Package, Check, Loader2, ShoppingCart,
+  Package, Check, Loader2, ShoppingCart, Tag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -31,6 +31,9 @@ export default function CommandeClient({ shop }: Props) {
   const router = useRouter();
 
   const [articles,      setArticles]      = useState<ArticlePanier[]>([]);
+  const [promoApplique, setPromoApplique] = useState<{
+    code: string; type: string; value: number; discount: number;
+  } | null>(null);
   const [loading,       setLoading]       = useState(false);
   const [erreur,        setErreur]        = useState('');
   const [commandeCreee, setCommandeCreee] = useState<{
@@ -56,9 +59,17 @@ export default function CommandeClient({ shop }: Props) {
     } else {
       router.push("/panier");
     }
+
+    // ✅ Récupère le promo depuis localStorage
+    const promoData = localStorage.getItem(`promo_${shop.slug}`);
+    if (promoData) {
+      try { setPromoApplique(JSON.parse(promoData)); } catch {}
+    }
   }, [shop.slug]);
 
   const sousTotal  = articles.reduce((s, a) => s + a.prix * a.quantite, 0);
+  const reduction  = promoApplique?.discount ?? 0;
+  const total      = Math.max(0, sousTotal - reduction);
   const nbArticles = articles.reduce((s, a) => s + a.quantite, 0);
 
   const valider = () => {
@@ -70,60 +81,64 @@ export default function CommandeClient({ shop }: Props) {
   };
 
   const soumettre = async () => {
-  const err = valider();
-  if (err) { setErreur(err); return; }
-  setLoading(true);
-  setErreur('');
-  try {
-    const API   = process.env.NEXT_PUBLIC_API_URL;
-    const token = localStorage.getItem('token');
-    const items = articles.map(a => ({
-      productId: a.produitId,
-      name:      a.nom,
-      price:     a.prix,
-      quantity:  a.quantite,
-      variants:  a.variantes,
-      image:     a.image,
-    }));
-    const res = await fetch(`${API}/orders`, {
-      method:  'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-      },
-      credentials: 'include',
-      body: JSON.stringify({
-        shopId:        shop._id,
-        nomClient:     form.nomClient.trim(),
-        telephone:     form.telephone.trim(),
-        adresse:       form.adresse.trim(),
-        ville:         form.ville.trim(),
-        modeLivraison: form.modeLivraison,
-        notes:         form.notes.trim(),
-        items,
-        subtotal:      sousTotal,
-        total:         sousTotal,
-        customer: {
-          name:    form.nomClient.trim(),
-          phone:   form.telephone.trim(),
-          email:   form.email.trim() || undefined,
-          address: form.adresse.trim(),
-          city:    form.ville.trim(),
+    const err = valider();
+    if (err) { setErreur(err); return; }
+    setLoading(true);
+    setErreur('');
+    try {
+      const API   = process.env.NEXT_PUBLIC_API_URL;
+      const token = localStorage.getItem('token');
+      const items = articles.map(a => ({
+        productId: a.produitId,
+        name:      a.nom,
+        price:     a.prix,
+        quantity:  a.quantite,
+        variants:  a.variantes,
+        image:     a.image,
+      }));
+      const res = await fetch(`${API}/orders`, {
+        method:  'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
-      }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message ?? 'Erreur serveur');
+        credentials: 'include',
+        body: JSON.stringify({
+          shopId:        shop._id,
+          nomClient:     form.nomClient.trim(),
+          telephone:     form.telephone.trim(),
+          adresse:       form.adresse.trim(),
+          ville:         form.ville.trim(),
+          modeLivraison: form.modeLivraison,
+          notes:         form.notes.trim(),
+          items,
+          subtotal:      sousTotal,
+          discount:      reduction,
+          promoCode:     promoApplique?.code,
+          total:         total,
+          customer: {
+            name:    form.nomClient.trim(),
+            phone:   form.telephone.trim(),
+            email:   form.email.trim() || undefined,
+            address: form.adresse.trim(),
+            city:    form.ville.trim(),
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message ?? 'Erreur serveur');
 
-    localStorage.removeItem(`panier_${shop.slug}`);
-    window.dispatchEvent(new Event('panier-updated'));
-    setCommandeCreee({ _id: data.data._id, orderNumber: data.data.orderNumber });
-  } catch (err: any) {
-    setErreur(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      // ✅ Vide le panier et le promo
+      localStorage.removeItem(`panier_${shop.slug}`);
+      localStorage.removeItem(`promo_${shop.slug}`);
+      window.dispatchEvent(new Event('panier-updated'));
+      setCommandeCreee({ _id: data.data._id, orderNumber: data.data.orderNumber });
+    } catch (err: any) {
+      setErreur(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
@@ -166,7 +181,7 @@ export default function CommandeClient({ shop }: Props) {
 
             <div className="space-y-2 pt-2">
               <button
-                onClick={() => router.push(` /commande/confirmation?id=${commandeCreee._id}`)}
+                onClick={() => router.push(`/commande/confirmation?id=${commandeCreee._id}`)}
                 className="w-full py-3 rounded-2xl font-bold text-sm transition-all hover:opacity-90"
                 style={{ backgroundColor: t.accent, color: '#fff' }}>
                 Voir le detail de ma commande
@@ -202,7 +217,7 @@ export default function CommandeClient({ shop }: Props) {
             Finaliser la commande
           </h1>
           <p className="text-sm mt-0.5" style={{ color: t.muted }}>
-            {nbArticles} article{nbArticles > 1 ? 's' : ''} — {formatFcfa(sousTotal)}
+            {nbArticles} article{nbArticles > 1 ? 's' : ''} — {formatFcfa(total)}
           </p>
         </div>
 
@@ -240,10 +255,23 @@ export default function CommandeClient({ shop }: Props) {
               </div>
             </div>
           ))}
+
+          {/* ✅ Réduction code promo */}
+          {reduction > 0 && (
+            <div className="flex items-center justify-between pt-2 border-t text-sm"
+                 style={{ borderColor: t.border }}>
+              <span className="flex items-center gap-1.5" style={{ color: t.muted }}>
+                <Tag size={13} style={{ color: t.accent }} />
+                Réduction ({promoApplique?.code})
+              </span>
+              <span className="text-green-400 font-semibold">-{formatFcfa(reduction)}</span>
+            </div>
+          )}
+
           <div className="flex justify-between font-bold pt-3 border-t text-sm"
                style={{ borderColor: t.border }}>
             <span style={{ color: t.text }}>Total</span>
-            <span style={{ color: t.accent }}>{formatFcfa(sousTotal)}</span>
+            <span style={{ color: t.accent }}>{formatFcfa(total)}</span>
           </div>
         </div>
 
@@ -372,7 +400,7 @@ export default function CommandeClient({ shop }: Props) {
           style={{ backgroundColor: t.accent, color: '#fff' }}>
           {loading
             ? <><Loader2 size={18} className="animate-spin" /> Envoi en cours...</>
-            : <><Check size={18} /> Confirmer la commande — {formatFcfa(sousTotal)}</>
+            : <><Check size={18} /> Confirmer la commande — {formatFcfa(total)}</>
           }
         </button>
 
