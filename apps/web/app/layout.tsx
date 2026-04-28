@@ -15,14 +15,59 @@ export const metadata: Metadata = {
   keywords: [
     "boutique en ligne Côte d'Ivoire",
     'e-commerce Abidjan',
-    'vendre en ligne CI',
+    'vendre en ligne Côte d\'Ivoire',
     'ShopEasy CI',
+    'boutique Instagram Abidjan',
+    'vendre sur internet Côte d\'Ivoire',
+    'e-commerce ivoirien',
+    'boutique en ligne Abidjan',
   ],
+  authors: [{ name: 'ShopEasy CI' }],
+  creator: 'ShopEasy CI',
+  publisher: 'ShopEasy CI',
+  metadataBase: new URL('https://www.shopeasyci.store'),
+  alternates: {
+    canonical: 'https://www.shopeasyci.store',
+  },
   openGraph: {
     title:       'ShopEasy CI — Votre boutique en ligne',
-    description: "Transformez votre activité Instagram en boutique professionnelle.",
+    description: "Transformez votre activité Instagram, TikTok ou Facebook en boutique professionnelle. Créez votre boutique en ligne en quelques minutes en Côte d'Ivoire.",
+    url:         'https://www.shopeasyci.store',
+    siteName:    'ShopEasy CI',
     locale:      'fr_CI',
     type:        'website',
+    images: [
+      {
+        url:    '/Design_sans_titre__2_.png',
+        width:  800,
+        height: 800,
+        alt:    'ShopEasy CI — Boutique en ligne Côte d\'Ivoire',
+      },
+    ],
+  },
+  twitter: {
+    card:        'summary_large_image',
+    title:       'ShopEasy CI — Boutique en ligne Côte d\'Ivoire',
+    description: "Créez votre boutique en ligne professionnelle en quelques minutes.",
+    images:      ['/Design_sans_titre__2_.png'],
+  },
+  robots: {
+    index:          true,
+    follow:         true,
+    googleBot: {
+      index:               true,
+      follow:              true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet':       -1,
+    },
+  },
+  icons: {
+    icon:  '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
+  verification: {
+    google: '', // ← tu ajouteras ton code Google Search Console ici
   },
 };
 
