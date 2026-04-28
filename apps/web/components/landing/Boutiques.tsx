@@ -90,7 +90,7 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         </span>
         <span className="text-primary text-xs font-semibold">Visiter</span>
       </div>
-    </>
+    </Link>
   );
 }
 
