@@ -26,7 +26,7 @@ const envSchema = zod_1.z.object({
     ANTHROPIC_API_KEY: zod_1.z.string().optional(),
     AFRICAS_TALKING_API_KEY: zod_1.z.string().optional(),
     AFRICAS_TALKING_USERNAME: zod_1.z.string().optional(),
-    ADMIN_EMAIL: zod_1.z.string().default('admin@shopeasyci.ci'),
+    ADMIN_EMAIL: zod_1.z.string().default('contact@shopeasyci.store'),
     FRONTEND_URL: zod_1.z.string().default('http://localhost:3000'),
 });
 const parsed = envSchema.safeParse(process.env);

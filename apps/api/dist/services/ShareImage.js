@@ -77,7 +77,7 @@ const generateShareImage = async (options) => {
 
       <!-- URL -->
       <text x="${WIDTH - 60}" y="1010" font-family="Arial" font-size="28"
-            fill="#06C167" text-anchor="end">shopeasyci.ci</text>
+            fill="#06C167" text-anchor="end">shopeasyci.store</text>
 
     </svg>
   `;

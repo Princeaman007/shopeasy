@@ -634,9 +634,9 @@ router.get('/config', authenticate, requireAdmin, async (req, res) => {
       data: {
         config: {
           nomPlateforme:        'ShopEasy CI',
-          emailContact:         'contact@shopeasyci.ci',
+          emailContact:         'contact@shopeasyci.store',
           whatsappSupport:      '+2250700000000',
-          urlPlateforme:        'https://shopeasyci.ci',
+          urlPlateforme:        'https://www.shopeasyci.store',
           maintenanceMode:      false,
           inscriptionsOuvertes: true,
           maxProduitsBasic:     10,

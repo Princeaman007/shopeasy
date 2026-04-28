@@ -22,7 +22,7 @@ const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
   AFRICAS_TALKING_API_KEY: z.string().optional(),
   AFRICAS_TALKING_USERNAME: z.string().optional(),
-  ADMIN_EMAIL: z.string().default('admin@shopeasyci.ci'),
+  ADMIN_EMAIL: z.string().default('contact@shopeasyci.store'),
   FRONTEND_URL: z.string().default('http://localhost:3000'),
 });
 
