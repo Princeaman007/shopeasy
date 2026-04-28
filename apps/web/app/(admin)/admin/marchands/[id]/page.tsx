@@ -141,9 +141,9 @@ export default function PageDetailMarchand({
               <CheckCircle size={18} className="text-primary" />
             )}
           </div>
-          <p className="text-muted text-sm">{boutique.slug}.shopeasyci.ci</p>
+          <p className="text-muted text-sm">{boutique.slug}.shopeasyci.store</p>
         </div>
-        <Link href={`/${boutique.slug}`} target="_blank"
+        <Link href={`https://${boutique.slug}.shopeasyci.store`} target="_blank"
               className="flex items-center gap-2 px-4 py-2 rounded-xl border
                          border-border text-muted hover:text-white text-sm
                          transition-colors">
@@ -393,12 +393,20 @@ export default function PageDetailMarchand({
               )}
 
               {boutique.subscriptionStatus === 'active' && (
-                <button onClick={() => modifierAbonnement('suspended')} disabled={actionLoad}
-                        className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-400
-                                   hover:bg-red-500/20 text-sm font-semibold transition-colors
-                                   disabled:opacity-50">
-                  Suspendre
-                </button>
+                <>
+                  <button onClick={() => modifierAbonnement('active')} disabled={actionLoad}
+                          className="w-full py-2.5 rounded-xl bg-primary text-white
+                                     hover:bg-primary-hover text-sm font-semibold
+                                     transition-colors disabled:opacity-50">
+                    + 30 jours
+                  </button>
+                  <button onClick={() => modifierAbonnement('suspended')} disabled={actionLoad}
+                          className="w-full py-2.5 rounded-xl bg-red-500/10 text-red-400
+                                     hover:bg-red-500/20 text-sm font-semibold transition-colors
+                                     disabled:opacity-50">
+                    Suspendre
+                  </button>
+                </>
               )}
 
               {boutique.subscriptionStatus === 'suspended' && (

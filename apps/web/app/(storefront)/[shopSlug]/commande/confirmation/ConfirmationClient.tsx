@@ -233,7 +233,7 @@ export default function ConfirmationClient({ shop, commande }: Props) {
               </div>
             </div>
             <Link
-              href={`/inscription-client?email=${commande?.customer?.email ?? ''}`}
+              href={`https://www.shopeasyci.store/inscription-client?email=${commande?.customer?.email ?? ''}`}
               className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all hover:opacity-90 text-sm"
               style={{ backgroundColor: t.accent, color: '#fff' }}>
               Créer mon compte client
@@ -253,7 +253,7 @@ export default function ConfirmationClient({ shop, commande }: Props) {
               Suivre ma commande sur WhatsApp
             </Link>
           )}
-          <Link  href="https://www.shopeasyci.store"
+          <Link href={`/`}
             className="w-full py-3.5 rounded-2xl font-semibold flex items-center justify-center gap-2 border transition-colors"
             style={{ borderColor: t.border, color: t.muted }}>
             <Home size={18} />
