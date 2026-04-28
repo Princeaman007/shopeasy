@@ -216,7 +216,7 @@ export default function BoutiquesPage() {
                       Visiter la boutique
                     </span>
                   </div>
-                </>
+                </Link>
               ))}
             </div>
 
