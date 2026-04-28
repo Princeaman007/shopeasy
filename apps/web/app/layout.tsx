@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   verification: {
-    google: '', // ← tu ajouteras ton code Google Search Console ici
+    google: '<meta name="google-site-verification" content="ItxQUaN0VClmrBRIR8Ek-qM4V17EhskLBKRTGCSw_Sc" />',
   },
 };
 
