@@ -135,7 +135,7 @@ export default function BoutiquesPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {boutiques.map((boutique) => (
-                <Link key={boutique._id} href={`/${boutique.slug}`}
+                <Link key={boutique._id} href={`https://${boutique.slug}.shopeasyci.store`}
                   className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1">
 
                   {/* Hero */}
@@ -216,7 +216,7 @@ export default function BoutiquesPage() {
                       Visiter la boutique
                     </span>
                   </div>
-                </Link>
+                </>
               ))}
             </div>
 
