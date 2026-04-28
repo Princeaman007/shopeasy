@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const API_BASE = 'https://shopeasy-k4rb.onrender.com/api';
 
+// ✅ Désactive le body parser Next.js pour permettre les uploads
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
+
 // ✅ Headers CORS pour autoriser tous les sous-domaines shopeasyci.store
 function corsHeaders(req: NextRequest): Record<string, string> {
   const origin = req.headers.get('origin') || '';
@@ -25,18 +32,31 @@ async function proxyRequest(req: NextRequest, params: { path: string[] }, method
     const path = params.path.join('/');
     const url  = `${API_BASE}/${path}${req.nextUrl.search}`;
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
+    const headers: Record<string, string> = {};
 
+    // ✅ Transfère Authorization
     const auth = req.headers.get('Authorization');
     if (auth) headers['Authorization'] = auth;
 
-    const options: RequestInit = { method, headers, cache: 'no-store' };
+    const contentType = req.headers.get('content-type') || '';
+
+    let body: BodyInit | null = null;
 
     if (['POST', 'PUT', 'PATCH'].includes(method)) {
-      options.body = await req.text();
+      // ✅ Si c'est un upload (multipart/form-data), passe le FormData directement
+      if (contentType.includes('multipart/form-data')) {
+        const formData = await req.formData();
+        body = formData;
+        // Ne pas forcer Content-Type — le browser le génère avec le boundary
+      } else {
+        // JSON normal
+        headers['Content-Type'] = 'application/json';
+        body = await req.text();
+      }
     }
+
+    const options: RequestInit = { method, headers, cache: 'no-store' };
+    if (body) options.body = body;
 
     const res  = await fetch(url, options);
     const text = await res.text();
