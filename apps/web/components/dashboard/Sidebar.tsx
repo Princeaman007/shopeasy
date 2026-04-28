@@ -26,6 +26,7 @@ const NAV_SETTINGS = [
   { href: '/dashboard/parametres/about',      icone: FileText,      label: 'A propos',             ownerOnly: true  },
   { href: '/dashboard/parametres/partage',    icone: Share2,        label: 'Partage & QR Code',    ownerOnly: false },
   { href: '/dashboard/parametres/abonnement', icone: CreditCard,    label: 'Abonnement',           ownerOnly: true  },
+  { href: '/dashboard/parametres/profil',     icone: Users,         label: 'Mon profil',           ownerOnly: false },
   { href: '/dashboard/avis',                  icone: MessageSquare, label: 'Avis clients',         ownerOnly: false },
 ];
 

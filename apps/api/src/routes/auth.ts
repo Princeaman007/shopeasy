@@ -4,6 +4,7 @@ import { Shop } from '../models/Shop';
 import { Category, PREDEFINED_CATEGORIES } from '../models/Category';
 import { RegisterMerchantSchema, LoginSchema, RegisterClientSchema } from '@shopeasy/types';
 import { signToken, signRefreshToken, verifyToken, verifyRefreshToken, IJwtPayload } from '../config/jwt';
+import { authenticate } from '../middleware/auth';
 import crypto from 'crypto';
 import { getRedis } from '../config/redis';
 import { sendPasswordResetEmail, sendWelcomeEmail, sendEmailConfirmation } from '../services/Email';
@@ -460,5 +461,63 @@ router.post('/reset-password', async (req: Request, res: Response): Promise<void
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
+// PATCH /auth/change-password — Changer mot de passe
+router.patch('/change-password', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { ancienMotDePasse, nouveauMotDePasse } = req.body;
 
+    if (!ancienMotDePasse || !nouveauMotDePasse) {
+      res.status(400).json({ success: false, message: 'Champs obligatoires manquants' });
+      return;
+    }
+
+    if (nouveauMotDePasse.length < 6) {
+      res.status(400).json({ success: false, message: 'Minimum 6 caractères' });
+      return;
+    }
+
+    const user = await User.findById(req.user!.userId).select('+password');
+    if (!user) {
+      res.status(404).json({ success: false, message: 'Utilisateur introuvable' });
+      return;
+    }
+
+    const valide = await user.comparePassword(ancienMotDePasse);
+    if (!valide) {
+      res.status(400).json({ success: false, message: 'Ancien mot de passe incorrect' });
+      return;
+    }
+
+    user.password = nouveauMotDePasse;
+    await user.save();
+
+    res.json({ success: true, message: 'Mot de passe mis à jour avec succès' });
+  } catch (error) {
+    console.error('Erreur PATCH /auth/change-password :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// PATCH /auth/update-profile — Mettre à jour profil
+router.patch('/update-profile', authenticate, async (req: Request, res: Response) => {
+  try {
+    const { name, phone } = req.body;
+
+    const user = await User.findByIdAndUpdate(
+      req.user!.userId,
+      { ...(name && { name }), ...(phone && { phone }) },
+      { new: true }
+    ).select('-password');
+
+    if (!user) {
+      res.status(404).json({ success: false, message: 'Utilisateur introuvable' });
+      return;
+    }
+
+    res.json({ success: true, data: user, message: 'Profil mis à jour' });
+  } catch (error) {
+    console.error('Erreur PATCH /auth/update-profile :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
 export default router;

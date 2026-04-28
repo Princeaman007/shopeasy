@@ -9,6 +9,7 @@ const Shop_1 = require("../models/Shop");
 const Category_1 = require("../models/Category");
 const types_1 = require("@shopeasy/types");
 const jwt_1 = require("../config/jwt");
+const auth_1 = require("../middleware/auth");
 const crypto_1 = __importDefault(require("crypto"));
 const redis_1 = require("../config/redis");
 const Email_1 = require("../services/Email");
@@ -400,6 +401,53 @@ router.post('/reset-password', async (req, res) => {
     }
     catch (error) {
         console.error('Erreur reset-password :', error);
+        res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+});
+// PATCH /auth/change-password — Changer mot de passe
+router.patch('/change-password', auth_1.authenticate, async (req, res) => {
+    try {
+        const { ancienMotDePasse, nouveauMotDePasse } = req.body;
+        if (!ancienMotDePasse || !nouveauMotDePasse) {
+            res.status(400).json({ success: false, message: 'Champs obligatoires manquants' });
+            return;
+        }
+        if (nouveauMotDePasse.length < 6) {
+            res.status(400).json({ success: false, message: 'Minimum 6 caractères' });
+            return;
+        }
+        const user = await User_1.User.findById(req.user.userId).select('+password');
+        if (!user) {
+            res.status(404).json({ success: false, message: 'Utilisateur introuvable' });
+            return;
+        }
+        const valide = await user.comparePassword(ancienMotDePasse);
+        if (!valide) {
+            res.status(400).json({ success: false, message: 'Ancien mot de passe incorrect' });
+            return;
+        }
+        user.password = nouveauMotDePasse;
+        await user.save();
+        res.json({ success: true, message: 'Mot de passe mis à jour avec succès' });
+    }
+    catch (error) {
+        console.error('Erreur PATCH /auth/change-password :', error);
+        res.status(500).json({ success: false, message: 'Erreur serveur' });
+    }
+});
+// PATCH /auth/update-profile — Mettre à jour profil
+router.patch('/update-profile', auth_1.authenticate, async (req, res) => {
+    try {
+        const { name, phone } = req.body;
+        const user = await User_1.User.findByIdAndUpdate(req.user.userId, { ...(name && { name }), ...(phone && { phone }) }, { new: true }).select('-password');
+        if (!user) {
+            res.status(404).json({ success: false, message: 'Utilisateur introuvable' });
+            return;
+        }
+        res.json({ success: true, data: user, message: 'Profil mis à jour' });
+    }
+    catch (error) {
+        console.error('Erreur PATCH /auth/update-profile :', error);
         res.status(500).json({ success: false, message: 'Erreur serveur' });
     }
 });

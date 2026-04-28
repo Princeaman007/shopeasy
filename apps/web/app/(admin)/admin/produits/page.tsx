@@ -54,6 +54,8 @@ export default function PageProduitsAdmin() {
   const [totalPages,   setTotalPages]   = useState(1);
   const [total,        setTotal]        = useState(0);
   const [actionId,     setActionId]     = useState<string | null>(null);
+  const [modalSupp,    setModalSupp]    = useState<string | null>(null);
+  const [nomProduit,   setNomProduit]   = useState('');
   const [stats,        setStats]        = useState({
     total: 0, actifs: 0, draft: 0, rupture: 0,
   });
@@ -90,12 +92,19 @@ export default function PageProduitsAdmin() {
     return () => clearTimeout(timer);
   }, [recherche]);
 
+  // -- Ouvrir modal suppression --
+  const ouvrirModal = (id: string, nom: string) => {
+    setModalSupp(id);
+    setNomProduit(nom);
+  };
+
   // -- Supprimer produit --
-  const supprimer = async (id: string) => {
-    if (!confirm('Supprimer ce produit ?')) return;
-    setActionId(id);
+  const supprimer = async () => {
+    if (!modalSupp) return;
+    setActionId(modalSupp);
+    setModalSupp(null);
     try {
-      await authFetch(`${API}/admin/products/${id}`, { method: 'DELETE' });
+      await authFetch(`${API}/admin/products/${modalSupp}`, { method: 'DELETE' });
       charger();
     } finally {
       setActionId(null);
@@ -239,7 +248,9 @@ export default function PageProduitsAdmin() {
                               ? <Image src={p.images[0]} alt={p.name}
                                        fill className="object-cover" />
                               : <div className="w-full h-full flex items-center
-                                                justify-center text-lg"></div>
+                                                justify-center text-lg">
+                                  <Package size={16} className="text-muted" />
+                                </div>
                             }
                           </div>
                           <p className="text-white text-sm font-medium truncate max-w-[180px]">
@@ -251,7 +262,7 @@ export default function PageProduitsAdmin() {
                       {/* Boutique */}
                       <td className="px-5 py-4">
                         {p.shopSlug ? (
-                          <Link href={`/${p.shopSlug}`} target="_blank"
+                          <Link href={`https://${p.shopSlug}.shopeasyci.store`} target="_blank"
                                 className="flex items-center gap-1 text-primary
                                            text-sm hover:underline">
                             {p.shopName ?? p.shopId}
@@ -309,7 +320,7 @@ export default function PageProduitsAdmin() {
                           ) : (
                             <>
                               {p.shopSlug && (
-                                <Link href={`/${p.shopSlug}/produits/${p._id}`}
+                                <Link href={`https://${p.shopSlug}.shopeasyci.store/produits/${p._id}`}
                                       target="_blank"
                                       className="p-1.5 rounded-lg text-muted hover:text-white
                                                  hover:bg-elevated transition-colors"
@@ -328,7 +339,7 @@ export default function PageProduitsAdmin() {
                                 </button>
                               )}
                               <button
-                                onClick={() => supprimer(p._id)}
+                                onClick={() => ouvrirModal(p._id, p.name)}
                                 className="p-1.5 rounded-lg text-muted hover:text-red-400
                                            hover:bg-red-400/10 transition-colors"
                                 title="Supprimer"
@@ -368,6 +379,43 @@ export default function PageProduitsAdmin() {
           >
             Suivant →
           </button>
+        </div>
+      )}
+
+      {/* ── Modal confirmation suppression ── */}
+      {modalSupp && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+          <div className="bg-surface border border-border rounded-2xl w-full max-w-sm p-6 space-y-5">
+
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                <Trash2 size={22} className="text-red-400" />
+              </div>
+              <div>
+                <h2 className="text-white font-bold text-lg">Supprimer ce produit ?</h2>
+                <p className="text-muted text-sm mt-1">Cette action est irréversible.</p>
+              </div>
+            </div>
+
+            <div className="bg-elevated border border-border rounded-xl px-4 py-3">
+              <p className="text-white text-sm font-medium truncate">{nomProduit}</p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalSupp(null)}
+                className="flex-1 py-3 rounded-xl border border-border text-muted
+                           hover:text-white transition-colors font-medium text-sm">
+                Annuler
+              </button>
+              <button
+                onClick={supprimer}
+                className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600
+                           text-white font-bold transition-colors text-sm">
+                Supprimer
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
