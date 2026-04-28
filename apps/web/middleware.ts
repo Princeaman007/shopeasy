@@ -5,31 +5,34 @@ const ROUTES_ADMIN     = ['/admin'];
 const ROUTES_CLIENT    = ['/mes-commandes', '/mes-favoris', '/mes-adresses', '/profil'];
 const ROUTES_AUTH      = ['/connexion', '/inscription', '/inscription-client', '/mot-de-passe-oublie'];
 
+const ROOT_DOMAIN = 'shopeasyci.store';
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const hostname = req.headers.get('host') || '';
 
-  // ✅ Utilise x-forwarded-host comme Vercel le recommande
-  const hostname = req.headers.get('x-forwarded-host') ?? 
-                   req.headers.get('host') ?? '';
-
-  const rootDomain = 'shopeasyci.store';
-  
-  const isMainDomain = 
-    hostname === rootDomain ||
-    hostname === `www.${rootDomain}` ||
+  const isMainDomain =
+    hostname === ROOT_DOMAIN ||
+    hostname === `www.${ROOT_DOMAIN}` ||
     hostname === 'shopeasy-web.vercel.app' ||
     hostname.includes('localhost');
 
-  const isSubdomain = !isMainDomain && hostname.endsWith(`.${rootDomain}`);
+  const isSubdomain = !isMainDomain && hostname.endsWith(`.${ROOT_DOMAIN}`);
 
-  // ✅ Rewrite sous-domaine → /[shopSlug]/...
+  // ✅ Sous-domaine → rewrite + stocke cookie currentShop
   if (isSubdomain) {
-    const shopSlug = hostname.replace(`.${rootDomain}`, '');
-    
+    const shopSlug = hostname.replace(`.${ROOT_DOMAIN}`, '');
     const url = req.nextUrl.clone();
-    url.pathname = `/${shopSlug}${pathname === '/' ? '' : pathname}`;
-    
-    return NextResponse.rewrite(url);
+    url.pathname = pathname === '/' ? `/${shopSlug}` : `/${shopSlug}${pathname}`;
+
+    const response = NextResponse.rewrite(url);
+    response.cookies.set('currentShop', shopSlug, {
+      path:     '/',
+      maxAge:   60 * 60 * 24,
+      sameSite: 'lax',
+      secure:   true,
+    });
+    return response;
   }
 
   // ── Auth ─────────────────────────────────────────────────────────────────
@@ -41,9 +44,7 @@ export function middleware(req: NextRequest) {
       const base64Payload = token.split('.')[1];
       const decoded       = Buffer.from(base64Payload, 'base64').toString('utf-8');
       const parsed        = JSON.parse(decoded);
-      if (parsed.exp && parsed.exp * 1000 > Date.now()) {
-        payload = parsed;
-      }
+      if (parsed.exp && parsed.exp * 1000 > Date.now()) payload = parsed;
     } catch { }
   }
 
