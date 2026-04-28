@@ -36,9 +36,9 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-sm mb-4">Support</h3>
             <ul className="space-y-2">
               <li><Link href="#faq" className="text-muted hover:text-white transition-colors text-sm">FAQ</Link></li>
-              <li><a href="https://wa.me/2250000000000" target="_blank" rel="noopener noreferrer"
+              <li><a href="https://wa.me/32467620878" target="_blank" rel="noopener noreferrer"
                 className="text-muted hover:text-white transition-colors text-sm">WhatsApp</a></li>
-              <li><a href="mailto:info@shopeasyci.ci"
+              <li><a href="mailto:contact@shopeasyci.store"
                 className="text-muted hover:text-white transition-colors text-sm">Contact</a></li>
             </ul>
           </div>
@@ -52,7 +52,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
+       <div className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-muted text-sm">
             &copy; {new Date().getFullYear()} ShopEasy CI — Tous droits reserves
           </p>
@@ -60,7 +60,7 @@ export default function Footer() {
             <Link href="/cgu" className="text-muted hover:text-white text-xs transition-colors">CGU</Link>
             <Link href="/cgv" className="text-muted hover:text-white text-xs transition-colors">CGV</Link>
             <p className="text-muted text-sm">
-              Fait avec amour en <span className="text-primary font-medium">Cote d'Ivoire</span>
+              Développé par <span className="text-primary font-semibold">PrinceDev</span>
             </p>
           </div>
         </div>
