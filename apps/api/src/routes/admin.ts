@@ -714,4 +714,51 @@ router.get('/stats/public', async (req: Request, res: Response) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
+// GET /admin/leads — Liste des leads Koffi
+router.get('/leads', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { page = '1', limit = '20', status } = req.query;
+
+    const filter: Record<string, any> = {};
+    if (status) filter.status = status;
+
+    const skip  = (Number(page) - 1) * Number(limit);
+    const total = await Lead.countDocuments(filter);
+
+    const leads = await Lead.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    res.json({
+      success: true,
+      data: leads,
+      pagination: {
+        total,
+        page:       Number(page),
+        limit:      Number(limit),
+        totalPages: Math.ceil(total / Number(limit)),
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+// PATCH /admin/leads/:id — Changer statut lead
+router.patch('/leads/:id', authenticate, requireAdmin, async (req, res) => {
+  try {
+    const { status } = req.body;
+    const lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { status },
+      { new: true }
+    );
+    res.json({ success: true, data: lead });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
 export default router;
