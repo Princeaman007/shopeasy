@@ -40,7 +40,7 @@ export default function PageProfil() {
   useEffect(() => {
     if (user) {
       setNom(user.name ?? '');
-      setTelephone(user.phone ?? '');
+      setTelephone((user as any).phone ?? '');
     }
   }, [user]);
 
