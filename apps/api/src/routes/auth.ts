@@ -52,7 +52,7 @@ router.post('/register', async (req: Request, res: Response): Promise<void> => {
       selectedTheme: 'vitrine-moderne',
       subscriptionStatus: 'trial' as const,
       trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      subscriptionExpiresAt: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
+      subscriptionExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     await User.findByIdAndUpdate(user._id, { shopId: shop._id });

@@ -249,9 +249,16 @@ router.patch('/shops/:id/subscription', auth_1.authenticate, auth_1.requireAdmin
         if (planType)
             shop.planType = planType;
         if (status === 'active') {
-            shop.subscriptionExpiresAt = expiresAt
-                ? new Date(expiresAt)
-                : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+            if (expiresAt) {
+                shop.subscriptionExpiresAt = new Date(expiresAt);
+            }
+            else {
+                // ✅ Si déjà actif avec date future, ajoute 30j à la date existante
+                const base = shop.subscriptionExpiresAt && shop.subscriptionExpiresAt > new Date()
+                    ? shop.subscriptionExpiresAt
+                    : new Date();
+                shop.subscriptionExpiresAt = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+            }
         }
         await shop.save();
         res.json({ success: true, data: shop, message: `Abonnement → ${status}` });

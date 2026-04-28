@@ -50,7 +50,7 @@ router.post('/register', async (req, res) => {
             selectedTheme: 'vitrine-moderne',
             subscriptionStatus: 'trial',
             trialEndsAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-            subscriptionExpiresAt: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
+            subscriptionExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         });
         await User_1.User.findByIdAndUpdate(user._id, { shopId: shop._id });
         await Category_1.Category.insertMany(Category_1.PREDEFINED_CATEGORIES.map((cat) => ({
