@@ -157,7 +157,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
         className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link  href="/"
+          <Link  href="https://www.shopeasyci.store"
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70 flex-shrink-0"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />

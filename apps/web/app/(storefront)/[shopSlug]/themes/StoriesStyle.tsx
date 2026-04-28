@@ -35,7 +35,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
 
           <div className="flex items-center gap-3">
-            <Link  href="/" className="flex items-center gap-2">
+            <Link  href="https://www.shopeasyci.store" className="flex items-center gap-2">
               {shop.logo
                 ? <Image src={shop.logo} alt={shop.name} width={36} height={36}
                   className="rounded-full object-cover"
@@ -56,7 +56,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
               </div>
             </Link>
 
-            <Link href="/"
+            <Link href="https://www.shopeasyci.store"
               className="hidden md:flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors hover:opacity-80"
               style={{ backgroundColor: `${t.accent}15`, color: t.accent }}>
               ShopEasy CI
@@ -106,7 +106,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
                 {l.label}
               </Link>
             ))}
-            <Link href="/" className="block text-sm font-semibold py-2" style={{ color: t.accent }}>
+            <Link href="https://www.shopeasyci.store" className="block text-sm font-semibold py-2" style={{ color: t.accent }}>
               ShopEasy CI
             </Link>
           </div>
@@ -324,7 +324,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
           </Link>
           <p className="text-xs" style={{ color: t.muted }}>
             Propulse par{' '}
-            <Link href="/" className="font-bold hover:underline" style={{ color: t.accent }}>ShopEasy CI</Link>
+            <Link href="https://www.shopeasyci.store" className="font-bold hover:underline" style={{ color: t.accent }}>ShopEasy CI</Link>
           </p>
         </div>
       </footer>

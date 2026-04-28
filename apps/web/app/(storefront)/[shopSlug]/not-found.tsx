@@ -9,7 +9,7 @@ export default function BoutiqueNotFound() {
                     Cette boutique n'existe pas ou n'est plus disponible.
                 </p>
                 <Link
-                    href="/"
+                    href="https://www.shopeasyci.store"
                     className="inline-block mt-4 bg-primary hover:bg-primary-hover
              text-white px-6 py-3 rounded-xl font-medium transition-colors"
                 >

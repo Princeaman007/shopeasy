@@ -99,7 +99,7 @@ export default function RechercheClient({ shop, produits, queryInitiale }: Props
 
           {/* Retour */}
           <Link
-             href="/"
+             href="https://www.shopeasyci.store"
             className="p-2 rounded-xl flex-shrink-0"
             style={{ backgroundColor: t.elevated }}
           >
