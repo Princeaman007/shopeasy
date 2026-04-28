@@ -6,7 +6,7 @@ import { usePathname }    from 'next/navigation';
 import {
   LayoutDashboard, Users, ShoppingBag, Package,
   BarChart3, CreditCard, Bell, Settings,
-  LogOut, Shield, Tag, Menu, X,
+  LogOut, Shield, Tag, Menu, X,MessageSquare,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -27,9 +27,10 @@ const LIENS = [
       { href: '/admin/analytics',     label: 'Analytics',      icone: BarChart3       },
     ],
   },
-  {
+ {
     groupe: 'Gestion',
     items: [
+      { href: '/admin/leads',         label: 'Leads Koffi',    icone: MessageSquare   },
       { href: '/admin/notifications', label: 'Notifications',  icone: Bell            },
       { href: '/admin/parametres',    label: 'Paramètres',     icone: Settings        },
     ],
