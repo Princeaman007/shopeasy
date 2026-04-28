@@ -24,32 +24,180 @@ const baseTemplate = (contenu: string): string => `
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    body        { font-family: Inter, Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-    .container  { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; }
-    .header     { background: #000000; padding: 32px; text-align: center; }
-    .header h1  { color: #06C167; margin: 0; font-size: 24px; letter-spacing: 1px; }
-    .body       { padding: 32px; color: #333333; line-height: 1.6; }
-    .body h2    { color: #000000; }
-    .btn        { display: inline-block; background: #06C167; color: #ffffff !important;
-                  padding: 14px 28px; border-radius: 8px; text-decoration: none;
-                  font-weight: bold; margin: 16px 0; }
-    .footer     { background: #f9f9f9; padding: 20px 32px; text-align: center;
-                  color: #888888; font-size: 13px; border-top: 1px solid #eeeeee; }
-    .badge      { display: inline-block; background: #f0fdf4; color: #06C167;
-                  padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f0f0;
+      margin: 0;
+      padding: 0;
+      color: #333333;
+    }
+    .wrapper {
+      padding: 40px 16px;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .header {
+      background: #000000;
+      padding: 28px 40px;
+      text-align: center;
+    }
+    .header-brand {
+      font-size: 22px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.5px;
+    }
+    .header-brand span {
+      color: #06C167;
+    }
+    .header-tagline {
+      color: #888888;
+      font-size: 12px;
+      margin-top: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .body {
+      padding: 36px 40px;
+      line-height: 1.7;
+      color: #333333;
+    }
+    .body h2 {
+      color: #111111;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 16px 0;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #06C167;
+    }
+    .body p {
+      margin: 0 0 14px 0;
+      font-size: 15px;
+    }
+    .btn {
+      display: inline-block;
+      background: #06C167;
+      color: #ffffff !important;
+      padding: 14px 32px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 15px;
+      margin: 20px 0;
+      letter-spacing: 0.3px;
+    }
+    .btn:hover {
+      background: #05a558;
+    }
+    .badge {
+      display: inline-block;
+      background: #f0fdf4;
+      color: #06C167;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid #06C16730;
+    }
+    .info-box {
+      background: #f8f8f8;
+      border-left: 3px solid #06C167;
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .info-box strong {
+      color: #111111;
+    }
+    .warning-box {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+      padding: 14px 18px;
+      border-radius: 0 6px 6px 0;
+      margin: 16px 0;
+      font-size: 14px;
+      color: #92400e;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    table th {
+      background: #f8f8f8;
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #555555;
+      border-bottom: 1px solid #eeeeee;
+    }
+    table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f0f0f0;
+      color: #333333;
+    }
+    table tfoot td {
+      font-weight: 700;
+      font-size: 15px;
+      border-top: 2px solid #eeeeee;
+      border-bottom: none;
+      padding-top: 14px;
+    }
+    .total-amount {
+      color: #06C167;
+    }
+    .divider {
+      border: none;
+      border-top: 1px solid #eeeeee;
+      margin: 24px 0;
+    }
+    .note {
+      color: #888888;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .footer {
+      background: #f8f8f8;
+      padding: 24px 40px;
+      text-align: center;
+      color: #999999;
+      font-size: 12px;
+      border-top: 1px solid #eeeeee;
+    }
+    .footer a {
+      color: #06C167;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🛍️ ShopEasy CI</h1>
-    </div>
-    <div class="body">
-      ${contenu}
-    </div>
-    <div class="footer">
-      <p>© ${new Date().getFullYear()} ShopEasy CI — La boutique en ligne pour les vendeurs ivoiriens</p>
-      <p>Abidjan, Côte d'Ivoire · <a href="https://shopeasyci.ci" style="color:#06C167;">shopeasyci.ci</a></p>
+  <div class="wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="header-brand">Shop<span>Easy</span> CI</div>
+        <div class="header-tagline">Plateforme de commerce en ligne</div>
+      </div>
+      <div class="body">
+        ${contenu}
+      </div>
+      <div class="footer">
+        <p style="margin:0 0 6px 0;">
+          &copy; ${new Date().getFullYear()} ShopEasy CI &mdash; Tous droits réservés
+        </p>
+        <p style="margin:0;">
+          Abidjan, Côte d'Ivoire &nbsp;&middot;&nbsp;
+          <a href="https://www.shopeasyci.store">www.shopeasyci.store</a>
+        </p>
+      </div>
     </div>
   </div>
 </body>
@@ -67,93 +215,117 @@ export const sendWelcomeEmail = async (
   shopSlug: string
 ): Promise<void> => {
   const contenu = `
-    <h2>Bienvenue sur ShopEasy CI, ${name} ! 🎉</h2>
-    <p>Votre boutique est créée et votre essai gratuit de <strong>7 jours</strong> commence maintenant.</p>
-    <p>Votre lien boutique :</p>
-    <p><span class="badge">🔗 ${shopSlug}.shopeasyci.ci</span></p>
-    <p>Commencez par ajouter vos premiers produits et personnaliser votre boutique.</p>
-    <a href="${env.FRONTEND_URL}/dashboard" class="btn">Accéder à mon dashboard →</a>
-    <p>Si vous avez des questions, notre équipe est disponible pour vous aider.</p>
+    <h2>Bienvenue sur ShopEasy CI</h2>
+    <p>Bonjour <strong>${name}</strong>,</p>
+    <p>
+      Votre boutique a été créée avec succès. Votre période d'essai gratuite de
+      <strong>7 jours</strong> est maintenant active.
+    </p>
+    <div class="info-box">
+      <strong>Votre adresse boutique :</strong><br/>
+      <span style="color:#06C167;font-weight:600;">${shopSlug}.shopeasyci.store</span>
+    </div>
+    <p>Pour bien démarrer, nous vous recommandons de :</p>
+    <ul style="margin:0 0 16px 0;padding-left:20px;font-size:15px;">
+      <li style="margin-bottom:8px;">Ajouter vos premiers produits</li>
+      <li style="margin-bottom:8px;">Personnaliser le thème de votre boutique</li>
+      <li style="margin-bottom:8px;">Compléter votre page À propos</li>
+      <li>Partager votre lien boutique sur vos réseaux sociaux</li>
+    </ul>
+    <a href="${env.FRONTEND_URL}/dashboard" class="btn">Accéder à mon tableau de bord</a>
+    <hr class="divider" />
+    <p class="note">
+      Notre équipe reste disponible pour vous accompagner.
+      N'hésitez pas à nous contacter si vous avez des questions.
+    </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: '🎉 Bienvenue sur ShopEasy CI — Votre boutique est prête !',
+    subject: 'Bienvenue sur ShopEasy CI — Votre boutique est prête',
     html:    baseTemplate(contenu),
   });
 };
 
 /**
- * Email de confirmation de commande — pour le marchand
+ * Email de notification de commande — pour le marchand
  */
 export const sendOrderNotificationEmail = async (
   email: string,
   merchantName: string,
   order: {
-    orderNumber: string;
-    customerName: string;
+    orderNumber:   string;
+    customerName:  string;
     customerPhone: string;
-    total: number;
-    items: { name: string; quantity: number; price: number }[];
+    total:         number;
+    items:         { name: string; quantity: number; price: number }[];
   }
 ): Promise<void> => {
   const lignesProduits = order.items
-    .map(
-      (item) => `
+    .map(item => `
       <tr>
-        <td style="padding:8px;border-bottom:1px solid #eee;">${item.name}</td>
-        <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
-        <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${item.price.toLocaleString('fr-FR')} FCFA</td>
+        <td>${item.name}</td>
+        <td style="text-align:center;">${item.quantity}</td>
+        <td style="text-align:right;">${item.price.toLocaleString('fr-FR')} FCFA</td>
       </tr>
-    `
-    )
+    `)
     .join('');
 
   const contenu = `
-    <h2>Nouvelle commande reçue ! 🛍️</h2>
+    <h2>Nouvelle commande reçue</h2>
     <p>Bonjour <strong>${merchantName}</strong>,</p>
-    <p>Vous avez reçu une nouvelle commande <span class="badge">${order.orderNumber}</span></p>
-
-    <h3>Client</h3>
     <p>
-      <strong>Nom :</strong> ${order.customerName}<br/>
-      <strong>Téléphone :</strong> ${order.customerPhone}
+      Vous avez reçu une nouvelle commande.
+      Référence : <span class="badge">${order.orderNumber}</span>
     </p>
 
-    <h3>Produits commandés</h3>
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+    <div class="info-box">
+      <strong>Informations client</strong><br/>
+      Nom : ${order.customerName}<br/>
+      Téléphone : ${order.customerPhone}
+    </div>
+
+    <strong style="font-size:14px;color:#555555;display:block;margin-bottom:8px;">
+      DÉTAIL DE LA COMMANDE
+    </strong>
+    <table>
       <thead>
-        <tr style="background:#f9f9f9;">
-          <th style="padding:8px;text-align:left;">Produit</th>
-          <th style="padding:8px;text-align:center;">Qté</th>
-          <th style="padding:8px;text-align:right;">Prix</th>
+        <tr>
+          <th>Produit</th>
+          <th style="text-align:center;">Qté</th>
+          <th style="text-align:right;">Prix unitaire</th>
         </tr>
       </thead>
-      <tbody>
-        ${lignesProduits}
-      </tbody>
+      <tbody>${lignesProduits}</tbody>
       <tfoot>
         <tr>
-          <td colspan="2" style="padding:12px;font-weight:bold;">Total</td>
-          <td style="padding:12px;font-weight:bold;text-align:right;color:#06C167;">
+          <td colspan="2">Montant total</td>
+          <td style="text-align:right;" class="total-amount">
             ${order.total.toLocaleString('fr-FR')} FCFA
           </td>
         </tr>
       </tfoot>
     </table>
 
-    <p style="background:#fff8e1;padding:12px;border-radius:8px;margin-top:16px;">
-      💰 <strong>Paiement à la livraison</strong> — Encaissez directement auprès du client.
-    </p>
+    <div class="info-box">
+      <strong>Mode de paiement :</strong> Paiement à la livraison<br/>
+      Encaissez le montant directement auprès du client lors de la livraison.
+    </div>
 
-    <a href="${env.FRONTEND_URL}/dashboard/commandes" class="btn">Voir la commande →</a>
+    <a href="${env.FRONTEND_URL}/dashboard/commandes" class="btn">Gérer cette commande</a>
+
+    <hr class="divider" />
+    <p class="note">
+      Pensez à confirmer la commande rapidement pour informer votre client
+      et maintenir un bon niveau de satisfaction.
+    </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: `🛍️ Nouvelle commande ${order.orderNumber} — ${order.total.toLocaleString('fr-FR')} FCFA`,
+    subject: `Nouvelle commande ${order.orderNumber} — ${order.total.toLocaleString('fr-FR')} FCFA`,
     html:    baseTemplate(contenu),
   });
 };
@@ -166,61 +338,75 @@ export const sendOrderConfirmationEmail = async (
   customerName: string,
   order: {
     orderNumber: string;
-    shopName: string;
-    total: number;
-    items: { name: string; quantity: number; price: number }[];
-    address: string;
-    city: string;
+    shopName:    string;
+    total:       number;
+    items:       { name: string; quantity: number; price: number }[];
+    address:     string;
+    city:        string;
   }
 ): Promise<void> => {
   const lignesProduits = order.items
-    .map(
-      (item) => `
+    .map(item => `
       <tr>
-        <td style="padding:8px;border-bottom:1px solid #eee;">${item.name}</td>
-        <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${item.quantity}</td>
-        <td style="padding:8px;border-bottom:1px solid #eee;text-align:right;">${item.price.toLocaleString('fr-FR')} FCFA</td>
+        <td>${item.name}</td>
+        <td style="text-align:center;">${item.quantity}</td>
+        <td style="text-align:right;">${item.price.toLocaleString('fr-FR')} FCFA</td>
       </tr>
-    `
-    )
+    `)
     .join('');
 
   const contenu = `
-    <h2>Commande confirmée ! ✅</h2>
+    <h2>Confirmation de votre commande</h2>
     <p>Bonjour <strong>${customerName}</strong>,</p>
-    <p>Votre commande <span class="badge">${order.orderNumber}</span> chez <strong>${order.shopName}</strong> a bien été reçue.</p>
+    <p>
+      Votre commande <span class="badge">${order.orderNumber}</span> passée auprès de
+      <strong>${order.shopName}</strong> a bien été enregistrée.
+    </p>
 
-    <h3>Récapitulatif</h3>
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+    <strong style="font-size:14px;color:#555555;display:block;margin-bottom:8px;">
+      RÉCAPITULATIF DE LA COMMANDE
+    </strong>
+    <table>
       <thead>
-        <tr style="background:#f9f9f9;">
-          <th style="padding:8px;text-align:left;">Produit</th>
-          <th style="padding:8px;text-align:center;">Qté</th>
-          <th style="padding:8px;text-align:right;">Prix</th>
+        <tr>
+          <th>Produit</th>
+          <th style="text-align:center;">Qté</th>
+          <th style="text-align:right;">Prix</th>
         </tr>
       </thead>
       <tbody>${lignesProduits}</tbody>
       <tfoot>
         <tr>
-          <td colspan="2" style="padding:12px;font-weight:bold;">Total</td>
-          <td style="padding:12px;font-weight:bold;text-align:right;color:#06C167;">
+          <td colspan="2">Montant total</td>
+          <td style="text-align:right;" class="total-amount">
             ${order.total.toLocaleString('fr-FR')} FCFA
           </td>
         </tr>
       </tfoot>
     </table>
 
-    <h3>Livraison</h3>
-    <p>📍 ${order.address}, ${order.city}</p>
-    <p style="background:#f0fdf4;padding:12px;border-radius:8px;">
-      💰 <strong>Paiement à la livraison</strong> — Vous payez en recevant votre commande.
+    <div class="info-box">
+      <strong>Adresse de livraison :</strong><br/>
+      ${order.address}, ${order.city}
+    </div>
+
+    <div class="info-box">
+      <strong>Mode de paiement :</strong> Paiement à la livraison<br/>
+      Vous réglez le montant directement au livreur lors de la réception de votre commande.
+    </div>
+
+    <hr class="divider" />
+    <p class="note">
+      Le marchand va traiter votre commande et vous contacter pour confirmer
+      les modalités de livraison. Pour toute question, contactez directement
+      la boutique <strong>${order.shopName}</strong>.
     </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: `✅ Commande ${order.orderNumber} confirmée — ${order.shopName}`,
+    subject: `Commande ${order.orderNumber} confirmée — ${order.shopName}`,
     html:    baseTemplate(contenu),
   });
 };
@@ -238,18 +424,24 @@ export const sendPasswordResetEmail = async (
   const contenu = `
     <h2>Réinitialisation de mot de passe</h2>
     <p>Bonjour <strong>${name}</strong>,</p>
-    <p>Vous avez demandé à réinitialiser votre mot de passe. Cliquez sur le bouton ci-dessous :</p>
-    <a href="${resetUrl}" class="btn">Réinitialiser mon mot de passe →</a>
-    <p style="color:#888;font-size:13px;">
-      Ce lien expire dans <strong>1 heure</strong>.<br/>
-      Si vous n'avez pas fait cette demande, ignorez cet email.
+    <p>
+      Nous avons reçu une demande de réinitialisation du mot de passe associé
+      à votre compte ShopEasy CI. Cliquez sur le bouton ci-dessous pour
+      définir un nouveau mot de passe :
+    </p>
+    <a href="${resetUrl}" class="btn">Réinitialiser mon mot de passe</a>
+    <hr class="divider" />
+    <p class="note">
+      Ce lien est valable pendant <strong>1 heure</strong>.<br/>
+      Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer
+      cet email en toute sécurité. Votre mot de passe restera inchangé.
     </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: '🔐 Réinitialisation de votre mot de passe ShopEasy CI',
+    subject: 'Réinitialisation de votre mot de passe — ShopEasy CI',
     html:    baseTemplate(contenu),
   });
 };
@@ -268,20 +460,34 @@ export const sendSubscriptionReminderEmail = async (
   });
 
   const contenu = `
-    <h2>⚠️ Votre abonnement expire bientôt</h2>
+    <h2>Votre abonnement arrive à expiration</h2>
     <p>Bonjour <strong>${name}</strong>,</p>
-    <p>L'abonnement de votre boutique <strong>${shopName}</strong> expire le <strong>${dateExpiration}</strong>.</p>
-    <p>Pour continuer à vendre sans interruption, renouvelez votre abonnement dès maintenant.</p>
-    <a href="${env.FRONTEND_URL}/dashboard/parametres/abonnement" class="btn">Renouveler mon abonnement →</a>
-    <p style="color:#888;font-size:13px;">
-      Sans renouvellement, votre boutique sera suspendue après cette date.
+    <p>
+      Nous vous informons que l'abonnement de votre boutique
+      <strong>${shopName}</strong> expirera le <strong>${dateExpiration}</strong>.
+    </p>
+    <p>
+      Pour assurer la continuité de votre activité sans interruption,
+      nous vous invitons à renouveler votre abonnement dès maintenant.
+    </p>
+    <a href="${env.FRONTEND_URL}/dashboard/parametres/abonnement" class="btn">
+      Renouveler mon abonnement
+    </a>
+    <hr class="divider" />
+    <div class="warning-box">
+      Passé la date d'expiration, votre boutique sera temporairement suspendue
+      et vos clients ne pourront plus passer de commandes.
+    </div>
+    <p class="note">
+      Pour toute question concernant votre abonnement, n'hésitez pas
+      à contacter notre équipe.
     </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: `⚠️ Votre boutique ${shopName} expire le ${dateExpiration}`,
+    subject: `Votre boutique ${shopName} — Abonnement expirant le ${dateExpiration}`,
     html:    baseTemplate(contenu),
   });
 };
@@ -290,45 +496,56 @@ export const sendSubscriptionReminderEmail = async (
  * Email de notification admin — nouveau lead Koffi
  */
 export const sendLeadNotificationEmail = async (lead: {
-  name: string;
-  phone: string;
-  email?: string;
+  name:     string;
+  phone:    string;
+  email?:   string;
   message?: string;
 }): Promise<void> => {
   const contenu = `
-    <h2>Nouveau lead capté par Koffi 🤖</h2>
-    <p>Un prospect a été enregistré via l'agent Koffi :</p>
-    <table width="100%" cellpadding="0" cellspacing="0">
+    <h2>Nouveau prospect enregistré</h2>
+    <p>Un visiteur a été capté via l'agent Koffi sur la page d'accueil.</p>
+
+    <strong style="font-size:14px;color:#555555;display:block;margin-bottom:8px;">
+      INFORMATIONS DU PROSPECT
+    </strong>
+    <table>
       <tr>
-        <td style="padding:8px;"><strong>Nom</strong></td>
-        <td style="padding:8px;">${lead.name}</td>
-      </tr>
-      <tr style="background:#f9f9f9;">
-        <td style="padding:8px;"><strong>Téléphone</strong></td>
-        <td style="padding:8px;">${lead.phone}</td>
+        <td style="width:140px;"><strong>Nom</strong></td>
+        <td>${lead.name}</td>
       </tr>
       <tr>
-        <td style="padding:8px;"><strong>Email</strong></td>
-        <td style="padding:8px;">${lead.email ?? '—'}</td>
+        <td><strong>Téléphone</strong></td>
+        <td>${lead.phone}</td>
       </tr>
-      <tr style="background:#f9f9f9;">
-        <td style="padding:8px;"><strong>Message</strong></td>
-        <td style="padding:8px;">${lead.message ?? '—'}</td>
+      <tr>
+        <td><strong>Email</strong></td>
+        <td>${lead.email ?? 'Non renseigné'}</td>
+      </tr>
+      <tr>
+        <td><strong>Message</strong></td>
+        <td>${lead.message ?? 'Aucun message'}</td>
       </tr>
     </table>
-    <a href="${env.FRONTEND_URL}/admin/leads" class="btn">Voir les leads →</a>
+
+    <a href="${env.FRONTEND_URL}/admin/leads" class="btn">Voir tous les prospects</a>
+
+    <hr class="divider" />
+    <p class="note">
+      Nous vous recommandons de contacter ce prospect dans les plus brefs délais
+      pour maximiser les chances de conversion.
+    </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      env.ADMIN_EMAIL,
-    subject: `🤖 Nouveau lead Koffi — ${lead.name} (${lead.phone})`,
+    subject: `Nouveau prospect — ${lead.name} (${lead.phone})`,
     html:    baseTemplate(contenu),
   });
 };
 
 /**
- * Email de confirmation d'inscription
+ * Email de confirmation d'adresse email
  */
 export const sendEmailConfirmation = async (
   email: string,
@@ -338,26 +555,32 @@ export const sendEmailConfirmation = async (
   const confirmUrl = `${env.FRONTEND_URL}/confirmer-email?token=${token}`;
 
   const contenu = `
-    <h2>Confirmez votre adresse email 📧</h2>
+    <h2>Confirmez votre adresse email</h2>
     <p>Bonjour <strong>${name}</strong>,</p>
-    <p>Merci de vous être inscrit sur ShopEasy CI ! Pour activer votre compte, cliquez sur le bouton ci-dessous :</p>
-    <a href="${confirmUrl}" class="btn">Confirmer mon email →</a>
-    <p style="color:#888;font-size:13px;">
-      Ce lien expire dans <strong>24 heures</strong>.<br/>
-      Si vous n'avez pas créé de compte, ignorez cet email.
+    <p>
+      Merci de vous être inscrit sur ShopEasy CI. Pour activer votre compte
+      et accéder à votre tableau de bord, veuillez confirmer votre adresse
+      email en cliquant sur le bouton ci-dessous :
+    </p>
+    <a href="${confirmUrl}" class="btn">Confirmer mon adresse email</a>
+    <hr class="divider" />
+    <p class="note">
+      Ce lien est valable pendant <strong>24 heures</strong>.<br/>
+      Si vous n'avez pas créé de compte sur ShopEasy CI, vous pouvez
+      ignorer cet email en toute sécurité.
     </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: '📧 Confirmez votre adresse email — ShopEasy CI',
+    subject: 'Confirmez votre adresse email — ShopEasy CI',
     html:    baseTemplate(contenu),
   });
 };
 
 /**
- * Email de changement de statut commande — pour le client
+ * Email de mise à jour du statut de commande — pour le client
  */
 export const sendOrderStatusEmail = async (
   email: string,
@@ -369,53 +592,54 @@ export const sendOrderStatusEmail = async (
     total:       number;
   }
 ): Promise<void> => {
-  const statuts: Record<string, { label: string; emoji: string; message: string }> = {
+  const statuts: Record<string, { label: string; message: string }> = {
     confirmed: {
       label:   'Confirmée',
-      emoji:   '✅',
-      message: 'Votre commande a été confirmée par le marchand. Elle sera bientôt en préparation.',
+      message: 'Votre commande a été confirmée par le marchand et est en cours de préparation.',
     },
     shipping: {
-      label:   'En livraison',
-      emoji:   '🚚',
-      message: 'Votre commande est en route ! Le livreur vous contactera pour la livraison.',
+      label:   'En cours de livraison',
+      message: 'Votre commande est en route. Le livreur vous contactera pour convenir de la livraison.',
     },
     delivered: {
       label:   'Livrée',
-      emoji:   '🎉',
-      message: 'Votre commande a été livrée. Merci pour votre confiance !',
+      message: 'Votre commande a été livrée avec succès. Merci pour votre confiance.',
     },
     cancelled: {
       label:   'Annulée',
-      emoji:   '❌',
-      message: 'Votre commande a été annulée. Contactez la boutique pour plus d\'informations.',
+      message: 'Votre commande a été annulée. Veuillez contacter la boutique pour plus d\'informations.',
     },
   };
 
   const statut = statuts[order.status] ?? {
     label:   order.status,
-    emoji:   '📦',
     message: 'Le statut de votre commande a été mis à jour.',
   };
 
   const contenu = `
-    <h2>${statut.emoji} Commande ${statut.label}</h2>
+    <h2>Mise à jour de votre commande</h2>
     <p>Bonjour <strong>${customerName}</strong>,</p>
     <p>${statut.message}</p>
-    <div style="background:#f0fdf4;padding:16px;border-radius:8px;margin:16px 0;">
-      <p style="margin:0;"><strong>Commande :</strong> <span style="color:#06C167;font-weight:bold;">${order.orderNumber}</span></p>
-      <p style="margin:8px 0 0;"><strong>Boutique :</strong> ${order.shopName}</p>
-      <p style="margin:8px 0 0;"><strong>Total :</strong> ${order.total.toLocaleString('fr-FR')} FCFA</p>
+
+    <div class="info-box">
+      <strong>Référence commande :</strong>
+      <span style="color:#06C167;font-weight:700;"> ${order.orderNumber}</span><br/>
+      <strong>Statut :</strong> ${statut.label}<br/>
+      <strong>Boutique :</strong> ${order.shopName}<br/>
+      <strong>Montant :</strong> ${order.total.toLocaleString('fr-FR')} FCFA
     </div>
-    <p style="color:#888;font-size:13px;">
-      Pour toute question, contactez directement la boutique ${order.shopName}.
+
+    <hr class="divider" />
+    <p class="note">
+      Pour toute question concernant votre commande, contactez directement
+      la boutique <strong>${order.shopName}</strong>.
     </p>
   `;
 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: `${statut.emoji} Commande ${order.orderNumber} — ${statut.label}`,
+    subject: `Commande ${order.orderNumber} — ${statut.label}`,
     html:    baseTemplate(contenu),
   });
 };
