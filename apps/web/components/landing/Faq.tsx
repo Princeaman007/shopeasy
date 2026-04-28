@@ -19,11 +19,11 @@ const FAQ = [
   },
   {
     question: "Puis-je utiliser mon propre nom de domaine ?",
-    reponse:  "En V1, votre boutique est accessible via nomdevotreboutique.shopeasyci.ci. La possibilité d'utiliser votre propre domaine sera disponible dans une prochaine version.",
+    reponse:  "Votre boutique est accessible via une adresse personnalisée du type nomdevotreboutique.shopeasyci.store. L'utilisation d'un domaine personnalisé sera disponible bientôt.",
   },
   {
     question: "Combien de produits puis-je ajouter ?",
-    reponse:  "Avec le plan Basic, vous pouvez ajouter jusqu'à 10 produits avec 5 photos chacun. Le plan Premium vous donne des produits illimités avec photos et vidéos illimitées.",
+    reponse:  "Avec le plan Basic, vous pouvez ajouter jusqu'à 10 produits avec 5 photos chacun. Le plan Premium vous donne des produits illimités avec photos.",
   },
   {
     question: "Mes clients peuvent-ils commander sans compte ?",
