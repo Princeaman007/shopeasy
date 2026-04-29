@@ -17,7 +17,7 @@ export default function HeroBoutique({ shop, accent }: Props) {
   if (!shop.heroImage) return null;
 
   return (
-    <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/5' }}>
+    <div className="relative w-full overflow-hidden h-48 sm:h-64 md:h-80 lg:h-96">
 
       {/* Image */}
       <Image
