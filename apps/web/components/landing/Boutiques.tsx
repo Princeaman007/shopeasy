@@ -45,7 +45,7 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
   return (
     <Link href={`https://${boutique.slug}.shopeasyci.store`}
       className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all duration-300">
-      <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/5' }}>
+      <div className="relative w-full overflow-hidden rounded-t-2xl" style={{ aspectRatio: '16/6' }}>
         {boutique.heroImage ? (
           <Image src={boutique.heroImage} alt={boutique.name} fill
             className="object-cover group-hover:scale-105 transition-transform duration-500"
