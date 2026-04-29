@@ -45,20 +45,24 @@ function NavContenu({
   pathname:    string;
   onLinkClick?: () => void;
 }) {
-  const deconnecter = async () => {
-  try {
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-      method:      'POST',
-      credentials: 'include',
-    });
-  } catch {}
+const deconnecter = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+        method:      'POST',
+        credentials: 'include',
+      });
+    } catch {}
 
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  localStorage.removeItem('shop');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('shop');
 
-  window.location.href = '/connexion';
-};
+    //  Supprime aussi le cookie token côté client
+    document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    document.cookie = 'refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+
+    window.location.href = '/connexion';
+  };
 
   return (
     <>
