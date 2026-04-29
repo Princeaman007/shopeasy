@@ -40,7 +40,7 @@ export default function AboutClient({ shop, produits }: Props) {
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
         className="sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link  href="https://www.shopeasyci.store"
+          <Link href={"/"}
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70 transition-opacity"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />
