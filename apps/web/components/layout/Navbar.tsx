@@ -38,7 +38,7 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link href="/">
-            <Image src="/Shop.png" alt="ShopEasy CI" width={150} height={60} className="object-contain" priority />
+            <Image src="/Shop.png" alt="ShopEasy CI" width={150} height={60} className="object-contain mt-2" priority />
           </Link>
 
           {/* Navigation desktop */}
