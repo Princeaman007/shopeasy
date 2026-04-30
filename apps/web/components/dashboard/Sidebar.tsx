@@ -5,10 +5,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  ShoppingBag, LayoutDashboard, Package, ShoppingCart,
+  LayoutDashboard, Package, ShoppingCart,
   Tag, Palette, Settings, BarChart2, Gift, Users,
   Share2, CreditCard, X, Menu, Crown, FileText, MessageSquare, Lock,
 } from 'lucide-react';
+import Image from 'next/image';
 
 const NAV_ITEMS = [
   { href: '/dashboard',             icone: LayoutDashboard, label: 'Accueil',     premium: false, exact: true,  ownerOnly: false },
@@ -44,13 +45,8 @@ export default function Sidebar() {
     <div className="flex flex-col h-full">
 
       <div className="p-6 border-b border-border">
-        <Link href="/" className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-            <ShoppingBag size={16} className="text-black" />
-          </div>
-          <span className="text-white font-bold">
-            Shop<span className="text-primary">Easy</span> CI
-          </span>
+        <Link href="/" className="mb-4 inline-block">
+          <Image src="/Shop.png" alt="ShopEasy CI" width={120} height={45} className="object-contain" priority />
         </Link>
 
         {shop && (

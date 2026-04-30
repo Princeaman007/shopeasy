@@ -101,12 +101,7 @@ export default function MotDePasseOubliePage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <ShoppingBag size={22} className="text-black" />
-            </div>
-            <span className="text-white font-bold text-2xl">
-              Shop<span className="text-primary">Easy</span> CI
-            </span>
+            <Image src="/Shop.png" alt="ShopEasy CI" width={150} height={55} className="object-contain" />
           </Link>
         </div>
 
