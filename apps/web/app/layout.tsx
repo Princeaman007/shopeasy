@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.shopeasyci.store',
   },
-  openGraph: {
+ openGraph: {
     title:       'ShopEasy CI — Votre boutique en ligne',
     description: "Transformez votre activité Instagram, TikTok ou Facebook en boutique professionnelle. Créez votre boutique en ligne en quelques minutes en Côte d'Ivoire.",
     url:         'https://www.shopeasyci.store',
@@ -38,9 +38,9 @@ export const metadata: Metadata = {
     type:        'website',
     images: [
       {
-        url:    '/Design_sans_titre__2_.png',
-        width:  800,
-        height: 800,
+        url:    '/Shop.png',
+        width:  1080,
+        height: 1080,
         alt:    "ShopEasy CI — Boutique en ligne Côte d'Ivoire",
       },
     ],
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card:        'summary_large_image',
     title:       "ShopEasy CI — Boutique en ligne Côte d'Ivoire",
     description: 'Créez votre boutique en ligne professionnelle en quelques minutes.',
-    images:      ['/Design_sans_titre__2_.png'],
+    images:      ['/Shop.png'],
   },
   robots: {
     index:  true,
@@ -77,7 +77,7 @@ const schemaOrg = {
   '@type':    'Organization',
   name:       'ShopEasy CI',
   url:        'https://www.shopeasyci.store',
-  logo:       'https://www.shopeasyci.store/Design_sans_titre__2_.png',
+  logo:       'https://www.shopeasyci.store/Shop.png',
   description: "Plateforme e-commerce pour vendeurs ivoiriens — Créez votre boutique en ligne en quelques minutes.",
   address: {
     '@type':         'PostalAddress',
