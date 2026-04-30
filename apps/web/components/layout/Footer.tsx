@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Footer() {
   return (
@@ -8,13 +8,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
 
           <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <ShoppingBag size={18} className="text-black" />
-              </div>
-              <span className="text-white font-bold text-lg">
-                Shop<span className="text-primary">Easy</span> CI
-              </span>
+            <Link href="/" className="mb-4 inline-block">
+              <Image src="/Shop.png" alt="ShopEasy CI" width={130} height={45} className="object-contain" priority />
             </Link>
             <p className="text-muted text-sm leading-relaxed max-w-xs">
               La plateforme e-commerce pensee pour les vendeurs ivoiriens.

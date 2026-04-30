@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X, ShoppingBag, LogOut, LayoutDashboard, ChevronDown, Package, Heart, MapPin, User } from 'lucide-react';
+import { Menu, X, LogOut, LayoutDashboard, ChevronDown, Package, Heart, MapPin, User } from 'lucide-react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Navbar() {
@@ -36,13 +37,8 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <ShoppingBag size={18} className="text-black" />
-            </div>
-            <span className="text-white font-bold text-lg">
-              Shop<span className="text-primary">Easy</span> CI
-            </span>
+          <Link href="/">
+            <Image src="/Shop.png" alt="ShopEasy CI" width={130} height={45} className="object-contain" priority />
           </Link>
 
           {/* Navigation desktop */}
