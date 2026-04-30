@@ -139,10 +139,10 @@ export default function BoutiquesPage() {
                   className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 transition-all hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-1">
 
                   {/* Hero */}
-                  <div className="relative w-full overflow-hidden rounded-t-2xl" style={{ aspectRatio: '16/9' }}>
+                  <div className="relative w-full overflow-hidden" style={{ aspectRatio: '16/7' }}>
                     {boutique.heroImage ? (
                       <Image src={boutique.heroImage} alt={boutique.name} fill
-                        className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                        className="object-contain group-hover:scale-105 transition-transform duration-500" />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-primary/20 to-elevated" />
                     )}
