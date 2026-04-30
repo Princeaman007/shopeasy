@@ -85,7 +85,7 @@ export default async function Hero() {
                     ))}
                   </div>
                   <p className="text-muted text-xs">
-                    +{totalBoutiques} boutique{totalBoutiques > 1 ? 's' : ''} cre{totalBoutiques > 1 ? 'es' : 'e'}
+                    +{totalBoutiques} boutique{totalBoutiques > 1 ? 's' : ''} cree{totalBoutiques > 1 ? 'es' : 'e'}
                   </p>
                 </div>
               </div>
