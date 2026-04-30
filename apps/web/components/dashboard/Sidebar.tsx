@@ -46,7 +46,7 @@ export default function Sidebar() {
 
       <div className="p-6 border-b border-border">
         <Link href="/" className="mb-4 inline-block">
-          <Image src="/Shop.png" alt="ShopEasy CI" width={120} height={45} className="object-contain" priority />
+          <Image src="/Shop.png" alt="ShopEasy CI" width={100} height={38} className="object-contain" priority />
         </Link>
 
         {shop && (
