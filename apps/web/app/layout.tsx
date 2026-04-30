@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     type:        'website',
     images: [
       {
-        url:    '/Shop.png',
+        url:    '/og-image.png',
         width:  1080,
         height: 1080,
         alt:    "ShopEasy CI — Boutique en ligne Côte d'Ivoire",
@@ -49,7 +49,7 @@ export const metadata: Metadata = {
     card:        'summary_large_image',
     title:       "ShopEasy CI — Boutique en ligne Côte d'Ivoire",
     description: 'Créez votre boutique en ligne professionnelle en quelques minutes.',
-    images:      ['/Shop.png'],
+    images:      ['/og-image.png'],
   },
   robots: {
     index:  true,
@@ -77,7 +77,7 @@ const schemaOrg = {
   '@type':    'Organization',
   name:       'ShopEasy CI',
   url:        'https://www.shopeasyci.store',
-  logo:       'https://www.shopeasyci.store/Shop.png',
+  logo:       'https://www.shopeasyci.store/og-image.png',
   description: "Plateforme e-commerce pour vendeurs ivoiriens — Créez votre boutique en ligne en quelques minutes.",
   address: {
     '@type':         'PostalAddress',
