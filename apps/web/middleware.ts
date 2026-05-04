@@ -21,7 +21,7 @@ export function middleware(req: NextRequest) {
 
   // ✅ Sous-domaine → rewrite + stocke cookie currentShop
   if (isSubdomain) {
-    const shopSlug = hostname.replace(`.${ROOT_DOMAIN}`, '');
+    const shopSlug = hostname.replace(`.${ROOT_DOMAIN}`, '').toLowerCase().trim();
     const url = req.nextUrl.clone();
 
     // ✅ Évite le double slug
@@ -59,7 +59,10 @@ export function middleware(req: NextRequest) {
 
   if (ROUTES_DASHBOARD.some(r => pathname.startsWith(r))) {
     if (!isConnecte) return NextResponse.redirect(new URL('/connexion', req.url));
-    if (role !== 'merchant') return NextResponse.redirect(new URL('/', req.url));
+    // ✅ Autorise marchands ET équipiers (client avec shopId)
+    if (role !== 'merchant' && !(role === 'client' && payload?.shopId)) {
+      return NextResponse.redirect(new URL('/', req.url));
+    }
   }
 
   if (ROUTES_ADMIN.some(r => pathname.startsWith(r))) {
