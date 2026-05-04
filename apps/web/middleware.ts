@@ -34,7 +34,7 @@ export function middleware(req: NextRequest) {
     const response = NextResponse.rewrite(url);
     response.cookies.set('currentShop', shopSlug, {
       path:     '/',
-      maxAge:   60 * 60 * 24,
+      maxAge:   60 * 60 * 2,
       sameSite: 'lax',
       secure:   true,
     });
