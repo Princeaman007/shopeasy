@@ -82,15 +82,15 @@ exports.Category = mongoose_1.default.model('Category', CategorySchema);
  * Insérées automatiquement à la création d'une boutique
  */
 exports.PREDEFINED_CATEGORIES = [
-    { name: 'Mode femme', slug: 'mode-femme', icon: '👗', order: 1 },
-    { name: 'Mode homme', slug: 'mode-homme', icon: '👔', order: 2 },
-    { name: 'Chaussures', slug: 'chaussures', icon: '👟', order: 3 },
-    { name: 'Accessoires', slug: 'accessoires', icon: '👜', order: 4 },
-    { name: 'Lunettes', slug: 'lunettes', icon: '🕶️', order: 5 },
-    { name: 'Beauté & Cosmétiques', slug: 'beaute-cosmetiques', icon: '💄', order: 6 },
-    { name: 'Enfants', slug: 'enfants', icon: '🧸', order: 7 },
-    { name: 'Maison & Déco', slug: 'maison-deco', icon: '🏠', order: 8 },
-    { name: 'Alimentation', slug: 'alimentation', icon: '🍎', order: 9 },
-    { name: 'Autre', slug: 'autre', icon: '📦', order: 10 },
+    { name: 'Mode femme', slug: 'mode-femme', icon: '', order: 1 },
+    { name: 'Mode homme', slug: 'mode-homme', icon: '', order: 2 },
+    { name: 'Chaussures', slug: 'chaussures', icon: '', order: 3 },
+    { name: 'Accessoires', slug: 'accessoires', icon: '', order: 4 },
+    { name: 'Lunettes', slug: 'lunettes', icon: '', order: 5 },
+    { name: 'Beauté & Cosmétiques', slug: 'beaute-cosmetiques', icon: '', order: 6 },
+    { name: 'Enfants', slug: 'enfants', icon: '', order: 7 },
+    { name: 'Maison & Déco', slug: 'maison-deco', icon: '', order: 8 },
+    { name: 'Alimentation', slug: 'alimentation', icon: '', order: 9 },
+    { name: 'Autre', slug: 'autre', icon: '', order: 10 },
 ];
 //# sourceMappingURL=Category.js.map

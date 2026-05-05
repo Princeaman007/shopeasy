@@ -112,7 +112,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                     color:      categorie === cat._id ? t.accent : t.muted,
                     fontWeight: categorie === cat._id ? 600 : 400,
                   }}>
-                  <span>{cat.icon} {cat.name}</span>
+                  <span>{cat.name}</span>
                   <span className="text-xs">{count}</span>
                 </button>
               );
