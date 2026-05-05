@@ -5,16 +5,16 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   Search, X, SlidersHorizontal, ChevronLeft,
-  ShoppingCart, ChevronRight, Grid3X3, List,
+  ShoppingCart, ChevronRight, Grid3X3, List, Flame,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
 import BoutonFavori from '@/components/storefront/BoutonFavori';
 
 interface Props {
-  shop: ShopPublic;
+  shop:       ShopPublic;
   categories: any[];
-  produits: any[];
+  produits:   any[];
 }
 
 const formatFcfa = (n: number) =>
@@ -25,12 +25,12 @@ const PAR_PAGE = 12;
 export default function CatalogueClient({ shop, categories, produits }: Props) {
   const t = getThemeConfig(shop.selectedTheme);
 
-  const [recherche, setRecherche] = useState('');
-  const [categorie, setCategorie] = useState('');
-  const [tri, setTri] = useState<'recent' | 'prix-asc' | 'prix-desc' | 'nom'>('recent');
-  const [filtrePrix, setFiltrePrix] = useState<[number, number]>([0, 500000]);
-  const [grille, setGrille] = useState<'grid' | 'list'>('grid');
-  const [page, setPage] = useState(1);
+  const [recherche,      setRecherche]      = useState('');
+  const [categorie,      setCategorie]      = useState('');
+  const [tri,            setTri]            = useState<'recent' | 'prix-asc' | 'prix-desc' | 'nom'>('recent');
+  const [filtrePrix,     setFiltrePrix]     = useState<[number, number]>([0, 500000]);
+  const [grille,         setGrille]         = useState<'grid' | 'list'>('grid');
+  const [page,           setPage]           = useState(1);
   const [filtresOuverts, setFiltresOuverts] = useState(false);
 
   const prixMax = useMemo(
@@ -47,15 +47,15 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
     if (categorie) liste = liste.filter(p => p.categoryId === categorie);
     liste = liste.filter(p => p.price >= filtrePrix[0] && p.price <= filtrePrix[1]);
     switch (tri) {
-      case 'prix-asc': liste.sort((a, b) => a.price - b.price); break;
+      case 'prix-asc':  liste.sort((a, b) => a.price - b.price); break;
       case 'prix-desc': liste.sort((a, b) => b.price - a.price); break;
-      case 'nom': liste.sort((a, b) => a.name.localeCompare(b.name)); break;
+      case 'nom':       liste.sort((a, b) => a.name.localeCompare(b.name)); break;
       default: liste.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     }
     return liste;
   }, [produits, recherche, categorie, filtrePrix, tri]);
 
-  const totalPages = Math.ceil(produitsFiltres.length / PAR_PAGE);
+  const totalPages   = Math.ceil(produitsFiltres.length / PAR_PAGE);
   const produitsPaged = produitsFiltres.slice((page - 1) * PAR_PAGE, page * PAR_PAGE);
 
   const changerPage = (n: number) => { setPage(n); window.scrollTo({ top: 0, behavior: 'smooth' }); };
@@ -68,7 +68,12 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
   const filtresActifs = recherche || categorie ||
     filtrePrix[0] > 0 || filtrePrix[1] < prixMax || tri !== 'recent';
 
-  // Contenu filtres (reutilise dans sidebar + drawer)
+  // ── Vérifie si un produit est nouveau (moins de 7 jours) ──────────────────
+  const estNouveau = (createdAt: string) => {
+    const diff = Date.now() - new Date(createdAt).getTime();
+    return diff < 7 * 24 * 60 * 60 * 1000;
+  };
+
   const ContenuFiltres = () => (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -91,7 +96,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors"
               style={{
                 backgroundColor: !categorie ? `${t.accent}20` : 'transparent',
-                color: !categorie ? t.accent : t.muted,
+                color:      !categorie ? t.accent : t.muted,
                 fontWeight: !categorie ? 600 : 400,
               }}>
               Tous ({produits.length})
@@ -104,7 +109,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                   className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center justify-between"
                   style={{
                     backgroundColor: categorie === cat._id ? `${t.accent}20` : 'transparent',
-                    color: categorie === cat._id ? t.accent : t.muted,
+                    color:      categorie === cat._id ? t.accent : t.muted,
                     fontWeight: categorie === cat._id ? 600 : 400,
                   }}>
                   <span>{cat.icon} {cat.name}</span>
@@ -197,20 +202,18 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Bouton filtres — visible partout sur mobile */}
             <button onClick={() => setFiltresOuverts(!filtresOuverts)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors lg:hidden"
               style={{
                 backgroundColor: filtresActifs ? `${t.accent}15` : t.surface,
-                borderColor: filtresActifs ? t.accent : t.border,
-                color: filtresActifs ? t.accent : t.text,
+                borderColor:     filtresActifs ? t.accent : t.border,
+                color:           filtresActifs ? t.accent : t.text,
               }}>
               <SlidersHorizontal size={15} />
               Filtres
               {filtresActifs && <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.accent }} />}
             </button>
 
-            {/* Vue grille / liste */}
             <div className="flex border rounded-xl overflow-hidden" style={{ borderColor: t.border }}>
               {(['grid', 'list'] as const).map(v => (
                 <button key={v} onClick={() => setGrille(v)} className="p-2 transition-colors"
@@ -220,7 +223,6 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               ))}
             </div>
 
-            {/* Tri */}
             <select value={tri} onChange={e => { setTri(e.target.value as any); setPage(1); }}
               className="px-3 py-2 rounded-xl border text-sm outline-none hidden sm:block"
               style={{ backgroundColor: t.surface, borderColor: t.border, color: t.text }}>
@@ -254,93 +256,130 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               </div>
             ) : grille === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
-                {produitsPaged.map(produit => (
-                  <Link key={produit._id} href={`/produits/${produit._id}`}
-                    className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
-                    style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                    <div className="aspect-square relative overflow-hidden"
-                      style={{ backgroundColor: t.elevated }}>
-                      {produit.images?.[0]
-                        ? <Image src={produit.images[0]} alt={produit.name} fill
-                          className="object-cover group-hover:scale-105 transition-transform" />
-                        : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
-                      }
-                      {produit.comparePrice > produit.price && (
-                        <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
-                          style={{ backgroundColor: t.accent }}>
-                          -{Math.round((1 - produit.price / produit.comparePrice) * 100)}%
-                        </div>
-                      )}
+                {produitsPaged.map(produit => {
+                  const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
+                  const nouveau     = estNouveau(produit.createdAt);
+                  return (
+                    <Link key={produit._id} href={`/produits/${produit._id}`}
+                      className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
+                      style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
 
-                      {/* Bouton favori */}
-                      <div className="absolute top-2 right-2 z-10">
-                        <BoutonFavori
-                          shopSlug={shop.slug}
-                          produitId={produit._id}
-                          nom={produit.name}
-                          prix={produit.price}
-                          image={produit.images?.[0] ?? null}
-                          accent={t.accent}
-                          className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
-                        />
-                      </div>
+                      <div className="aspect-square relative overflow-hidden"
+                        style={{ backgroundColor: t.elevated }}>
+                        {produit.images?.[0]
+                          ? <Image src={produit.images[0]} alt={produit.name} fill
+                              className="object-cover group-hover:scale-105 transition-transform" />
+                          : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
+                        }
 
-                      {produit.totalStock === 0 && (
-                        <div className="absolute inset-0 flex items-center justify-center"
-                          style={{ backgroundColor: `${t.bg}bb` }}>
-                          <span className="text-xs font-semibold px-2 py-1 rounded-full"
-                            style={{ backgroundColor: t.elevated, color: t.muted }}>
-                            Rupture
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-3 space-y-1">
-                      <p className="font-medium text-sm line-clamp-2" style={{ color: t.text }}>
-                        {produit.name}
-                      </p>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm" style={{ color: t.accent }}>
-                          {formatFcfa(produit.price)}
-                        </span>
+                        {/* Badge réduction */}
                         {produit.comparePrice > produit.price && (
-                          <span className="text-xs line-through" style={{ color: t.muted }}>
-                            {formatFcfa(produit.comparePrice)}
-                          </span>
+                          <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
+                            style={{ backgroundColor: '#ef4444' }}>
+                            -{Math.round((1 - produit.price / produit.comparePrice) * 100)}%
+                          </div>
+                        )}
+
+                        {/* Badge Nouveau */}
+                        {nouveau && !stockFaible && produit.totalStock > 0 && (
+                          <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
+                            style={{ backgroundColor: t.accent }}>
+                            Nouveau
+                          </div>
+                        )}
+
+                        {/* Badge Stock faible */}
+                        {stockFaible && (
+                          <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full"
+                            style={{ backgroundColor: '#f59e0b', color: '#000' }}>
+                            <Flame size={11} />
+                            Plus que {produit.totalStock} !
+                          </div>
+                        )}
+
+                        {/* Bouton favori */}
+                        <div className="absolute top-2 right-2 z-10">
+                          <BoutonFavori
+                            shopSlug={shop.slug}
+                            produitId={produit._id}
+                            nom={produit.name}
+                            prix={produit.price}
+                            image={produit.images?.[0] ?? null}
+                            accent={t.accent}
+                            className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
+                          />
+                        </div>
+
+                        {/* Rupture de stock */}
+                        {produit.totalStock === 0 && (
+                          <div className="absolute inset-0 flex items-center justify-center"
+                            style={{ backgroundColor: `${t.bg}bb` }}>
+                            <span className="text-xs font-semibold px-2 py-1 rounded-full"
+                              style={{ backgroundColor: t.elevated, color: t.muted }}>
+                              Rupture
+                            </span>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  </Link>
-                ))}
+
+                      <div className="p-3 space-y-1">
+                        <p className="font-medium text-sm line-clamp-2" style={{ color: t.text }}>
+                          {produit.name}
+                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm" style={{ color: t.accent }}>
+                            {formatFcfa(produit.price)}
+                          </span>
+                          {produit.comparePrice > produit.price && (
+                            <span className="text-xs line-through" style={{ color: t.muted }}>
+                              {formatFcfa(produit.comparePrice)}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
               <div className="space-y-3">
-                {produitsPaged.map(produit => (
-                  <Link key={produit._id} href={`/produits/${produit._id}`}
-                    className="flex gap-4 p-4 rounded-2xl border transition-all hover:shadow-md"
-                    style={{ backgroundColor: t.surface, borderColor: t.border }}>
-                    <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 relative"
-                      style={{ backgroundColor: t.elevated }}>
-                      {produit.images?.[0]
-                        ? <Image src={produit.images[0]} alt={produit.name} fill className="object-cover" />
-                        : <div className="w-full h-full flex items-center justify-center text-2xl">...</div>
-                      }
-                    </div>
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <p className="font-semibold text-sm" style={{ color: t.text }}>{produit.name}</p>
-                      {produit.description && (
-                        <p className="text-xs line-clamp-2" style={{ color: t.muted }}>{produit.description}</p>
-                      )}
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm" style={{ color: t.accent }}>{formatFcfa(produit.price)}</span>
-                        {produit.comparePrice > produit.price && (
-                          <span className="text-xs line-through" style={{ color: t.muted }}>{formatFcfa(produit.comparePrice)}</span>
-                        )}
+                {produitsPaged.map(produit => {
+                  const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
+                  return (
+                    <Link key={produit._id} href={`/produits/${produit._id}`}
+                      className="flex gap-4 p-4 rounded-2xl border transition-all hover:shadow-md"
+                      style={{ backgroundColor: t.surface, borderColor: t.border }}>
+                      <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 relative"
+                        style={{ backgroundColor: t.elevated }}>
+                        {produit.images?.[0]
+                          ? <Image src={produit.images[0]} alt={produit.name} fill className="object-cover" />
+                          : <div className="w-full h-full flex items-center justify-center text-2xl">...</div>
+                        }
                       </div>
-                    </div>
-                    <ChevronRight size={18} className="flex-shrink-0 self-center" style={{ color: t.muted }} />
-                  </Link>
-                ))}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <p className="font-semibold text-sm" style={{ color: t.text }}>{produit.name}</p>
+                        {produit.description && (
+                          <p className="text-xs line-clamp-2" style={{ color: t.muted }}>{produit.description}</p>
+                        )}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-sm" style={{ color: t.accent }}>{formatFcfa(produit.price)}</span>
+                          {produit.comparePrice > produit.price && (
+                            <span className="text-xs line-through" style={{ color: t.muted }}>{formatFcfa(produit.comparePrice)}</span>
+                          )}
+                          {/* Badge stock faible vue liste */}
+                          {stockFaible && (
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
+                              style={{ backgroundColor: '#f59e0b20', color: '#f59e0b' }}>
+                              <Flame size={10} />
+                              Plus que {produit.totalStock} !
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <ChevronRight size={18} className="flex-shrink-0 self-center" style={{ color: t.muted }} />
+                    </Link>
+                  );
+                })}
               </div>
             )}
 
@@ -361,12 +400,12 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                   .map((n, i) => n === '...'
                     ? <span key={`dot-${i}`} style={{ color: t.muted }}>...</span>
                     : <button key={n} onClick={() => changerPage(n as number)}
-                      className="w-9 h-9 rounded-xl border text-sm font-semibold transition-colors"
-                      style={{
-                        backgroundColor: page === n ? t.accent : t.surface,
-                        borderColor: page === n ? t.accent : t.border,
-                        color: page === n ? '#fff' : t.text,
-                      }}>{n}</button>
+                        className="w-9 h-9 rounded-xl border text-sm font-semibold transition-colors"
+                        style={{
+                          backgroundColor: page === n ? t.accent : t.surface,
+                          borderColor:     page === n ? t.accent : t.border,
+                          color:           page === n ? '#fff' : t.text,
+                        }}>{n}</button>
                   )
                 }
                 <button onClick={() => changerPage(page + 1)} disabled={page === totalPages}
