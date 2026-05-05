@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
   ChevronLeft, ChevronRight, ShoppingCart,
   MessageCircle, Check, Minus, Plus, Share2,
-  MapPin, Clock,
+  MapPin, Clock, Shield, Truck, RotateCcw, Flame, Eye,
 } from 'lucide-react';
 import { getThemeConfig } from '../../theme.config';
 import type { ShopPublic } from '../../types';
@@ -16,16 +16,48 @@ import FormulaireAvis from '@/components/storefront/FormulaireAvis';
 import ListeAvis from '@/components/storefront/ListeAvis';
 
 interface Props {
-  shop: ShopPublic;
-  produit: any;
+  shop:      ShopPublic;
+  produit:   any;
   similaires: any[];
 }
 
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
+// ── Compte à rebours ──────────────────────────────────────────────────────────
+function useCompteur() {
+  const [temps, setTemps] = useState({ h: 2, m: 0, s: 0 });
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTemps(prev => {
+        let { h, m, s } = prev;
+        if (s > 0) return { h, m, s: s - 1 };
+        if (m > 0) return { h, m: m - 1, s: 59 };
+        if (h > 0) return { h: h - 1, m: 59, s: 59 };
+        return { h: 1, m: 59, s: 59 }; // Repart
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  return temps;
+}
+
+// ── Visiteurs simulés ─────────────────────────────────────────────────────────
+function useVisiteurs() {
+  const [visiteurs, setVisiteurs] = useState(Math.floor(Math.random() * 8) + 3);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisiteurs(Math.floor(Math.random() * 8) + 3);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+  return visiteurs;
+}
+
 export default function ProduitClient({ shop, produit, similaires }: Props) {
-  const t = getThemeConfig(shop.selectedTheme);
+  const t         = getThemeConfig(shop.selectedTheme);
+  const temps     = useCompteur();
+  const visiteurs = useVisiteurs();
 
   const [imageActive,       setImageActive]       = useState(0);
   const [quantite,          setQuantite]          = useState(1);
@@ -71,6 +103,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
   const stockDispo = stockVariante !== null ? stockVariante : (produit.totalStock ?? 0);
   const enRupture  = stockDispo === 0;
+  const stockFaible = stockDispo > 0 && stockDispo <= 5;
 
   const ajouterAuPanier = () => {
     if (!toutesVariantesChoisies || enRupture) return;
@@ -116,20 +149,20 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   };
 
   const couleurCSS: Record<string, string> = {
-    noir: '#1a1a1a',    black: '#1a1a1a',
-    blanc: '#ffffff',   white: '#ffffff',
-    rouge: '#ef4444',   red: '#ef4444',
-    bleu: '#3b82f6',    blue: '#3b82f6',
-    vert: '#22c55e',    green: '#22c55e',
-    jaune: '#eab308',   yellow: '#eab308',
+    noir: '#1a1a1a', black: '#1a1a1a',
+    blanc: '#ffffff', white: '#ffffff',
+    rouge: '#ef4444', red: '#ef4444',
+    bleu: '#3b82f6', blue: '#3b82f6',
+    vert: '#22c55e', green: '#22c55e',
+    jaune: '#eab308', yellow: '#eab308',
     orange: '#f97316',
-    violet: '#a855f7',  purple: '#a855f7',
-    rose: '#ec4899',    pink: '#ec4899',
-    marron: '#92400e',  brown: '#92400e',
+    violet: '#a855f7', purple: '#a855f7',
+    rose: '#ec4899', pink: '#ec4899',
+    marron: '#92400e', brown: '#92400e',
     beige: '#d4b896',
-    gris: '#6b7280',    grey: '#6b7280',   gray: '#6b7280',
-    or: '#f59e0b',      gold: '#f59e0b',
-    argent: '#94a3b8',  silver: '#94a3b8',
+    gris: '#6b7280', grey: '#6b7280', gray: '#6b7280',
+    or: '#f59e0b', gold: '#f59e0b',
+    argent: '#94a3b8', silver: '#94a3b8',
   };
 
   return (
@@ -166,8 +199,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               }
               {produit.comparePrice > produit.price && (
                 <div className="absolute top-4 left-4 text-sm font-bold px-3 py-1.5 rounded-full"
-                  style={{ backgroundColor: t.accent, color: '#fff' }}>
-                  -{Math.round((1 - produit.price / produit.comparePrice) * 100)}%
+                  style={{ backgroundColor: '#ef4444', color: '#fff' }}>
+                  -{Math.round((1 - produit.price / produit.comparePrice) * 100)}% OFF
                 </div>
               )}
               {imagesAffichees?.length > 1 && (
@@ -201,7 +234,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           </div>
 
           {/* ── INFOS ── */}
-          <div className="space-y-5">
+          <div className="space-y-4">
 
             {/* Titre + favori */}
             <div className="flex items-start justify-between gap-3">
@@ -217,29 +250,70 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               />
             </div>
 
+            {/* Visiteurs en live */}
+            <div className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl w-fit"
+              style={{ backgroundColor: `${t.accent}15`, color: t.accent }}>
+              <Eye size={13} />
+              <span><strong>{visiteurs} personnes</strong> regardent ce produit en ce moment</span>
+            </div>
+
             {/* Prix */}
             <div className="flex items-center gap-3">
               <span className="text-3xl font-extrabold" style={{ color: t.accent }}>
                 {formatFcfa(produit.price)}
               </span>
               {produit.comparePrice > produit.price && (
-                <span className="text-lg line-through" style={{ color: t.muted }}>
-                  {formatFcfa(produit.comparePrice)}
-                </span>
+                <div className="space-y-0.5">
+                  <span className="text-lg line-through block" style={{ color: t.muted }}>
+                    {formatFcfa(produit.comparePrice)}
+                  </span>
+                  <span className="text-xs font-bold text-red-400">
+                    Vous économisez {formatFcfa(produit.comparePrice - produit.price)}
+                  </span>
+                </div>
               )}
+            </div>
+
+            {/* ── URGENCE — Compte à rebours ── */}
+            <div className="p-3 rounded-xl border"
+              style={{ backgroundColor: `#ef444415`, borderColor: `#ef444430` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <Flame size={15} className="text-red-400" />
+                <span className="text-xs font-bold text-red-400">Offre limitée — se termine dans</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {[
+                  { val: String(temps.h).padStart(2, '0'), label: 'h' },
+                  { val: String(temps.m).padStart(2, '0'), label: 'min' },
+                  { val: String(temps.s).padStart(2, '0'), label: 'sec' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-1">
+                    <div className="px-2 py-1 rounded-lg text-center min-w-[40px]"
+                      style={{ backgroundColor: t.elevated }}>
+                      <span className="text-lg font-bold font-mono" style={{ color: t.text }}>
+                        {item.val}
+                      </span>
+                    </div>
+                    <span className="text-xs" style={{ color: t.muted }}>{item.label}</span>
+                    {i < 2 && <span className="font-bold text-red-400">:</span>}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Stock */}
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: enRupture ? '#ef4444' : stockDispo <= 3 ? '#f59e0b' : t.accent }} />
-              <span className="text-sm"
-                style={{ color: enRupture ? '#ef4444' : stockDispo <= 3 ? '#f59e0b' : t.muted }}>
+                style={{ backgroundColor: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.accent }} />
+              <span className="text-sm font-medium"
+                style={{ color: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.muted }}>
                 {enRupture
-                  ? 'Rupture de stock'
-                  : stockVariante !== null
-                    ? `${stockDispo} disponible${stockDispo > 1 ? 's' : ''} pour cette variante`
-                    : `${stockDispo} en stock`
+                  ? '❌ Rupture de stock'
+                  : stockFaible
+                    ? `⚠️ Plus que ${stockDispo} en stock — commandez vite !`
+                    : stockVariante !== null
+                      ? `✅ ${stockDispo} disponible${stockDispo > 1 ? 's' : ''} pour cette variante`
+                      : `✅ En stock`
                 }
               </span>
             </div>
@@ -310,41 +384,63 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   <Plus size={16} style={{ color: t.text }} />
                 </button>
                 <span className="text-sm ml-2" style={{ color: t.muted }}>
-                  Total : {formatFcfa(produit.price * quantite)}
+                  Total : <strong style={{ color: t.accent }}>{formatFcfa(produit.price * quantite)}</strong>
                 </span>
               </div>
             </div>
 
-            {/* CTA */}
+            {/* ── CTA ── */}
             <div className="space-y-3 pt-2">
               <button onClick={ajouterAuPanier}
                 disabled={!toutesVariantesChoisies || enRupture}
-                className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40"
-                style={{ backgroundColor: ajoutePanier ? '#10b981' : t.accent, color: '#fff' }}>
+                className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-40 hover:opacity-90"
+                style={{
+                  backgroundColor: ajoutePanier ? '#10b981' : t.accent,
+                  color: '#fff',
+                  boxShadow: `0 4px 20px ${t.accent}50`,
+                }}>
                 {ajoutePanier
-                  ? <><Check size={18} /> Ajoute au panier !</>
-                  : <><ShoppingCart size={18} /> Ajouter au panier</>
+                  ? <><Check size={20} /> Ajouté au panier !</>
+                  : <><ShoppingCart size={20} /> Ajouter au panier</>
                 }
               </button>
+
               {shop.whatsapp && (
                 <button onClick={commanderWhatsApp}
                   disabled={!toutesVariantesChoisies || enRupture}
-                  className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+                  className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-40 hover:opacity-90"
                   style={{ backgroundColor: '#25D366', color: '#fff' }}>
-                  <MessageCircle size={18} /> Commander via WhatsApp
+                  <MessageCircle size={20} /> Commander via WhatsApp
                 </button>
               )}
+
               {variantes.length > 0 && !toutesVariantesChoisies && (
-                <p className="text-xs text-center" style={{ color: t.muted }}>
-                  Veuillez selectionner toutes les options avant de commander
+                <p className="text-xs text-center" style={{ color: '#f59e0b' }}>
+                  ⚠️ Veuillez sélectionner toutes les options avant de commander
                 </p>
               )}
+            </div>
+
+            {/* ── GARANTIES ── */}
+            <div className="grid grid-cols-3 gap-2 pt-2">
+              {[
+                { icone: <Truck size={16} />,    titre: 'Livraison',  desc: 'Rapide et fiable'   },
+                { icone: <Shield size={16} />,   titre: 'Sécurisé',  desc: 'Paiement à la livr.' },
+                { icone: <RotateCcw size={16} />, titre: 'Retour',    desc: 'Politique flexible'  },
+              ].map((g, i) => (
+                <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl border gap-1"
+                  style={{ backgroundColor: t.surface, borderColor: t.border }}>
+                  <span style={{ color: t.accent }}>{g.icone}</span>
+                  <p className="text-xs font-bold" style={{ color: t.text }}>{g.titre}</p>
+                  <p className="text-xs" style={{ color: t.muted }}>{g.desc}</p>
+                </div>
+              ))}
             </div>
 
             {/* Infos boutique */}
             <div className="p-4 rounded-2xl border space-y-2"
               style={{ backgroundColor: t.surface, borderColor: t.border }}>
-              <Link  href="https://www.shopeasyci.store"
+              <Link href="/"
                 className="flex items-center gap-2 font-semibold text-sm hover:opacity-80"
                 style={{ color: t.text }}>
                 {shop.name}
@@ -364,14 +460,14 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             </div>
 
           </div>
-        </div>{/* ── FIN GRILLE ── */}
+        </div>
 
         {/* ── POLITIQUE DE RETOUR ── */}
         {shop.about?.returnPolicy && (
           <div className="mt-6 p-4 rounded-2xl border space-y-2"
             style={{ backgroundColor: t.surface, borderColor: t.border }}>
             <p className="text-sm font-semibold" style={{ color: t.text }}>
-               Politique de retour
+              Politique de retour
             </p>
             <p className="text-xs leading-relaxed" style={{ color: t.muted }}>
               {shop.about.returnPolicy}
@@ -404,7 +500,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           </div>
         )}
 
-      </div>{/* ── FIN max-w-6xl ── */}
+      </div>
 
       {/* ── AVIS ── */}
       <div className="max-w-6xl mx-auto px-4 mt-12 space-y-8">
