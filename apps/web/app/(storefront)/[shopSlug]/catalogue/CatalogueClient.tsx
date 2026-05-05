@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
   Search, X, SlidersHorizontal, ChevronLeft,
   ShoppingCart, ChevronRight, Grid3X3, List, Flame,
+  Clock, Users, Zap,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -22,8 +23,40 @@ const formatFcfa = (n: number) =>
 
 const PAR_PAGE = 12;
 
+// ── Compte à rebours vente flash ─────────────────────────────────────────────
+function useCompteurFlash() {
+  const [temps, setTemps] = useState({ h: 3, m: 47, s: 22 });
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTemps(prev => {
+        const { h, m, s } = prev;
+        if (s > 0) return { h, m, s: s - 1 };
+        if (m > 0) return { h, m: m - 1, s: 59 };
+        if (h > 0) return { h: h - 1, m: 59, s: 59 };
+        return { h: 3, m: 47, s: 22 }; // Repart
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  return temps;
+}
+
+// ── Visiteurs actifs simulés ──────────────────────────────────────────────────
+function useVisiteursActifs() {
+  const [nb, setNb] = useState(Math.floor(Math.random() * 15) + 8);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNb(Math.floor(Math.random() * 15) + 8);
+    }, 12000);
+    return () => clearInterval(interval);
+  }, []);
+  return nb;
+}
+
 export default function CatalogueClient({ shop, categories, produits }: Props) {
-  const t = getThemeConfig(shop.selectedTheme);
+  const t           = getThemeConfig(shop.selectedTheme);
+  const temps       = useCompteurFlash();
+  const visiteurs   = useVisiteursActifs();
 
   const [recherche,      setRecherche]      = useState('');
   const [categorie,      setCategorie]      = useState('');
@@ -55,10 +88,13 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
     return liste;
   }, [produits, recherche, categorie, filtrePrix, tri]);
 
-  const totalPages   = Math.ceil(produitsFiltres.length / PAR_PAGE);
+  const totalPages    = Math.ceil(produitsFiltres.length / PAR_PAGE);
   const produitsPaged = produitsFiltres.slice((page - 1) * PAR_PAGE, page * PAR_PAGE);
 
-  const changerPage = (n: number) => { setPage(n); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  const changerPage = (n: number) => {
+    setPage(n);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const reinitialiserFiltres = () => {
     setRecherche(''); setCategorie(''); setTri('recent');
@@ -68,11 +104,20 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
   const filtresActifs = recherche || categorie ||
     filtrePrix[0] > 0 || filtrePrix[1] < prixMax || tri !== 'recent';
 
-  // ── Vérifie si un produit est nouveau (moins de 7 jours) ──────────────────
+  // ── Vérifie si un produit est nouveau (moins de 7 jours) ─────────────────
   const estNouveau = (createdAt: string) => {
     const diff = Date.now() - new Date(createdAt).getTime();
     return diff < 7 * 24 * 60 * 60 * 1000;
   };
+
+  // ── Nombre d'achats récents simulés par produit ───────────────────────────
+  const achatsSim = useMemo(() => {
+    const map: Record<string, number> = {};
+    produits.forEach(p => {
+      map[p._id] = Math.floor(Math.random() * 18) + 2;
+    });
+    return map;
+  }, [produits]);
 
   const ContenuFiltres = () => (
     <div className="space-y-5">
@@ -92,7 +137,8 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
             Categories
           </p>
           <div className="space-y-1">
-            <button onClick={() => { setCategorie(''); setPage(1); setFiltresOuverts(false); }}
+            <button
+              onClick={() => { setCategorie(''); setPage(1); setFiltresOuverts(false); }}
               className="w-full text-left px-3 py-2 rounded-lg text-sm transition-colors"
               style={{
                 backgroundColor: !categorie ? `${t.accent}20` : 'transparent',
@@ -162,7 +208,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
         className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
-          <Link href={"/"}
+          <Link href="/"
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70 flex-shrink-0"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />
@@ -171,30 +217,71 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
           <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl border"
             style={{ backgroundColor: t.elevated, borderColor: t.border }}>
             <Search size={15} style={{ color: t.muted }} />
-            <input value={recherche}
+            <input
+              value={recherche}
               onChange={e => { setRecherche(e.target.value); setPage(1); }}
-              placeholder="Rechercher..."
+              placeholder="Rechercher un produit..."
               className="flex-1 bg-transparent outline-none text-sm"
-              style={{ color: t.text }} />
+              style={{ color: t.text }}
+            />
             {recherche && (
               <button onClick={() => { setRecherche(''); setPage(1); }}>
                 <X size={13} style={{ color: t.muted }} />
               </button>
             )}
           </div>
-          <Link href={"/panier"} className="p-2 rounded-xl flex-shrink-0"
+          <Link href="/panier" className="p-2 rounded-xl flex-shrink-0"
             style={{ backgroundColor: t.elevated }}>
             <ShoppingCart size={20} style={{ color: t.text }} />
           </Link>
         </div>
       </nav>
 
+      {/* ── BANDEAU VENTE FLASH ── */}
+      <div style={{ backgroundColor: '#ef444410', borderBottom: '1px solid #ef444425' }}>
+        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+
+          {/* Gauche : vente flash + compte à rebours */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <Flame size={14} className="text-red-400" />
+              <span className="text-xs font-bold text-red-400">VENTE FLASH</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-mono font-bold"
+              style={{ color: t.text }}>
+              <span className="px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: t.elevated }}>
+                {String(temps.h).padStart(2, '0')}
+              </span>
+              <span className="text-red-400">:</span>
+              <span className="px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: t.elevated }}>
+                {String(temps.m).padStart(2, '0')}
+              </span>
+              <span className="text-red-400">:</span>
+              <span className="px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: t.elevated }}>
+                {String(temps.s).padStart(2, '0')}
+              </span>
+            </div>
+          </div>
+
+          {/* Droite : visiteurs actifs */}
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: t.muted }}>
+            <Users size={12} style={{ color: t.accent }} />
+            <span>
+              <strong style={{ color: t.text }}>{visiteurs} personnes</strong> sur la boutique en ce moment
+            </span>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-6xl mx-auto px-4 py-5">
 
         {/* ── EN-TETE ── */}
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: t.text }}>Catalogue</h1>
+            <h1 className="text-xl font-bold" style={{ color: t.text }}>Nos produits</h1>
             <p className="text-sm mt-0.5" style={{ color: t.muted }}>
               {produitsFiltres.length} produit{produitsFiltres.length > 1 ? 's' : ''}
               {filtresActifs && ' (filtre)'}
@@ -202,7 +289,8 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-            <button onClick={() => setFiltresOuverts(!filtresOuverts)}
+            <button
+              onClick={() => setFiltresOuverts(!filtresOuverts)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors lg:hidden"
               style={{
                 backgroundColor: filtresActifs ? `${t.accent}15` : t.surface,
@@ -217,13 +305,17 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
             <div className="flex border rounded-xl overflow-hidden" style={{ borderColor: t.border }}>
               {(['grid', 'list'] as const).map(v => (
                 <button key={v} onClick={() => setGrille(v)} className="p-2 transition-colors"
-                  style={{ backgroundColor: grille === v ? t.accent : t.surface, color: grille === v ? '#fff' : t.muted }}>
+                  style={{
+                    backgroundColor: grille === v ? t.accent : t.surface,
+                    color:           grille === v ? '#fff' : t.muted,
+                  }}>
                   {v === 'grid' ? <Grid3X3 size={15} /> : <List size={15} />}
                 </button>
               ))}
             </div>
 
-            <select value={tri} onChange={e => { setTri(e.target.value as any); setPage(1); }}
+            <select value={tri}
+              onChange={e => { setTri(e.target.value as any); setPage(1); }}
               className="px-3 py-2 rounded-xl border text-sm outline-none hidden sm:block"
               style={{ backgroundColor: t.surface, borderColor: t.border, color: t.text }}>
               <option value="recent">Plus recents</option>
@@ -254,43 +346,51 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                   Reinitialiser les filtres
                 </button>
               </div>
+
             ) : grille === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 {produitsPaged.map(produit => {
                   const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
                   const nouveau     = estNouveau(produit.createdAt);
+                  const aReduction  = produit.comparePrice > produit.price;
+                  const pct         = aReduction
+                    ? Math.round((1 - produit.price / produit.comparePrice) * 100)
+                    : 0;
+                  const achats      = achatsSim[produit._id] ?? 5;
+
                   return (
                     <Link key={produit._id} href={`/produits/${produit._id}`}
-                      className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
+                      className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl flex flex-col"
                       style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
 
+                      {/* ── IMAGE ── */}
                       <div className="aspect-square relative overflow-hidden"
                         style={{ backgroundColor: t.elevated }}>
                         {produit.images?.[0]
                           ? <Image src={produit.images[0]} alt={produit.name} fill
-                              className="object-cover group-hover:scale-105 transition-transform" />
+                              className="object-cover group-hover:scale-105 transition-transform duration-300" />
                           : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
                         }
 
-                        {/* Badge réduction */}
-                        {produit.comparePrice > produit.price && (
+                        {/* Badge réduction — priorité 1 */}
+                        {aReduction && (
                           <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
                             style={{ backgroundColor: '#ef4444' }}>
-                            -{Math.round((1 - produit.price / produit.comparePrice) * 100)}%
+                            -{pct}%
                           </div>
                         )}
 
-                        {/* Badge Nouveau */}
-                        {nouveau && !stockFaible && produit.totalStock > 0 && (
+                        {/* Badge Nouveau — priorité 2 (si pas de réduction) */}
+                        {nouveau && !aReduction && produit.totalStock > 0 && (
                           <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
                             style={{ backgroundColor: t.accent }}>
                             Nouveau
                           </div>
                         )}
 
-                        {/* Badge Stock faible */}
+                        {/* Badge Stock faible — en bas à gauche */}
                         {stockFaible && (
-                          <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full"
+                          <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full animate-pulse"
                             style={{ backgroundColor: '#f59e0b', color: '#000' }}>
                             <Flame size={11} />
                             Plus que {produit.totalStock} !
@@ -322,29 +422,75 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                         )}
                       </div>
 
-                      <div className="p-3 space-y-1">
+                      {/* ── INFOS ── */}
+                      <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
                         <p className="font-medium text-sm line-clamp-2" style={{ color: t.text }}>
                           {produit.name}
                         </p>
+
+                        {/* Prix */}
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm" style={{ color: t.accent }}>
                             {formatFcfa(produit.price)}
                           </span>
-                          {produit.comparePrice > produit.price && (
+                          {aReduction && (
                             <span className="text-xs line-through" style={{ color: t.muted }}>
                               {formatFcfa(produit.comparePrice)}
                             </span>
                           )}
+                        </div>
+
+                        {/* Preuve sociale — achats récents */}
+                        {produit.totalStock > 0 && (
+                          <div className="flex items-center gap-1 text-xs"
+                            style={{ color: t.muted }}>
+                            <Zap size={10} style={{ color: t.accent }} />
+                            <span>
+                              <strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Barre de stock visuelle — uniquement si stock faible */}
+                        {stockFaible && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs" style={{ color: t.muted }}>
+                              <span>Stock restant</span>
+                              <span className="font-bold" style={{ color: '#f59e0b' }}>
+                                {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''}
+                              </span>
+                            </div>
+                            <div className="w-full h-1.5 rounded-full overflow-hidden"
+                              style={{ backgroundColor: t.elevated }}>
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
+                                  backgroundColor: '#f59e0b',
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        {/* CTA Voir le produit */}
+                        <div
+                          className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all group-hover:opacity-90"
+                          style={{ backgroundColor: `${t.accent}20`, color: t.accent }}>
+                          Voir le produit →
                         </div>
                       </div>
                     </Link>
                   );
                 })}
               </div>
+
             ) : (
+              /* ── VUE LISTE ── */
               <div className="space-y-3">
                 {produitsPaged.map(produit => {
                   const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
+                  const achats      = achatsSim[produit._id] ?? 5;
                   return (
                     <Link key={produit._id} href={`/produits/${produit._id}`}
                       className="flex gap-4 p-4 rounded-2xl border transition-all hover:shadow-md"
@@ -357,16 +503,23 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                         }
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
-                        <p className="font-semibold text-sm" style={{ color: t.text }}>{produit.name}</p>
+                        <p className="font-semibold text-sm" style={{ color: t.text }}>
+                          {produit.name}
+                        </p>
                         {produit.description && (
-                          <p className="text-xs line-clamp-2" style={{ color: t.muted }}>{produit.description}</p>
+                          <p className="text-xs line-clamp-2" style={{ color: t.muted }}>
+                            {produit.description}
+                          </p>
                         )}
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm" style={{ color: t.accent }}>{formatFcfa(produit.price)}</span>
+                          <span className="font-bold text-sm" style={{ color: t.accent }}>
+                            {formatFcfa(produit.price)}
+                          </span>
                           {produit.comparePrice > produit.price && (
-                            <span className="text-xs line-through" style={{ color: t.muted }}>{formatFcfa(produit.comparePrice)}</span>
+                            <span className="text-xs line-through" style={{ color: t.muted }}>
+                              {formatFcfa(produit.comparePrice)}
+                            </span>
                           )}
-                          {/* Badge stock faible vue liste */}
                           {stockFaible && (
                             <span className="text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
                               style={{ backgroundColor: '#f59e0b20', color: '#f59e0b' }}>
@@ -375,15 +528,21 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                             </span>
                           )}
                         </div>
+                        {/* Preuve sociale vue liste */}
+                        <div className="flex items-center gap-1 text-xs" style={{ color: t.muted }}>
+                          <Zap size={10} style={{ color: t.accent }} />
+                          <span><strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine</span>
+                        </div>
                       </div>
-                      <ChevronRight size={18} className="flex-shrink-0 self-center" style={{ color: t.muted }} />
+                      <ChevronRight size={18} className="flex-shrink-0 self-center"
+                        style={{ color: t.muted }} />
                     </Link>
                   );
                 })}
               </div>
             )}
 
-            {/* Pagination */}
+            {/* ── PAGINATION ── */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 pt-4">
                 <button onClick={() => changerPage(page - 1)} disabled={page === 1}
@@ -419,9 +578,10 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         </div>
       </div>
 
-      {/* WhatsApp flottant */}
+      {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (
-        <Link href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}
+        <Link
+          href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}
           target="_blank" rel="noopener noreferrer"
           className="fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
           style={{ backgroundColor: '#25D366' }}>
