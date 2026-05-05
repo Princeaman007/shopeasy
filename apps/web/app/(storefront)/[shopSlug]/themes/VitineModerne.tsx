@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
   Search, Menu, X, CheckCircle,
   MapPin, Clock, ChevronRight,
+  Flame, Users, Zap, ShoppingBag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -17,15 +18,57 @@ import ListeAvis from '@/components/storefront/ListeAvis';
 
 interface Props { shop: ShopPublic; produits: any[]; }
 
-
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
+// ── Compte à rebours vente flash ─────────────────────────────────────────────
+function useCompteurFlash() {
+  const [temps, setTemps] = useState({ h: 2, m: 45, s: 0 });
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTemps(prev => {
+        const { h, m, s } = prev;
+        if (s > 0) return { h, m, s: s - 1 };
+        if (m > 0) return { h, m: m - 1, s: 59 };
+        if (h > 0) return { h: h - 1, m: 59, s: 59 };
+        return { h: 2, m: 45, s: 0 };
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  return temps;
+}
+
+// ── Visiteurs actifs simulés ──────────────────────────────────────────────────
+function useVisiteursActifs() {
+  const [nb, setNb] = useState(Math.floor(Math.random() * 12) + 5);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNb(Math.floor(Math.random() * 12) + 5);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+  return nb;
+}
+
 export default function VitrinModerne({ shop, produits }: Props) {
-  const t = getThemeConfig('vitrine-moderne');
-  const [menuOuvert, setMenuOuvert] = useState(false);
+  const t         = getThemeConfig('vitrine-moderne');
+  const temps     = useCompteurFlash();
+  const visiteurs = useVisiteursActifs();
+
+  const [menuOuvert,  setMenuOuvert]  = useState(false);
   const [refreshAvis, setRefreshAvis] = useState(0);
 
+  // Achats récents simulés par produit
+  const achatsSim = useMemo(() => {
+    const map: Record<string, number> = {};
+    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 20) + 3; });
+    return map;
+  }, [produits]);
+
+  // Vérifie si un produit est nouveau (moins de 7 jours)
+  const estNouveau = (createdAt: string) =>
+    Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
@@ -36,19 +79,20 @@ export default function VitrinModerne({ shop, produits }: Props) {
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
 
           <div className="flex items-center gap-3">
-            <Link  href="https://www.shopeasyci.store" className="flex items-center gap-3">
+            <Link href="https://www.shopeasyci.store" className="flex items-center gap-3">
               {shop.logo
                 ? <Image src={shop.logo} alt={shop.name} width={36} height={36}
-                  className="rounded-xl object-cover" />
+                    className="rounded-xl object-cover" />
                 : <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-                  style={{ backgroundColor: t.accent }}>
-                  S
-                </div>
+                    style={{ backgroundColor: t.accent }}>
+                    S
+                  </div>
               }
               <div>
                 <span className="font-bold text-lg" style={{ color: t.text }}>{shop.name}</span>
                 {shop.isVerified && (
-                  <CheckCircle size={14} className="inline ml-1 mb-0.5" style={{ color: t.accent }} />
+                  <CheckCircle size={14} className="inline ml-1 mb-0.5"
+                    style={{ color: t.accent }} />
                 )}
               </div>
             </Link>
@@ -60,12 +104,16 @@ export default function VitrinModerne({ shop, produits }: Props) {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link href={"/catalogue"}
+            <Link href="/catalogue"
               className="text-sm font-medium hover:opacity-80 transition-opacity"
-              style={{ color: t.muted }}>Catalogue</Link>
-            <Link href={` /about`}
+              style={{ color: t.muted }}>
+              Catalogue
+            </Link>
+            <Link href="/about"
               className="text-sm font-medium hover:opacity-80 transition-opacity"
-              style={{ color: t.muted }}>A propos</Link>
+              style={{ color: t.muted }}>
+              A propos
+            </Link>
           </div>
 
           <div className="flex items-center gap-2">
@@ -73,7 +121,10 @@ export default function VitrinModerne({ shop, produits }: Props) {
             <button onClick={() => setMenuOuvert(!menuOuvert)}
               className="md:hidden p-2 rounded-xl"
               style={{ backgroundColor: t.elevated }}>
-              {menuOuvert ? <X size={20} style={{ color: t.text }} /> : <Menu size={20} style={{ color: t.text }} />}
+              {menuOuvert
+                ? <X    size={20} style={{ color: t.text }} />
+                : <Menu size={20} style={{ color: t.text }} />
+              }
             </button>
           </div>
         </div>
@@ -81,17 +132,69 @@ export default function VitrinModerne({ shop, produits }: Props) {
         {menuOuvert && (
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-4 py-4 space-y-3">
-            <Link href={"/catalogue"} className="block text-sm font-medium py-2"
-              style={{ color: t.muted }} onClick={() => setMenuOuvert(false)}>Catalogue</Link>
-            <Link href={` /about`} className="block text-sm font-medium py-2"
-              style={{ color: t.muted }} onClick={() => setMenuOuvert(false)}>A propos</Link>
-            <Link href="https://www.shopeasyci.store" className="block text-sm font-medium py-2" style={{ color: t.accent }}>
+            <Link href="/catalogue"
+              className="block text-sm font-medium py-2"
+              style={{ color: t.muted }}
+              onClick={() => setMenuOuvert(false)}>
+              Catalogue
+            </Link>
+            <Link href="/about"
+              className="block text-sm font-medium py-2"
+              style={{ color: t.muted }}
+              onClick={() => setMenuOuvert(false)}>
+              A propos
+            </Link>
+            <Link href="https://www.shopeasyci.store"
+              className="block text-sm font-medium py-2"
+              style={{ color: t.accent }}>
               ShopEasy CI
             </Link>
           </div>
         )}
       </nav>
 
+      {/* ── BANDEAU URGENCE ── */}
+      <div style={{ backgroundColor: '#ef444410', borderBottom: `1px solid #ef444425` }}>
+        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+
+          {/* Vente flash + compte à rebours */}
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <Flame size={14} className="text-red-400" />
+              <span className="text-xs font-bold text-red-400 uppercase tracking-wide">
+                Vente flash
+              </span>
+            </div>
+            <div className="flex items-center gap-1 font-mono font-bold text-xs"
+              style={{ color: t.text }}>
+              <span className="px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: t.elevated }}>
+                {String(temps.h).padStart(2, '0')}
+              </span>
+              <span className="text-red-400">:</span>
+              <span className="px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: t.elevated }}>
+                {String(temps.m).padStart(2, '0')}
+              </span>
+              <span className="text-red-400">:</span>
+              <span className="px-1.5 py-0.5 rounded"
+                style={{ backgroundColor: t.elevated }}>
+                {String(temps.s).padStart(2, '0')}
+              </span>
+            </div>
+          </div>
+
+          {/* Visiteurs actifs */}
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: t.muted }}>
+            <Users size={12} style={{ color: t.accent }} />
+            <span>
+              <strong style={{ color: t.text }}>{visiteurs} personnes</strong> visitent la boutique
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── HERO ── */}
       <HeroBoutique shop={shop} accent={t.accent} />
 
       {!shop.heroImage && (
@@ -104,16 +207,18 @@ export default function VitrinModerne({ shop, produits }: Props) {
                   Boutique verifiee
                 </div>
               )}
-              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: t.text }}>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight"
+                style={{ color: t.text }}>
                 {shop.name}
               </h1>
               {shop.about?.description && (
                 <p className="text-base leading-relaxed" style={{ color: t.muted }}>
-                  {shop.about.description.slice(0, 150)}{shop.about.description.length > 150 ? '...' : ''}
+                  {shop.about.description.slice(0, 150)}
+                  {shop.about.description.length > 150 ? '...' : ''}
                 </p>
               )}
               <div className="flex flex-wrap gap-3 justify-center">
-                <Link href={"/catalogue"}
+                <Link href="/catalogue"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90"
                   style={{ backgroundColor: t.accent, color: '#fff' }}>
                   Explorer la boutique <ChevronRight size={16} />
@@ -132,8 +237,9 @@ export default function VitrinModerne({ shop, produits }: Props) {
         </div>
       )}
 
+      {/* ── RECHERCHE ── */}
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <Link href={` /recherche`}
+        <Link href="/recherche"
           className="flex items-center gap-3 px-4 py-3 rounded-2xl border w-full"
           style={{ backgroundColor: t.surface, borderColor: t.border }}>
           <Search size={18} style={{ color: t.muted }} />
@@ -141,10 +247,11 @@ export default function VitrinModerne({ shop, produits }: Props) {
         </Link>
       </div>
 
+      {/* ── PRODUITS ── */}
       <div className="max-w-6xl mx-auto px-4 pb-16 space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold" style={{ color: t.text }}>Nos produits</h2>
-          <Link href={"/catalogue"}
+          <Link href="/catalogue"
             className="text-sm font-medium flex items-center gap-1 hover:opacity-80"
             style={{ color: t.accent }}>
             Tout voir <ChevronRight size={14} />
@@ -157,63 +264,160 @@ export default function VitrinModerne({ shop, produits }: Props) {
             <p>Aucun produit pour le moment</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {produits.map(produit => (
-              <Link key={produit._id} href={`/produits/${produit._id}`}
-                className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl"
-                style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
-                  {produit.images?.[0]
-                    ? <Image src={produit.images[0]} alt={produit.name} fill
-                      className="object-cover group-hover:scale-105 transition-transform" />
-                    : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
-                  }
-                  {produit.comparePrice > produit.price && (
-                    <div className="absolute top-2 left-2 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
-                      style={{ backgroundColor: t.accent }}>
-                      -{Math.round((1 - produit.price / produit.comparePrice) * 100)}%
-                    </div>
-                  )}
+          <>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {produits.map(produit => {
+                const aReduction  = produit.comparePrice > produit.price;
+                const pct         = aReduction
+                  ? Math.round((1 - produit.price / produit.comparePrice) * 100)
+                  : 0;
+                const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
+                const nouveau     = estNouveau(produit.createdAt);
+                const enRupture   = produit.totalStock === 0;
+                const achats      = achatsSim[produit._id] ?? 5;
 
-                  {/* Bouton favori */}
-                  <div className="absolute top-2 right-2 z-10">
-                    <BoutonFavori
-                      shopSlug={shop.slug}
-                      produitId={produit._id}
-                      nom={produit.name}
-                      prix={produit.price}
-                      image={produit.images?.[0] ?? null}
-                      accent={t.accent}
-                      className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
-                    />
-                  </div>
+                return (
+                  <Link key={produit._id} href={`/produits/${produit._id}`}
+                    className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl flex flex-col"
+                    style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
 
-                  {produit.totalStock === 0 && (
-                    <div className="absolute inset-0 flex items-center justify-center"
-                      style={{ backgroundColor: `${t.bg}bb` }}>
-                      <span className="text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
-                        style={{ backgroundColor: t.surface, color: t.muted }}>
-                        Epuise
-                      </span>
+                    {/* ── IMAGE ── */}
+                    <div className="aspect-square relative overflow-hidden"
+                      style={{ backgroundColor: t.elevated }}>
+                      {produit.images?.[0]
+                        ? <Image src={produit.images[0]} alt={produit.name} fill
+                            className="object-cover group-hover:scale-105 transition-transform duration-300" />
+                        : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
+                      }
+
+                      {/* Badge réduction — priorité 1 */}
+                      {aReduction && (
+                        <div className="absolute top-2 left-2 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
+                          style={{ backgroundColor: '#ef4444' }}>
+                          -{pct}%
+                        </div>
+                      )}
+
+                      {/* Badge Nouveau — priorité 2 */}
+                      {nouveau && !aReduction && !enRupture && (
+                        <div className="absolute top-2 left-2 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
+                          style={{ backgroundColor: t.accent }}>
+                          Nouveau
+                        </div>
+                      )}
+
+                      {/* Badge stock faible — bas gauche, pulse */}
+                      {stockFaible && (
+                        <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full animate-pulse"
+                          style={{ backgroundColor: '#f59e0b', color: '#000' }}>
+                          <Flame size={10} />
+                          Plus que {produit.totalStock} !
+                        </div>
+                      )}
+
+                      {/* Bouton favori */}
+                      <div className="absolute top-2 right-2 z-10">
+                        <BoutonFavori
+                          shopSlug={shop.slug}
+                          produitId={produit._id}
+                          nom={produit.name}
+                          prix={produit.price}
+                          image={produit.images?.[0] ?? null}
+                          accent={t.accent}
+                          className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
+                        />
+                      </div>
+
+                      {/* Rupture de stock */}
+                      {enRupture && (
+                        <div className="absolute inset-0 flex items-center justify-center"
+                          style={{ backgroundColor: `${t.bg}bb` }}>
+                          <span className="text-xs font-semibold px-3 py-1 rounded-full shadow-sm"
+                            style={{ backgroundColor: t.surface, color: t.muted }}>
+                            Epuise
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-                <div className="p-3 space-y-1.5">
-                  <p className="font-medium text-sm line-clamp-2" style={{ color: t.text }}>{produit.name}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm" style={{ color: t.accent }}>{formatFcfa(produit.price)}</span>
-                    {produit.comparePrice && produit.comparePrice > produit.price && (
-                      <span className="text-xs line-through" style={{ color: t.muted }}>{formatFcfa(produit.comparePrice)}</span>
-                    )}
-                  </div>
-                </div>
+
+                    {/* ── INFOS ── */}
+                    <div className="p-3 space-y-1.5 flex-1 flex flex-col justify-between">
+                      <p className="font-medium text-sm line-clamp-2" style={{ color: t.text }}>
+                        {produit.name}
+                      </p>
+
+                      {/* Prix */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-sm" style={{ color: t.accent }}>
+                          {formatFcfa(produit.price)}
+                        </span>
+                        {aReduction && (
+                          <span className="text-xs line-through" style={{ color: t.muted }}>
+                            {formatFcfa(produit.comparePrice)}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Preuve sociale */}
+                      {!enRupture && (
+                        <div className="flex items-center gap-1 text-xs" style={{ color: t.muted }}>
+                          <Zap size={10} style={{ color: t.accent }} />
+                          <span>
+                            <strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine
+                          </span>
+                        </div>
+                      )}
+
+                      {/* Barre stock faible */}
+                      {stockFaible && (
+                        <div className="space-y-1">
+                          <div className="flex justify-between text-xs" style={{ color: t.muted }}>
+                            <span>Stock restant</span>
+                            <span className="font-bold" style={{ color: '#f59e0b' }}>
+                              {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full overflow-hidden"
+                            style={{ backgroundColor: t.elevated }}>
+                            <div className="h-full rounded-full"
+                              style={{
+                                width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
+                                backgroundColor: '#f59e0b',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CTA */}
+                      <div className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all group-hover:opacity-90"
+                        style={{
+                          backgroundColor: enRupture ? t.elevated : `${t.accent}15`,
+                          color:           enRupture ? t.muted   : t.accent,
+                        }}>
+                        {enRupture ? 'Indisponible' : 'Voir le produit →'}
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* CTA voir tout */}
+            <div className="text-center pt-4">
+              <Link href="/catalogue"
+                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90 hover:scale-105"
+                style={{ backgroundColor: t.accent, color: '#fff' }}>
+                <ShoppingBag size={16} />
+                Voir tous les produits
               </Link>
-            ))}
-          </div>
+              <p className="text-xs mt-3" style={{ color: t.muted }}>
+                Livraison rapide · Paiement a la livraison
+              </p>
+            </div>
+          </>
         )}
       </div>
-
-
 
       {/* ── AVIS BOUTIQUE ── */}
       <div style={{ borderTop: `1px solid ${t.border}` }}>
@@ -250,6 +454,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
         </div>
       </div>
 
+      {/* ── A PROPOS ── */}
       {shop.about && (shop.about.description || shop.about.ownerName) && (
         <div id="about" style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}>
           <div className="max-w-6xl mx-auto px-4 py-16 space-y-8">
@@ -257,16 +462,20 @@ export default function VitrinModerne({ shop, produits }: Props) {
             <div className="grid md:grid-cols-2 gap-8">
               {shop.about.description && (
                 <div className="space-y-3">
-                  <p className="leading-relaxed" style={{ color: t.muted }}>{shop.about.description}</p>
+                  <p className="leading-relaxed" style={{ color: t.muted }}>
+                    {shop.about.description}
+                  </p>
                   <div className="space-y-2">
                     {shop.about.location && (
                       <div className="flex items-center gap-2 text-sm" style={{ color: t.muted }}>
-                        <MapPin size={14} style={{ color: t.accent }} />{shop.about.location}
+                        <MapPin size={14} style={{ color: t.accent }} />
+                        {shop.about.location}
                       </div>
                     )}
                     {shop.about.workingHours && (
                       <div className="flex items-center gap-2 text-sm" style={{ color: t.muted }}>
-                        <Clock size={14} style={{ color: t.accent }} />{shop.about.workingHours}
+                        <Clock size={14} style={{ color: t.accent }} />
+                        {shop.about.workingHours}
                       </div>
                     )}
                   </div>
@@ -277,14 +486,17 @@ export default function VitrinModerne({ shop, produits }: Props) {
                   style={{ backgroundColor: t.elevated, border: `1px solid ${t.border}` }}>
                   {shop.about.ownerPhoto
                     ? <Image src={shop.about.ownerPhoto} alt={shop.about.ownerName}
-                      width={64} height={64} className="rounded-full object-cover flex-shrink-0" />
+                        width={64} height={64}
+                        className="rounded-full object-cover flex-shrink-0" />
                     : <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
-                      style={{ backgroundColor: `${t.accent}20` }}>
-                      {shop.about.ownerName.charAt(0)}
-                    </div>
+                        style={{ backgroundColor: `${t.accent}20` }}>
+                        {shop.about.ownerName.charAt(0)}
+                      </div>
                   }
                   <div>
-                    <p className="font-semibold" style={{ color: t.text }}>{shop.about.ownerName}</p>
+                    <p className="font-semibold" style={{ color: t.text }}>
+                      {shop.about.ownerName}
+                    </p>
                     <p className="text-sm" style={{ color: t.muted }}>Proprietaire</p>
                   </div>
                 </div>
@@ -294,7 +506,9 @@ export default function VitrinModerne({ shop, produits }: Props) {
         </div>
       )}
 
-      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }} className="py-8">
+      {/* ── FOOTER ── */}
+      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }}
+        className="py-8">
         <div className="max-w-6xl mx-auto px-4 text-center space-y-3">
           <p className="font-semibold" style={{ color: t.text }}>{shop.name}</p>
           <Link href="/boutiques"
@@ -304,13 +518,19 @@ export default function VitrinModerne({ shop, produits }: Props) {
           </Link>
           <p className="text-xs" style={{ color: t.muted }}>
             Propulse par{' '}
-            <Link href="https://www.shopeasyci.store" className="hover:underline" style={{ color: t.accent }}>ShopEasy CI</Link>
+            <Link href="https://www.shopeasyci.store"
+              className="hover:underline"
+              style={{ color: t.accent }}>
+              ShopEasy CI
+            </Link>
           </p>
         </div>
       </footer>
 
+      {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (
-        <Link href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}
+        <Link
+          href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}
           target="_blank" rel="noopener noreferrer"
           className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
           style={{ backgroundColor: '#25D366' }}>
