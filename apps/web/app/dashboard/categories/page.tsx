@@ -22,8 +22,6 @@ interface Categorie {
 // ---------------------------------------------------------------------------
 const API = process.env.NEXT_PUBLIC_API_URL;
 
-
-
 // ---------------------------------------------------------------------------
 // Composant modal — créer / modifier une catégorie
 // ---------------------------------------------------------------------------
@@ -55,7 +53,7 @@ function ModalCategorie({
       const url    = estModification
         ? `${API}/categories/${categorie._id}`
         : `${API}/categories`;
-      const method = estModification ? 'PATCH'  : 'POST';
+      const method = estModification ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {
         method,
@@ -63,9 +61,9 @@ function ModalCategorie({
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-       body: JSON.stringify({
+        body: JSON.stringify({
           name:     nom.trim(),
-          icon:     '📦',
+          icon:     '',          // ← plus d'emoji envoyé
           parentId: parentId || null,
         }),
       });
@@ -103,8 +101,6 @@ function ModalCategorie({
           />
         </div>
 
-      
-
         {/* Catégorie parente (sous-catégorie) */}
         <div className="space-y-1">
           <label className="text-muted text-sm">Sous-catégorie de (optionnel)</label>
@@ -117,7 +113,7 @@ function ModalCategorie({
             <option value="">— Catégorie principale —</option>
             {parentOptions.map(p => (
               <option key={p._id} value={p._id}>
-                {p.icon} {p.name}
+                {p.name}  {/* ← emoji supprimé ici */}
               </option>
             ))}
           </select>
@@ -182,8 +178,7 @@ function LigneCategorie({
         {/* Grip */}
         <GripVertical size={16} className="text-muted/50 flex-shrink-0" />
 
-        {/* Icône + nom */}
-        <span className="text-xl">{cat.icon}</span>
+        {/* Nom — sans emoji */}
         <span className="text-white flex-1 font-medium">{cat.name}</span>
 
         {/* Badge prédéfini */}
@@ -262,28 +257,28 @@ function LigneCategorie({
 // Page principale
 // ---------------------------------------------------------------------------
 export default function PageCategories() {
-  const [categories,    setCategories]    = useState<Categorie[]>([]);
-  const [chargement,    setChargement]    = useState(true);
-  const [modalOuvert,   setModalOuvert]   = useState(false);
-  const [catSelectee,   setCatSelectee]   = useState<Categorie | null>(null);
-  const [parentPreSet,  setParentPreSet]  = useState<string>('');
-  const [suppression,   setSuppression]   = useState<Categorie | null>(null);
-  const [loadingSuppr,  setLoadingSuppr]  = useState(false);
+  const [categories,   setCategories]   = useState<Categorie[]>([]);
+  const [chargement,   setChargement]   = useState(true);
+  const [modalOuvert,  setModalOuvert]  = useState(false);
+  const [catSelectee,  setCatSelectee]  = useState<Categorie | null>(null);
+  const [parentPreSet, setParentPreSet] = useState<string>('');
+  const [suppression,  setSuppression]  = useState<Categorie | null>(null);
+  const [loadingSuppr, setLoadingSuppr] = useState(false);
 
   // -- Chargement --
   const charger = async () => {
-  setChargement(true);
-  try {
-    const token = localStorage.getItem('token');
-    const res   = await fetch(`${API}/categories/shop/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const data = await res.json();
-    if (data.success) setCategories(construireArbre(data.data)); // ← data.data
-  } finally {
-    setChargement(false);
-  }
-};
+    setChargement(true);
+    try {
+      const token = localStorage.getItem('token');
+      const res   = await fetch(`${API}/categories/shop/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.success) setCategories(construireArbre(data.data));
+    } finally {
+      setChargement(false);
+    }
+  };
 
   useEffect(() => { charger(); }, []);
 
@@ -406,7 +401,7 @@ export default function PageCategories() {
             <h2 className="text-white font-semibold text-lg">Supprimer la catégorie ?</h2>
             <p className="text-muted text-sm">
               <span className="text-white font-medium">
-                {suppression.icon} {suppression.name}
+                {suppression.name}  {/* ← emoji supprimé ici */}
               </span>{' '}
               sera supprimée. Les produits associés ne seront pas supprimés mais
               perdront leur catégorie.
@@ -418,7 +413,7 @@ export default function PageCategories() {
                            hover:text-white transition-colors"
               >
                 Annuler
-          </button>
+              </button>
               <button
                 onClick={confirmerSuppression}
                 disabled={loadingSuppr}
