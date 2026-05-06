@@ -239,7 +239,7 @@ export default function EditProduitPage() {
               className="w-full bg-elevated border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary transition-colors">
               <option value="">Sans categorie</option>
               {categories.map((cat) => (
-                <option key={cat._id} value={cat._id}>{cat.icon} {cat.name}</option>
+                <option key={cat._id} value={cat._id}>{cat.name}</option>
               ))}
             </select>
           </div>
@@ -280,14 +280,20 @@ export default function EditProduitPage() {
                   <X size={12} />
                 </button>
                 {i === 0 && (
-                  <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">Principal</div>
+                  <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded">
+                    Principal
+                  </div>
                 )}
               </div>
             ))}
             {(isPremium || images.length < 5) && (
               <label className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-2 transition-colors bg-elevated">
-                {uploading ? <Loader2 size={20} className="text-primary animate-spin" /> : <ImagePlus size={20} className="text-muted" />}
-                <input type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                {uploading
+                  ? <Loader2 size={20} className="text-primary animate-spin" />
+                  : <ImagePlus size={20} className="text-muted" />
+                }
+                <input type="file" accept="image/*" multiple className="hidden"
+                  onChange={handleImageUpload} disabled={uploading} />
               </label>
             )}
           </div>
@@ -323,7 +329,8 @@ export default function EditProduitPage() {
                       onChange={(e) => modifierVariante(index, 'label', e.target.value)}
                       placeholder="Ex: Taille, Couleur..."
                       className="flex-1 bg-bg border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" />
-                    <button type="button" onClick={() => setVariantes((prev) => prev.filter((_, i) => i !== index))}
+                    <button type="button"
+                      onClick={() => setVariantes((prev) => prev.filter((_, i) => i !== index))}
                       className="text-muted hover:text-red-400 transition-colors">
                       <Trash2 size={16} />
                     </button>
@@ -333,7 +340,8 @@ export default function EditProduitPage() {
                     {variante.options.map((opt, j) => (
                       <span key={j} className="flex items-center gap-1 bg-bg border border-border rounded-lg px-2 py-1 text-white text-xs">
                         {opt}
-                        <button type="button" onClick={() => supprimerOption(index, j)} className="text-muted hover:text-red-400">
+                        <button type="button" onClick={() => supprimerOption(index, j)}
+                          className="text-muted hover:text-red-400">
                           <X size={10} />
                         </button>
                       </span>
@@ -351,7 +359,9 @@ export default function EditProduitPage() {
 
                   {variante.options.length > 0 && (
                     <div className="space-y-3">
-                      <p className="text-muted text-xs uppercase tracking-wide font-medium">Photos par option (optionnel)</p>
+                      <p className="text-muted text-xs uppercase tracking-wide font-medium">
+                        Photos par option (optionnel)
+                      </p>
                       {variante.options.map((opt) => (
                         <div key={opt} className="space-y-2">
                           <p className="text-white text-xs font-medium">{opt}</p>
@@ -371,7 +381,10 @@ export default function EditProduitPage() {
                               </div>
                             ))}
                             <label className="w-16 h-16 rounded-lg border-2 border-dashed border-border hover:border-primary cursor-pointer flex items-center justify-center bg-bg transition-colors">
-                              {uploading ? <Loader2 size={14} className="text-primary animate-spin" /> : <ImagePlus size={14} className="text-muted" />}
+                              {uploading
+                                ? <Loader2 size={14} className="text-primary animate-spin" />
+                                : <ImagePlus size={14} className="text-muted" />
+                              }
                               <input type="file" accept="image/*" multiple className="hidden"
                                 onChange={async (e) => {
                                   const files = Array.from(e.target.files ?? []);
@@ -380,8 +393,10 @@ export default function EditProduitPage() {
                                   try {
                                     const formData = new FormData();
                                     files.forEach((f) => formData.append('files', f));
-                                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads/products`,
-                                      { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+                                    const res = await fetch(
+                                      `${process.env.NEXT_PUBLIC_API_URL}/uploads/products`,
+                                      { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData }
+                                    );
                                     const result = await res.json();
                                     if (result.success) {
                                       const newImages = { ...variante.images };
@@ -408,7 +423,9 @@ export default function EditProduitPage() {
                 <div className="space-y-3 pt-2">
                   <div className="flex items-center justify-between">
                     <h3 className="text-white text-sm font-semibold">Stock par combinaison</h3>
-                    <span className="text-muted text-xs">{skus.length} combinaison{skus.length > 1 ? 's' : ''}</span>
+                    <span className="text-muted text-xs">
+                      {skus.length} combinaison{skus.length > 1 ? 's' : ''}
+                    </span>
                   </div>
                   <div className="bg-elevated rounded-xl border border-border overflow-hidden">
                     <div className="grid grid-cols-3 gap-4 px-4 py-2 border-b border-border">
@@ -435,7 +452,9 @@ export default function EditProduitPage() {
                   </div>
                   <div className="flex items-center justify-between px-2">
                     <span className="text-muted text-sm">Stock total</span>
-                    <span className="text-white font-bold">{skus.reduce((s, sku) => s + sku.quantity, 0)} unites</span>
+                    <span className="text-white font-bold">
+                      {skus.reduce((s, sku) => s + sku.quantity, 0)} unites
+                    </span>
                   </div>
                 </div>
               )}
@@ -450,7 +469,9 @@ export default function EditProduitPage() {
             {(['active', 'draft', 'out_of_stock'] as const).map((s) => (
               <button key={s} type="button" onClick={() => setStatut(s)}
                 className={`py-3 rounded-xl text-xs font-medium border transition-all ${
-                  statut === s ? 'bg-primary border-primary text-black' : 'bg-elevated border-border text-muted hover:text-white'
+                  statut === s
+                    ? 'bg-primary border-primary text-black'
+                    : 'bg-elevated border-border text-muted hover:text-white'
                 }`}>
                 {s === 'active' ? 'Publie' : s === 'draft' ? 'Brouillon' : 'Rupture'}
               </button>
@@ -466,7 +487,10 @@ export default function EditProduitPage() {
           </Link>
           <button type="submit" disabled={isSaving}
             className="flex-1 bg-primary hover:bg-primary-hover disabled:opacity-50 text-black font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
-            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <><Save size={18} /> Sauvegarder</>}
+            {isSaving
+              ? <Loader2 size={18} className="animate-spin" />
+              : <><Save size={18} /> Sauvegarder</>
+            }
           </button>
         </div>
       </form>

@@ -4,23 +4,23 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  Plus, Search, Filter, Edit2, Trash2,
-  Package, Eye, EyeOff, Loader2, ImageOff,
+  Plus, Search, Edit2, Trash2,
+  Package, Eye, EyeOff, Loader2, ImageOff, AlertTriangle,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Produit {
-  _id:         string;
-  name:        string;
-  price:       number;
+  _id:          string;
+  name:         string;
+  price:        number;
   comparePrice?: number;
-  images:      string[];
-  status:      'active' | 'draft' | 'out_of_stock';
-  totalStock:  number;
-  hasVariants: boolean;
-  categoryId?: string;
-  createdAt:   string;
+  images:       string[];
+  status:       'active' | 'draft' | 'out_of_stock';
+  totalStock:   number;
+  hasVariants:  boolean;
+  categoryId?:  string;
+  createdAt:    string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -29,24 +29,84 @@ const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
 const STATUT_LABELS: Record<string, { label: string; classe: string }> = {
-  active:       { label: 'Actif',        classe: 'bg-primary/20 text-primary' },
-  draft:        { label: 'Brouillon',    classe: 'bg-elevated text-muted border border-border' },
-  out_of_stock: { label: 'Rupture',      classe: 'bg-red-500/20 text-red-400' },
+  active:       { label: 'Actif',     classe: 'bg-primary/20 text-primary' },
+  draft:        { label: 'Brouillon', classe: 'bg-elevated text-muted border border-border' },
+  out_of_stock: { label: 'Rupture',   classe: 'bg-red-500/20 text-red-400' },
 };
 
-// ─── Composant ────────────────────────────────────────────────────────────────
+// ─── Modal confirmation suppression ──────────────────────────────────────────
+
+function ModalSuppression({
+  produit,
+  loading,
+  onConfirmer,
+  onAnnuler,
+}: {
+  produit:     Produit;
+  loading:     boolean;
+  onConfirmer: () => void;
+  onAnnuler:   () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+      <div className="bg-surface border border-border rounded-2xl w-full max-w-sm p-6 space-y-5">
+
+        {/* Icône + titre */}
+        <div className="flex flex-col items-center text-center space-y-3">
+          <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
+            <AlertTriangle size={28} className="text-red-400" />
+          </div>
+          <h2 className="text-white font-bold text-lg">Supprimer ce produit ?</h2>
+          <p className="text-muted text-sm leading-relaxed">
+            Le produit{' '}
+            <span className="text-white font-semibold">"{produit.name}"</span>{' '}
+            sera définitivement supprimé. Cette action est irréversible.
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 pt-1">
+          <button
+            onClick={onAnnuler}
+            disabled={loading}
+            className="flex-1 py-3 rounded-xl border border-border text-muted
+                       hover:text-white hover:border-white/30 transition-colors
+                       disabled:opacity-50 font-medium text-sm"
+          >
+            Annuler
+          </button>
+          <button
+            onClick={onConfirmer}
+            disabled={loading}
+            className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600
+                       text-white font-semibold text-sm transition-colors
+                       disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {loading && <Loader2 size={15} className="animate-spin" />}
+            Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Composant principal ──────────────────────────────────────────────────────
 
 export default function ProduitsPage() {
   const { token, shop } = useAuth();
 
-  const [produits,   setProduits]   = useState<Produit[]>([]);
-  const [isLoading,  setIsLoading]  = useState(true);
-  const [recherche,  setRecherche]  = useState('');
-  const [filtreStatut, setFiltreStatut] = useState('');
-  const [page,       setPage]       = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total,      setTotal]      = useState(0);
-  const [suppression, setSuppression] = useState<string | null>(null);
+  const [produits,      setProduits]      = useState<Produit[]>([]);
+  const [isLoading,     setIsLoading]     = useState(true);
+  const [recherche,     setRecherche]     = useState('');
+  const [filtreStatut,  setFiltreStatut]  = useState('');
+  const [page,          setPage]          = useState(1);
+  const [totalPages,    setTotalPages]    = useState(1);
+  const [total,         setTotal]         = useState(0);
+
+  // Modal suppression
+  const [produitASupprimer, setProduitASupprimer] = useState<Produit | null>(null);
+  const [loadingSuppr,      setLoadingSuppr]      = useState(false);
 
   const isPremium   = shop?.planType === 'premium';
   const maxProduits = isPremium ? Infinity : 10;
@@ -81,23 +141,24 @@ export default function ProduitsPage() {
 
   useEffect(() => { fetchProduits(); }, [token, page, filtreStatut]);
 
-  // ── Suppression ──
-  const supprimerProduit = async (id: string) => {
-    if (!confirm('Supprimer ce produit ?')) return;
-    setSuppression(id);
+  // ── Suppression confirmée ──
+  const confirmerSuppression = async () => {
+    if (!produitASupprimer) return;
+    setLoadingSuppr(true);
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/products/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/products/${produitASupprimer._id}`,
         {
           method:  'DELETE',
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      setProduitASupprimer(null);
       fetchProduits();
     } catch (error) {
       console.error('Erreur suppression :', error);
     } finally {
-      setSuppression(null);
+      setLoadingSuppr(false);
     }
   };
 
@@ -177,13 +238,16 @@ export default function ProduitsPage() {
             placeholder="Rechercher un produit..."
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            className="w-full bg-surface border border-border rounded-xl pl-9 pr-4 py-2.5 text-white placeholder-muted focus:outline-none focus:border-primary transition-colors text-sm"
+            className="w-full bg-surface border border-border rounded-xl pl-9 pr-4 py-2.5
+                       text-white placeholder-muted focus:outline-none focus:border-primary
+                       transition-colors text-sm"
           />
         </div>
         <select
           value={filtreStatut}
           onChange={(e) => { setFiltreStatut(e.target.value); setPage(1); }}
-          className="bg-surface border border-border rounded-xl px-4 py-2.5 text-white focus:outline-none focus:border-primary transition-colors text-sm"
+          className="bg-surface border border-border rounded-xl px-4 py-2.5 text-white
+                     focus:outline-none focus:border-primary transition-colors text-sm"
         >
           <option value="">Tous les statuts</option>
           <option value="active">Actifs</option>
@@ -211,7 +275,8 @@ export default function ProduitsPage() {
           {!recherche && (
             <Link
               href="/dashboard/produits/nouveau"
-              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-6 py-3 rounded-xl transition-colors"
+              className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover
+                         text-black font-semibold px-6 py-3 rounded-xl transition-colors"
             >
               <Plus size={18} />
               Ajouter un produit
@@ -223,7 +288,8 @@ export default function ProduitsPage() {
           {produitsFiltres.map((produit) => (
             <div
               key={produit._id}
-              className="bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/30 transition-all group"
+              className="bg-surface border border-border rounded-2xl overflow-hidden
+                         hover:border-primary/30 transition-all group"
             >
               {/* Image */}
               <div className="h-40 bg-elevated relative overflow-hidden">
@@ -274,31 +340,33 @@ export default function ProduitsPage() {
                 <div className="flex items-center gap-2">
                   <Link
                     href={`/dashboard/produits/${produit._id}`}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-elevated hover:bg-border border border-border text-white text-xs font-medium py-2 rounded-lg transition-colors"
+                    className="flex-1 flex items-center justify-center gap-1.5 bg-elevated
+                               hover:bg-border border border-border text-white text-xs
+                               font-medium py-2 rounded-lg transition-colors"
                   >
                     <Edit2 size={13} />
                     Modifier
                   </Link>
                   <button
                     onClick={() => toggleStatut(produit)}
-                    className="w-9 h-9 flex items-center justify-center bg-elevated hover:bg-border border border-border text-muted hover:text-white rounded-lg transition-colors"
+                    className="w-9 h-9 flex items-center justify-center bg-elevated
+                               hover:bg-border border border-border text-muted
+                               hover:text-white rounded-lg transition-colors"
                     title={produit.status === 'active' ? 'Masquer' : 'Publier'}
                   >
                     {produit.status === 'active'
                       ? <EyeOff size={14} />
-                      : <Eye size={14} />
+                      : <Eye    size={14} />
                     }
                   </button>
                   <button
-                    onClick={() => supprimerProduit(produit._id)}
-                    disabled={suppression === produit._id}
-                    className="w-9 h-9 flex items-center justify-center bg-elevated hover:bg-red-500/10 border border-border hover:border-red-500/30 text-muted hover:text-red-400 rounded-lg transition-colors"
+                    onClick={() => setProduitASupprimer(produit)}
+                    className="w-9 h-9 flex items-center justify-center bg-elevated
+                               hover:bg-red-500/10 border border-border hover:border-red-500/30
+                               text-muted hover:text-red-400 rounded-lg transition-colors"
                     title="Supprimer"
                   >
-                    {suppression === produit._id
-                      ? <Loader2 size={14} className="animate-spin" />
-                      : <Trash2 size={14} />
-                    }
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>
@@ -313,22 +381,33 @@ export default function ProduitsPage() {
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            className="px-4 py-2 bg-surface border border-border rounded-xl text-white text-sm disabled:opacity-40 hover:bg-elevated transition-colors"
+            className="px-4 py-2 bg-surface border border-border rounded-xl text-white
+                       text-sm disabled:opacity-40 hover:bg-elevated transition-colors"
           >
             ← Précédent
           </button>
-          <span className="text-muted text-sm">
-            Page {page} / {totalPages}
-          </span>
+          <span className="text-muted text-sm">Page {page} / {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
-            className="px-4 py-2 bg-surface border border-border rounded-xl text-white text-sm disabled:opacity-40 hover:bg-elevated transition-colors"
+            className="px-4 py-2 bg-surface border border-border rounded-xl text-white
+                       text-sm disabled:opacity-40 hover:bg-elevated transition-colors"
           >
             Suivant →
           </button>
         </div>
       )}
+
+      {/* ── Modal confirmation suppression ── */}
+      {produitASupprimer && (
+        <ModalSuppression
+          produit={produitASupprimer}
+          loading={loadingSuppr}
+          onConfirmer={confirmerSuppression}
+          onAnnuler={() => setProduitASupprimer(null)}
+        />
+      )}
+
     </div>
   );
 }
