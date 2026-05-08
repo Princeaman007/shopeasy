@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Plus, Search, Edit2, Trash2,
-  Package, Eye, EyeOff, Loader2, ImageOff, AlertTriangle,
+  Package, Eye, EyeOff, Loader2, ImageOff, AlertTriangle, Video,
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -16,6 +16,7 @@ interface Produit {
   price:        number;
   comparePrice?: number;
   images:       string[];
+  video?:       string;
   status:       'active' | 'draft' | 'out_of_stock';
   totalStock:   number;
   hasVariants:  boolean;
@@ -50,8 +51,6 @@ function ModalSuppression({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
       <div className="bg-surface border border-border rounded-2xl w-full max-w-sm p-6 space-y-5">
-
-        {/* Icône + titre */}
         <div className="flex flex-col items-center text-center space-y-3">
           <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center">
             <AlertTriangle size={28} className="text-red-400" />
@@ -60,11 +59,9 @@ function ModalSuppression({
           <p className="text-muted text-sm leading-relaxed">
             Le produit{' '}
             <span className="text-white font-semibold">"{produit.name}"</span>{' '}
-            sera définitivement supprimé. Cette action est irréversible.
+            sera definitvement supprime. Cette action est irreversible.
           </p>
         </div>
-
-        {/* Actions */}
         <div className="flex gap-3 pt-1">
           <button
             onClick={onAnnuler}
@@ -96,15 +93,13 @@ function ModalSuppression({
 export default function ProduitsPage() {
   const { token, shop } = useAuth();
 
-  const [produits,      setProduits]      = useState<Produit[]>([]);
-  const [isLoading,     setIsLoading]     = useState(true);
-  const [recherche,     setRecherche]     = useState('');
-  const [filtreStatut,  setFiltreStatut]  = useState('');
-  const [page,          setPage]          = useState(1);
-  const [totalPages,    setTotalPages]    = useState(1);
-  const [total,         setTotal]         = useState(0);
-
-  // Modal suppression
+  const [produits,          setProduits]          = useState<Produit[]>([]);
+  const [isLoading,         setIsLoading]         = useState(true);
+  const [recherche,         setRecherche]         = useState('');
+  const [filtreStatut,      setFiltreStatut]      = useState('');
+  const [page,              setPage]              = useState(1);
+  const [totalPages,        setTotalPages]        = useState(1);
+  const [total,             setTotal]             = useState(0);
   const [produitASupprimer, setProduitASupprimer] = useState<Produit | null>(null);
   const [loadingSuppr,      setLoadingSuppr]      = useState(false);
 
@@ -121,7 +116,6 @@ export default function ProduitsPage() {
         limit: '12',
         ...(filtreStatut && { status: filtreStatut }),
       });
-
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/products/shop/me?${params}`,
         { headers: { Authorization: `Bearer ${token}` } }
@@ -141,17 +135,14 @@ export default function ProduitsPage() {
 
   useEffect(() => { fetchProduits(); }, [token, page, filtreStatut]);
 
-  // ── Suppression confirmée ──
+  // ── Suppression confirmee ──
   const confirmerSuppression = async () => {
     if (!produitASupprimer) return;
     setLoadingSuppr(true);
     try {
       await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/products/${produitASupprimer._id}`,
-        {
-          method:  'DELETE',
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
       );
       setProduitASupprimer(null);
       fetchProduits();
@@ -170,11 +161,8 @@ export default function ProduitsPage() {
         `${process.env.NEXT_PUBLIC_API_URL}/products/${produit._id}`,
         {
           method:  'PATCH',
-          headers: {
-            Authorization:  `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ status: nouveauStatut }),
+          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ status: nouveauStatut }),
         }
       );
       fetchProduits();
@@ -191,7 +179,7 @@ export default function ProduitsPage() {
   return (
     <div className="space-y-6">
 
-      {/* En-tête */}
+      {/* En-tete */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Produits</h1>
@@ -217,14 +205,12 @@ export default function ProduitsPage() {
       {!isPremium && total >= 8 && (
         <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl px-4 py-3 flex items-center justify-between">
           <p className="text-orange-400 text-sm">
-            ⚠️ Vous avez {total}/10 produits (plan Basic).
+            Vous avez {total}/10 produits (plan Basic).
             {total >= 10 ? ' Limite atteinte.' : ` Il vous reste ${10 - total} emplacement(s).`}
           </p>
-          <Link
-            href="/dashboard/parametres/abonnement"
-            className="text-primary text-sm font-medium hover:underline"
-          >
-            Passer en Premium →
+          <Link href="/dashboard/parametres/abonnement"
+            className="text-primary text-sm font-medium hover:underline">
+            Passer en Premium
           </Link>
         </div>
       )}
@@ -269,8 +255,8 @@ export default function ProduitsPage() {
           <h3 className="text-white font-semibold mb-2">Aucun produit</h3>
           <p className="text-muted text-sm mb-6">
             {recherche
-              ? 'Aucun produit ne correspond à votre recherche'
-              : 'Ajoutez votre premier produit pour commencer à vendre'}
+              ? 'Aucun produit ne correspond a votre recherche'
+              : 'Ajoutez votre premier produit pour commencer a vendre'}
           </p>
           {!recherche && (
             <Link
@@ -286,11 +272,10 @@ export default function ProduitsPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {produitsFiltres.map((produit) => (
-            <div
-              key={produit._id}
+            <div key={produit._id}
               className="bg-surface border border-border rounded-2xl overflow-hidden
-                         hover:border-primary/30 transition-all group"
-            >
+                         hover:border-primary/30 transition-all group">
+
               {/* Image */}
               <div className="h-40 bg-elevated relative overflow-hidden">
                 {produit.images?.[0] ? (
@@ -313,6 +298,17 @@ export default function ProduitsPage() {
                     {STATUT_LABELS[produit.status]?.label}
                   </span>
                 </div>
+
+                {/* Badge video — affiché si le produit a une video */}
+                {produit.video && (
+                  <div className="absolute top-2 right-2">
+                    <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium
+                                    bg-black/60 backdrop-blur-sm text-white">
+                      <Video size={11} />
+                      Video
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Infos */}
@@ -384,7 +380,7 @@ export default function ProduitsPage() {
             className="px-4 py-2 bg-surface border border-border rounded-xl text-white
                        text-sm disabled:opacity-40 hover:bg-elevated transition-colors"
           >
-            ← Précédent
+            Precedent
           </button>
           <span className="text-muted text-sm">Page {page} / {totalPages}</span>
           <button
@@ -393,12 +389,12 @@ export default function ProduitsPage() {
             className="px-4 py-2 bg-surface border border-border rounded-xl text-white
                        text-sm disabled:opacity-40 hover:bg-elevated transition-colors"
           >
-            Suivant →
+            Suivant
           </button>
         </div>
       )}
 
-      {/* ── Modal confirmation suppression ── */}
+      {/* Modal confirmation suppression */}
       {produitASupprimer && (
         <ModalSuppression
           produit={produitASupprimer}
@@ -407,7 +403,6 @@ export default function ProduitsPage() {
           onAnnuler={() => setProduitASupprimer(null)}
         />
       )}
-
     </div>
   );
 }

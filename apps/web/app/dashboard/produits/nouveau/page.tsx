@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   ArrowLeft, Plus, Trash2, Loader2,
-  ImagePlus, X, GripVertical,
+  ImagePlus, X, GripVertical, Video,
 } from 'lucide-react';
 
 interface Categorie {
@@ -47,21 +47,23 @@ export default function NouveauProduitPage() {
   const { token, shop } = useAuth();
   const isPremium       = shop?.planType === 'premium';
 
-  const [nom,         setNom]         = useState('');
-  const [description, setDescription] = useState('');
-  const [prix,        setPrix]        = useState('');
-  const [prixCompare, setPrixCompare] = useState('');
-  const [categoryId,  setCategoryId]  = useState('');
-  const [stock,       setStock]       = useState('0');
-  const [statut,      setStatut]      = useState<'active' | 'draft'>('draft');
-  const [hasVariants, setHasVariants] = useState(false);
-  const [variantes,   setVariantes]   = useState<VarianteForm[]>([]);
-  const [skus,        setSkus]        = useState<SkuForm[]>([]);
-  const [categories,  setCategories]  = useState<Categorie[]>([]);
-  const [images,      setImages]      = useState<string[]>([]);
-  const [uploading,   setUploading]   = useState(false);
-  const [isLoading,   setIsLoading]   = useState(false);
-  const [erreur,      setErreur]      = useState('');
+  const [nom,            setNom]            = useState('');
+  const [description,    setDescription]    = useState('');
+  const [prix,           setPrix]           = useState('');
+  const [prixCompare,    setPrixCompare]    = useState('');
+  const [categoryId,     setCategoryId]     = useState('');
+  const [stock,          setStock]          = useState('0');
+  const [statut,         setStatut]         = useState<'active' | 'draft'>('draft');
+  const [hasVariants,    setHasVariants]    = useState(false);
+  const [variantes,      setVariantes]      = useState<VarianteForm[]>([]);
+  const [skus,           setSkus]           = useState<SkuForm[]>([]);
+  const [categories,     setCategories]     = useState<Categorie[]>([]);
+  const [images,         setImages]         = useState<string[]>([]);
+  const [video,          setVideo]          = useState<string>('');
+  const [uploading,      setUploading]      = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [isLoading,      setIsLoading]      = useState(false);
+  const [erreur,         setErreur]         = useState('');
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -89,6 +91,7 @@ export default function NouveauProduitPage() {
     }));
   }, [variantes, hasVariants]);
 
+  // ── Upload images ──────────────────────────────────────────────────────────
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
@@ -106,6 +109,31 @@ export default function NouveauProduitPage() {
       if (result.success) setImages((prev) => [...prev, ...result.data.urls]);
     } catch { setErreur('Erreur upload images'); }
     finally  { setUploading(false); }
+  };
+
+  // ── Upload video (Premium uniquement) ─────────────────────────────────────
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      setErreur('La video ne doit pas depasser 100 Mo');
+      return;
+    }
+    setUploadingVideo(true);
+    setErreur('');
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/uploads/video`,
+        { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: formData });
+      const result = await response.json();
+      if (result.success) {
+        setVideo(result.data.url);
+      } else {
+        setErreur(result.message ?? 'Erreur upload video');
+      }
+    } catch { setErreur('Erreur upload video'); }
+    finally  { setUploadingVideo(false); }
   };
 
   const ajouterVariante = () => {
@@ -146,6 +174,7 @@ export default function NouveauProduitPage() {
         categoryId:   categoryId || undefined,
         status:       statut,
         images,
+        video:        isPremium && video ? video : undefined,
         hasVariants,
         variants:     hasVariants ? variantes.map(v => ({
           type:    v.label,
@@ -187,7 +216,7 @@ export default function NouveauProduitPage() {
           </div>
         )}
 
-        {/* Infos generales */}
+        {/* ── Informations generales ── */}
         <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
           <h2 className="text-white font-semibold">Informations generales</h2>
           <div className="space-y-1.5">
@@ -214,7 +243,7 @@ export default function NouveauProduitPage() {
           </div>
         </div>
 
-        {/* Prix */}
+        {/* ── Prix ── */}
         <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
           <h2 className="text-white font-semibold">Prix</h2>
           <div className="grid grid-cols-2 gap-4">
@@ -239,7 +268,7 @@ export default function NouveauProduitPage() {
           </div>
         </div>
 
-        {/* Images */}
+        {/* ── Photos ── */}
         <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-white font-semibold">Photos {!isPremium && `(${images.length}/5)`}</h2>
@@ -262,9 +291,10 @@ export default function NouveauProduitPage() {
             ))}
             {(isPremium || images.length < 5) && (
               <label className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer flex flex-col items-center justify-center gap-2 transition-colors bg-elevated hover:bg-elevated/80">
-                {uploading ? <Loader2 size={20} className="text-primary animate-spin" /> : (
-                  <><ImagePlus size={20} className="text-muted" /><span className="text-muted text-xs text-center">Ajouter</span></>
-                )}
+                {uploading
+                  ? <Loader2 size={20} className="text-primary animate-spin" />
+                  : <><ImagePlus size={20} className="text-muted" /><span className="text-muted text-xs text-center">Ajouter</span></>
+                }
                 <input type="file" accept="image/*" multiple className="hidden"
                   onChange={handleImageUpload} disabled={uploading} />
               </label>
@@ -272,7 +302,54 @@ export default function NouveauProduitPage() {
           </div>
         </div>
 
-        {/* Stock & Variantes */}
+        {/* ── Video produit — Premium uniquement ── */}
+        {isPremium && (
+          <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-white font-semibold">Video produit</h2>
+                <p className="text-muted text-xs mt-0.5">1 video par produit — max 100 Mo (MP4, MOV)</p>
+              </div>
+              <span className="text-xs px-2 py-1 rounded-full bg-primary/20 text-primary font-medium">
+                Premium
+              </span>
+            </div>
+
+            {video ? (
+              <div className="space-y-3">
+                <div className="relative rounded-xl overflow-hidden border border-border bg-elevated aspect-video">
+                  <video src={video} controls className="w-full h-full object-contain" />
+                </div>
+                <button type="button" onClick={() => setVideo('')}
+                  className="flex items-center gap-2 text-sm text-red-400 hover:text-red-300 transition-colors">
+                  <X size={14} />
+                  Supprimer la video
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed border-border hover:border-primary cursor-pointer transition-colors bg-elevated">
+                {uploadingVideo ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 size={28} className="text-primary animate-spin" />
+                    <p className="text-muted text-sm">Upload en cours...</p>
+                  </div>
+                ) : (
+                  <>
+                    <Video size={28} className="text-muted" />
+                    <div className="text-center">
+                      <p className="text-white text-sm font-medium">Ajouter une video</p>
+                      <p className="text-muted text-xs mt-1">MP4 ou MOV — max 100 Mo</p>
+                    </div>
+                  </>
+                )}
+                <input type="file" accept="video/mp4,video/quicktime,video/mov" className="hidden"
+                  onChange={handleVideoUpload} disabled={uploadingVideo} />
+              </label>
+            )}
+          </div>
+        )}
+
+        {/* ── Stock & Variantes ── */}
         <div className="bg-surface border border-border rounded-2xl p-6 space-y-4">
           <h2 className="text-white font-semibold">Stock & Variantes</h2>
 
@@ -435,7 +512,7 @@ export default function NouveauProduitPage() {
           )}
         </div>
 
-        {/* Statut */}
+        {/* ── Statut ── */}
         <div className="bg-surface border border-border rounded-2xl p-6 space-y-3">
           <h2 className="text-white font-semibold">Statut de publication</h2>
           <div className="grid grid-cols-2 gap-3">
@@ -452,7 +529,7 @@ export default function NouveauProduitPage() {
           </div>
         </div>
 
-        {/* Boutons */}
+        {/* ── Boutons ── */}
         <div className="flex gap-3">
           <Link href="/dashboard/produits"
             className="flex-1 text-center bg-elevated hover:bg-border border border-border text-white font-semibold py-3 rounded-xl transition-colors">

@@ -1,13 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, requireMerchant } from '../middleware/auth';
-import { uploadSingle, uploadMultiple, handleUpload } from '../middleware/upload';
+import { uploadSingle, uploadMultiple, uploadVideo, handleUpload } from '../middleware/upload';
 import { uploadImage, deleteFromCloudinary } from '../services/Cloudinary';
-import { Shop } from '../models/Shop';
+import { Shop }    from '../models/Shop';
 import { Product } from '../models/Product';
 
 const router = Router();
 
-// ─── POST /uploads/logo — Upload logo boutique ────────────────────────────────
+// ─── POST /uploads/logo — Upload logo boutique ───────────────────────────────
 
 router.post(
   '/logo',
@@ -21,21 +21,14 @@ router.post(
         return;
       }
 
-      // Upload vers Cloudinary
-      const url = await uploadImage(req.file.buffer, 'logo');
-
-      // Met à jour le logo de la boutique
+      const url  = await uploadImage(req.file.buffer, 'logo');
       const shop = await Shop.findOneAndUpdate(
         { ownerId: req.user!.userId },
         { logo: url },
         { new: true }
       );
 
-      res.json({
-        success: true,
-        data:    { url, shop },
-        message: 'Logo mis à jour',
-      });
+      res.json({ success: true, data: { url, shop }, message: 'Logo mis à jour' });
     } catch (error) {
       console.error('Erreur upload logo :', error);
       res.status(500).json({ success: false, message: 'Erreur upload' });
@@ -58,12 +51,7 @@ router.post(
       }
 
       const url = await uploadImage(req.file.buffer, 'ownerPhoto');
-
-      res.json({
-        success: true,
-        data:    { url },
-        message: 'Photo uploadée',
-      });
+      res.json({ success: true, data: { url }, message: 'Photo uploadée' });
     } catch (error) {
       console.error('Erreur upload owner-photo :', error);
       res.status(500).json({ success: false, message: 'Erreur upload' });
@@ -87,7 +75,6 @@ router.post(
         return;
       }
 
-      // Vérifie la limite photos selon le plan
       const { planType } = req.shop!;
       if (planType === 'basic' && files.length > 5) {
         res.status(403).json({
@@ -97,7 +84,6 @@ router.post(
         return;
       }
 
-      // Upload toutes les images en parallèle
       const urls = await Promise.all(
         files.map((file) => uploadImage(file.buffer, 'image'))
       );
@@ -114,16 +100,15 @@ router.post(
   }
 );
 
-// ─── POST /uploads/video — Upload vidéo produit (Premium) ────────────────────
+// ─── POST /uploads/video — Upload vidéo produit (Premium uniquement) ─────────
 
 router.post(
   '/video',
   authenticate,
   requireMerchant,
-  handleUpload(uploadSingle),
+  handleUpload(uploadVideo),        // ← limite 100 Mo, filtre video uniquement
   async (req: Request, res: Response) => {
     try {
-      // Vérifie plan Premium
       if (req.shop!.planType !== 'premium') {
         res.status(403).json({
           success: false,
@@ -137,19 +122,9 @@ router.post(
         return;
       }
 
-      // Vérifie que c'est bien une vidéo
-      if (!req.file.mimetype.startsWith('video/')) {
-        res.status(400).json({ success: false, message: 'Fichier vidéo requis' });
-        return;
-      }
-
       const url = await uploadImage(req.file.buffer, 'video');
 
-      res.json({
-        success: true,
-        data:    { url },
-        message: 'Vidéo uploadée',
-      });
+      res.json({ success: true, data: { url }, message: 'Vidéo uploadée' });
     } catch (error) {
       console.error('Erreur upload video :', error);
       res.status(500).json({ success: false, message: 'Erreur upload' });
@@ -173,7 +148,6 @@ router.delete(
       }
 
       await deleteFromCloudinary(url);
-
       res.json({ success: true, message: 'Fichier supprimé' });
     } catch (error) {
       console.error('Erreur suppression upload :', error);

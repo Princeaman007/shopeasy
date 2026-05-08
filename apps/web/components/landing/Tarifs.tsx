@@ -16,6 +16,7 @@ const PLANS = [
     features: [
       { label: '10 produits maximum',               inclus: true },
       { label: '5 photos par produit',              inclus: true },
+      { label: '1 vidéo par produit',  inclus: true },
       { label: '2 thèmes au choix',                 inclus: true },
       { label: 'Bouton WhatsApp intégré',           inclus: true },
       { label: 'Panier + gestion commandes',        inclus: true },
@@ -41,6 +42,7 @@ const PLANS = [
     features: [
       { label: 'Produits illimités',                inclus: true },
       { label: 'Photos illimitées',                 inclus: true },
+      { label: '1 vidéo par produit',  inclus: true },
       { label: '5 thèmes premium',                  inclus: true },
       { label: 'Bouton WhatsApp intégré',           inclus: true },
       { label: 'Panier + gestion commandes',        inclus: true },
