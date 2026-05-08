@@ -16,8 +16,8 @@ import FormulaireAvis from '@/components/storefront/FormulaireAvis';
 import ListeAvis from '@/components/storefront/ListeAvis';
 
 interface Props {
-  shop:       ShopPublic;
-  produit:    any;
+  shop: ShopPublic;
+  produit: any;
   similaires: any[];
 }
 
@@ -75,17 +75,17 @@ function useSwipe(onGauche: () => void, onDroite: () => void) {
 }
 
 export default function ProduitClient({ shop, produit, similaires }: Props) {
-  const t         = getThemeConfig(shop.selectedTheme);
-  const temps     = useCompteur();
+  const t = getThemeConfig(shop.selectedTheme);
+  const temps = useCompteur();
   const visiteurs = useVisiteurs();
 
-  const [imageActive,       setImageActive]       = useState(0);
-  const [quantite,          setQuantite]          = useState(1);
+  const [imageActive, setImageActive] = useState(0);
+  const [quantite, setQuantite] = useState(1);
   const [variantesChoisies, setVariantesChoisies] = useState<Record<string, string>>({});
-  const [ajoutePanier,      setAjoutePanier]      = useState(false);
-  const [imagesAffichees,   setImagesAffichees]   = useState<string[]>(produit.images ?? []);
-  const [stockVariante,     setStockVariante]     = useState<number | null>(null);
-  const [refreshAvis,       setRefreshAvis]       = useState(0);
+  const [ajoutePanier, setAjoutePanier] = useState(false);
+  const [imagesAffichees, setImagesAffichees] = useState<string[]>(produit.images ?? []);
+  const [stockVariante, setStockVariante] = useState<number | null>(null);
+  const [refreshAvis, setRefreshAvis] = useState(0);
 
   const swipe = useSwipe(
     () => setImageActive(i => Math.min(imagesAffichees.length - 1, i + 1)),
@@ -94,7 +94,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
   const variantes: { nom: string; valeurs: string[]; images: Record<string, string[]> }[] =
     (produit.variants ?? []).map((v: any) => ({
-      nom:    v.nom    ?? v.name  ?? v.label   ?? '',
+      nom: v.nom ?? v.name ?? v.label ?? '',
       valeurs: v.valeurs ?? v.values ?? v.options ?? [],
       images: v.images ?? {},
     }));
@@ -104,7 +104,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
     setVariantesChoisies(nouvellesVariantes);
 
     const varianteAvecImages = variantes.find(v => v.nom === nomVariante);
-    const imagesVariante     = varianteAvecImages?.images?.[valeur];
+    const imagesVariante = varianteAvecImages?.images?.[valeur];
     if (imagesVariante && imagesVariante.length > 0) {
       setImagesAffichees(imagesVariante);
     } else {
@@ -116,7 +116,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       v.nom === nomVariante ? true : !!nouvellesVariantes[v.nom]
     );
     if (toutesChoisies && produit.stock?.length > 0) {
-      const cle       = variantes.map(v => v.nom === nomVariante ? valeur : nouvellesVariantes[v.nom]).join('-');
+      const cle = variantes.map(v => v.nom === nomVariante ? valeur : nouvellesVariantes[v.nom]).join('-');
       const skuTrouve = produit.stock.find((s: any) => s.sku === cle);
       setStockVariante(skuTrouve?.quantity ?? 0);
     } else {
@@ -128,14 +128,14 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
     variantes.length === 0 ||
     variantes.every(v => variantesChoisies[v.nom]);
 
-  const stockDispo  = stockVariante !== null ? stockVariante : (produit.totalStock ?? 0);
-  const enRupture   = stockDispo === 0;
+  const stockDispo = stockVariante !== null ? stockVariante : (produit.totalStock ?? 0);
+  const enRupture = stockDispo === 0;
   const stockFaible = stockDispo > 0 && stockDispo <= 5;
 
   const ajouterAuPanier = () => {
     if (!toutesVariantesChoisies || enRupture) return;
-    const panier   = JSON.parse(localStorage.getItem(`panier_${shop.slug}`) ?? '[]');
-    const cle      = `${produit._id}_${JSON.stringify(variantesChoisies)}`;
+    const panier = JSON.parse(localStorage.getItem(`panier_${shop.slug}`) ?? '[]');
+    const cle = `${produit._id}_${JSON.stringify(variantesChoisies)}`;
     const existant = panier.find((i: any) => i.cle === cle);
     if (existant) {
       existant.quantite += quantite;
@@ -143,9 +143,9 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       panier.push({
         cle,
         produitId: produit._id,
-        nom:       produit.name,
-        prix:      produit.price,
-        image:     imagesAffichees[0] ?? produit.images?.[0] ?? null,
+        nom: produit.name,
+        prix: produit.price,
+        image: imagesAffichees[0] ?? produit.images?.[0] ?? null,
         variantes: variantesChoisies,
         quantite,
       });
@@ -171,8 +171,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
     if (navigator.share) {
       navigator.share({
         title: produit.name,
-        text:  `Decouvrez ${produit.name} sur ${shop.name}`,
-        url:   window.location.href,
+        text: `Decouvrez ${produit.name} sur ${shop.name}`,
+        url: window.location.href,
       });
     } else {
       navigator.clipboard.writeText(window.location.href);
@@ -180,19 +180,19 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   };
 
   const couleurCSS: Record<string, string> = {
-    noir: '#1a1a1a',   black: '#1a1a1a',
-    blanc: '#ffffff',  white: '#ffffff',
-    rouge: '#ef4444',  red: '#ef4444',
-    bleu: '#3b82f6',   blue: '#3b82f6',
-    vert: '#22c55e',   green: '#22c55e',
-    jaune: '#eab308',  yellow: '#eab308',
+    noir: '#1a1a1a', black: '#1a1a1a',
+    blanc: '#ffffff', white: '#ffffff',
+    rouge: '#ef4444', red: '#ef4444',
+    bleu: '#3b82f6', blue: '#3b82f6',
+    vert: '#22c55e', green: '#22c55e',
+    jaune: '#eab308', yellow: '#eab308',
     orange: '#f97316',
     violet: '#a855f7', purple: '#a855f7',
-    rose: '#ec4899',   pink: '#ec4899',
+    rose: '#ec4899', pink: '#ec4899',
     marron: '#92400e', brown: '#92400e',
     beige: '#d4b896',
-    gris: '#6b7280',   grey: '#6b7280', gray: '#6b7280',
-    or: '#f59e0b',     gold: '#f59e0b',
+    gris: '#6b7280', grey: '#6b7280', gray: '#6b7280',
+    or: '#f59e0b', gold: '#f59e0b',
     argent: '#94a3b8', silver: '#94a3b8',
   };
 
@@ -241,11 +241,11 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             >
               {imagesAffichees?.[imageActive]
                 ? <Image
-                    src={imagesAffichees[imageActive]}
-                    alt={produit.name}
-                    fill
-                    className="object-cover"
-                  />
+                  src={imagesAffichees[imageActive]}
+                  alt={produit.name}
+                  fill
+                  className="object-cover"
+                />
                 : <div className="w-full h-full flex items-center justify-center text-6xl">...</div>
               }
 
@@ -302,8 +302,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                       onClick={() => setImageActive(i)}
                       className="rounded-full transition-all duration-200"
                       style={{
-                        width:           imageActive === i ? '24px' : '8px',
-                        height:          '8px',
+                        width: imageActive === i ? '24px' : '8px',
+                        height: '8px',
                         backgroundColor: imageActive === i ? t.accent : t.border,
                       }}
                     />
@@ -327,6 +327,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             )}
 
             {/* ── VIDEO PRODUIT — affichee si disponible ── */}
+            {/* ── VIDEO PRODUIT ── */}
             {produit.video && (
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -337,14 +338,18 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 </div>
                 <div
                   className="rounded-2xl overflow-hidden border"
-                  style={{ borderColor: t.border, backgroundColor: t.surface }}
+                  style={{
+                    borderColor: t.border,
+                    backgroundColor: '#000',
+                    maxHeight: '280px',
+                  }}
                 >
                   <video
                     src={produit.video}
                     controls
                     playsInline
-                    className="w-full"
-                    style={{ maxHeight: '360px' }}
+                    className="w-full h-full"
+                    style={{ maxHeight: '280px', objectFit: 'contain' }}
                   />
                 </div>
               </div>
@@ -412,7 +417,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
               <div className="flex items-center gap-2">
                 {[
-                  { val: String(temps.h).padStart(2, '0'), label: 'h'   },
+                  { val: String(temps.h).padStart(2, '0'), label: 'h' },
                   { val: String(temps.m).padStart(2, '0'), label: 'min' },
                   { val: String(temps.s).padStart(2, '0'), label: 'sec' },
                 ].map((item, i) => (
@@ -482,7 +487,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {variant.valeurs.map(valeur => {
-                      const choisi  = variantesChoisies[variant.nom] === valeur;
+                      const choisi = variantesChoisies[variant.nom] === valeur;
                       const couleur = couleurCSS[valeur.toLowerCase()];
                       return (
                         <button
@@ -492,9 +497,9 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                                      text-sm font-medium transition-all"
                           style={{
                             backgroundColor: choisi ? t.accent : t.surface,
-                            borderColor:     choisi ? t.accent : t.border,
-                            color:           choisi ? '#fff'   : t.text,
-                            transform:       choisi ? 'scale(1.05)' : 'scale(1)',
+                            borderColor: choisi ? t.accent : t.border,
+                            color: choisi ? '#fff' : t.text,
+                            transform: choisi ? 'scale(1.05)' : 'scale(1)',
                           }}
                         >
                           {estCouleur && couleur && (
@@ -555,8 +560,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                            justify-center gap-2 transition-all disabled:opacity-40 hover:opacity-90"
                 style={{
                   backgroundColor: ajoutePanier ? '#10b981' : t.accent,
-                  color:           '#fff',
-                  boxShadow:       `0 4px 20px ${t.accent}50`,
+                  color: '#fff',
+                  boxShadow: `0 4px 20px ${t.accent}50`,
                 }}
               >
                 {ajoutePanier
@@ -587,9 +592,9 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             {/* Garanties */}
             <div className="grid grid-cols-3 gap-2 pt-2">
               {[
-                { icone: <Truck     size={16} />, titre: 'Livraison', desc: 'Rapide et fiable'    },
-                { icone: <Shield    size={16} />, titre: 'Sécurisé',  desc: 'Paiement à la livr.' },
-                { icone: <RotateCcw size={16} />, titre: 'Retour',    desc: 'Politique flexible'  },
+                { icone: <Truck size={16} />, titre: 'Livraison', desc: 'Rapide et fiable' },
+                { icone: <Shield size={16} />, titre: 'Sécurisé', desc: 'Paiement à la livr.' },
+                { icone: <RotateCcw size={16} />, titre: 'Retour', desc: 'Politique flexible' },
               ].map((g, i) => (
                 <div
                   key={i}
@@ -598,7 +603,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 >
                   <span style={{ color: t.accent }}>{g.icone}</span>
                   <p className="text-xs font-bold" style={{ color: t.text }}>{g.titre}</p>
-                  <p className="text-xs"           style={{ color: t.muted }}>{g.desc}</p>
+                  <p className="text-xs" style={{ color: t.muted }}>{g.desc}</p>
                 </div>
               ))}
             </div>
@@ -667,11 +672,11 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   >
                     {p.images?.[0]
                       ? <Image
-                          src={p.images[0]}
-                          alt={p.name}
-                          fill
-                          className="object-cover group-hover:scale-105 transition-transform"
-                        />
+                        src={p.images[0]}
+                        alt={p.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform"
+                      />
                       : <div className="w-full h-full flex items-center justify-center text-3xl">...</div>
                     }
                   </div>
