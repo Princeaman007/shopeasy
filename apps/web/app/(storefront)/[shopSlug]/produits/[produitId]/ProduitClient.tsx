@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ChevronLeft, ChevronRight, ShoppingCart,
   MessageCircle, Check, Minus, Plus, Share2,
-  MapPin, Clock, Shield, Truck, RotateCcw, Flame, Eye,
+  MapPin, Clock, Shield, Truck, RotateCcw, Flame, Eye, Video,
 } from 'lucide-react';
 import { getThemeConfig } from '../../theme.config';
 import type { ShopPublic } from '../../types';
@@ -34,7 +34,7 @@ function useCompteur() {
         if (s > 0) return { h, m, s: s - 1 };
         if (m > 0) return { h, m: m - 1, s: 59 };
         if (h > 0) return { h: h - 1, m: 59, s: 59 };
-        return { h: 1, m: 59, s: 59 }; // Repart
+        return { h: 1, m: 59, s: 59 };
       });
     }, 1000);
     return () => clearInterval(interval);
@@ -66,8 +66,6 @@ function useSwipe(onGauche: () => void, onDroite: () => void) {
     if (startX.current === null) return;
     const diff = startX.current - e.changedTouches[0].clientX;
     if (Math.abs(diff) > 40) {
-      // Swipe vers la gauche → image suivante
-      // Swipe vers la droite → image précédente
       diff > 0 ? onGauche() : onDroite();
     }
     startX.current = null;
@@ -89,7 +87,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   const [stockVariante,     setStockVariante]     = useState<number | null>(null);
   const [refreshAvis,       setRefreshAvis]       = useState(0);
 
-  // Swipe : gauche = suivant, droite = précédent
   const swipe = useSwipe(
     () => setImageActive(i => Math.min(imagesAffichees.length - 1, i + 1)),
     () => setImageActive(i => Math.max(0, i - 1)),
@@ -233,10 +230,10 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
         {/* ── GRILLE PRODUIT ── */}
         <div className="grid md:grid-cols-2 gap-10">
 
-          {/* ── GALERIE ── */}
+          {/* ── GALERIE + VIDEO ── */}
           <div className="space-y-3">
 
-            {/* Image principale — swipe tactile activé */}
+            {/* Image principale */}
             <div
               className="aspect-square rounded-2xl overflow-hidden relative"
               style={{ backgroundColor: t.surface }}
@@ -262,7 +259,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 </div>
               )}
 
-              {/* Flèches — visibles si plusieurs images */}
+              {/* Flèches */}
               {imagesAffichees?.length > 1 && (
                 <>
                   <button
@@ -284,7 +281,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                     <ChevronRight size={20} style={{ color: t.text }} />
                   </button>
 
-                  {/* Compteur discret — ex : 2 / 5 */}
                   <div
                     className="absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-bold"
                     style={{ backgroundColor: `${t.bg}cc`, color: t.text }}
@@ -298,7 +294,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             {/* Navigation images */}
             {imagesAffichees?.length > 1 && (
               <>
-                {/* DOTS — mobile uniquement */}
+                {/* DOTS — mobile */}
                 <div className="flex md:hidden justify-center gap-2 py-1">
                   {imagesAffichees.map((_: string, i: number) => (
                     <button
@@ -314,7 +310,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   ))}
                 </div>
 
-                {/* MINIATURES — desktop uniquement */}
+                {/* MINIATURES — desktop */}
                 <div className="hidden md:flex gap-2 overflow-x-auto pb-1">
                   {imagesAffichees.map((img: string, i: number) => (
                     <button
@@ -329,6 +325,31 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 </div>
               </>
             )}
+
+            {/* ── VIDEO PRODUIT — affichee si disponible ── */}
+            {produit.video && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Video size={14} style={{ color: t.accent }} />
+                  <p className="text-sm font-semibold" style={{ color: t.text }}>
+                    Video du produit
+                  </p>
+                </div>
+                <div
+                  className="rounded-2xl overflow-hidden border"
+                  style={{ borderColor: t.border, backgroundColor: t.surface }}
+                >
+                  <video
+                    src={produit.video}
+                    controls
+                    playsInline
+                    className="w-full"
+                    style={{ maxHeight: '360px' }}
+                  />
+                </div>
+              </div>
+            )}
+
           </div>
 
           {/* ── INFOS PRODUIT ── */}
@@ -378,7 +399,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               )}
             </div>
 
-            {/* ── URGENCE — Compte à rebours ── */}
+            {/* Compte à rebours */}
             <div
               className="p-3 rounded-xl border"
               style={{ backgroundColor: '#ef444415', borderColor: '#ef444430' }}
@@ -400,10 +421,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                       className="px-2 py-1 rounded-lg text-center min-w-[40px]"
                       style={{ backgroundColor: t.elevated }}
                     >
-                      <span
-                        className="text-lg font-bold font-mono"
-                        style={{ color: t.text }}
-                      >
+                      <span className="text-lg font-bold font-mono" style={{ color: t.text }}>
                         {item.val}
                       </span>
                     </div>
@@ -414,35 +432,25 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             </div>
 
-            {/* Indicateur stock */}
+            {/* Stock */}
             <div className="flex items-center gap-2">
               <div
                 className="w-2 h-2 rounded-full"
                 style={{
-                  backgroundColor: enRupture
-                    ? '#ef4444'
-                    : stockFaible
-                      ? '#f59e0b'
-                      : t.accent,
+                  backgroundColor: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.accent,
                 }}
               />
               <span
                 className="text-sm font-medium"
-                style={{
-                  color: enRupture
-                    ? '#ef4444'
-                    : stockFaible
-                      ? '#f59e0b'
-                      : t.muted,
-                }}
+                style={{ color: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.muted }}
               >
                 {enRupture
-                  ? '❌ Rupture de stock'
+                  ? 'Rupture de stock'
                   : stockFaible
-                    ? `⚠️ Plus que ${stockDispo} en stock — commandez vite !`
+                    ? `Plus que ${stockDispo} en stock — commandez vite !`
                     : stockVariante !== null
-                      ? `✅ ${stockDispo} disponible${stockDispo > 1 ? 's' : ''} pour cette variante`
-                      : '✅ En stock'
+                      ? `${stockDispo} disponible${stockDispo > 1 ? 's' : ''} pour cette variante`
+                      : 'En stock'
                 }
               </span>
             </div>
@@ -518,10 +526,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 >
                   <Minus size={16} style={{ color: t.text }} />
                 </button>
-                <span
-                  className="w-12 text-center font-bold text-lg"
-                  style={{ color: t.text }}
-                >
+                <span className="w-12 text-center font-bold text-lg" style={{ color: t.text }}>
                   {quantite}
                 </span>
                 <button
@@ -541,7 +546,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             </div>
 
-            {/* ── CTA ── */}
+            {/* CTA */}
             <div className="space-y-3 pt-2">
               <button
                 onClick={ajouterAuPanier}
@@ -574,12 +579,12 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
               {variantes.length > 0 && !toutesVariantesChoisies && (
                 <p className="text-xs text-center" style={{ color: '#f59e0b' }}>
-                  ⚠️ Veuillez sélectionner toutes les options avant de commander
+                  Veuillez sélectionner toutes les options avant de commander
                 </p>
               )}
             </div>
 
-            {/* ── GARANTIES ── */}
+            {/* Garanties */}
             <div className="grid grid-cols-3 gap-2 pt-2">
               {[
                 { icone: <Truck     size={16} />, titre: 'Livraison', desc: 'Rapide et fiable'    },
@@ -627,7 +632,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           </div>
         </div>
 
-        {/* ── POLITIQUE DE RETOUR ── */}
+        {/* Politique de retour */}
         {shop.about?.returnPolicy && (
           <div
             className="mt-6 p-4 rounded-2xl border space-y-2"
@@ -642,7 +647,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           </div>
         )}
 
-        {/* ── PRODUITS SIMILAIRES ── */}
+        {/* Produits similaires */}
         {similaires.length > 0 && (
           <div className="mt-16 space-y-6">
             <h2 className="text-xl font-bold" style={{ color: t.text }}>
@@ -667,16 +672,11 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                           fill
                           className="object-cover group-hover:scale-105 transition-transform"
                         />
-                      : <div className="w-full h-full flex items-center justify-center text-3xl">
-                          ...
-                        </div>
+                      : <div className="w-full h-full flex items-center justify-center text-3xl">...</div>
                     }
                   </div>
                   <div className="p-3 space-y-1">
-                    <p
-                      className="text-sm font-medium line-clamp-2"
-                      style={{ color: t.text }}
-                    >
+                    <p className="text-sm font-medium line-clamp-2" style={{ color: t.text }}>
                       {p.name}
                     </p>
                     <p className="text-sm font-bold" style={{ color: t.accent }}>
@@ -691,7 +691,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
       </div>
 
-      {/* ── AVIS CLIENTS ── */}
+      {/* Avis clients */}
       <div className="max-w-6xl mx-auto px-4 mt-12 space-y-8">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">
@@ -728,7 +728,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
         </div>
       </div>
 
-      {/* ── WHATSAPP FLOTTANT ── */}
+      {/* WhatsApp flottant */}
       {shop.whatsapp && (
         <Link
           href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par ${produit.name}`}

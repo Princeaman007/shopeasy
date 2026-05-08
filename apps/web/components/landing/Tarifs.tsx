@@ -16,7 +16,6 @@ const PLANS = [
     features: [
       { label: '10 produits maximum',               inclus: true },
       { label: '5 photos par produit',              inclus: true },
-      { label: '1 vidéo par produit',  inclus: true },
       { label: '2 thèmes au choix',                 inclus: true },
       { label: 'Bouton WhatsApp intégré',           inclus: true },
       { label: 'Panier + gestion commandes',        inclus: true },
@@ -24,6 +23,7 @@ const PLANS = [
       { label: 'Variantes produit + stock',         inclus: true },
       { label: 'Badge vérifié',                     inclus: true },
       { label: 'Image partageable produit',         inclus: true },
+      { label: '1 vidéo par produit',  inclus: true },
       { label: 'Analytics avancés',                 inclus: false },
       { label: 'Codes promo',                       inclus: false },
       { label: 'Multi-admins',                      inclus: false },
@@ -42,7 +42,6 @@ const PLANS = [
     features: [
       { label: 'Produits illimités',                inclus: true },
       { label: 'Photos illimitées',                 inclus: true },
-      { label: '1 vidéo par produit',  inclus: true },
       { label: '5 thèmes premium',                  inclus: true },
       { label: 'Bouton WhatsApp intégré',           inclus: true },
       { label: 'Panier + gestion commandes',        inclus: true },
@@ -50,6 +49,7 @@ const PLANS = [
       { label: 'Variantes produit + stock',         inclus: true },
       { label: 'Badge vérifié',                     inclus: true },
       { label: 'Image partageable produit',         inclus: true },
+      { label: '1 vidéo par produit',  inclus: true },
       { label: 'Analytics avancés',                 inclus: true },
       { label: 'Codes promo',                       inclus: true },
       { label: 'Multi-admins',                      inclus: true },
