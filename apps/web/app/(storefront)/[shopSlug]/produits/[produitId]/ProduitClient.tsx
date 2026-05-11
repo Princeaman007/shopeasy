@@ -7,6 +7,7 @@ import {
   ChevronLeft, ChevronRight, ShoppingCart,
   MessageCircle, Check, Minus, Plus, Share2,
   MapPin, Clock, Shield, Truck, RotateCcw, Flame, Eye, Video, ImageIcon,
+  Star, BadgeCheck, Zap,
 } from 'lucide-react';
 import { getThemeConfig } from '../../theme.config';
 import type { ShopPublic } from '../../types';
@@ -54,6 +55,12 @@ function useVisiteurs() {
   return visiteurs;
 }
 
+// ── Commandes simulées ────────────────────────────────────────────────────────
+function useCommandes() {
+  const [commandes] = useState(Math.floor(Math.random() * 40) + 12);
+  return commandes;
+}
+
 // ── Swipe tactile ─────────────────────────────────────────────────────────────
 function useSwipe(onGauche: () => void, onDroite: () => void) {
   const startX = useRef<number | null>(null);
@@ -78,8 +85,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   const t         = getThemeConfig(shop.selectedTheme);
   const temps     = useCompteur();
   const visiteurs = useVisiteurs();
+  const commandes = useCommandes();
 
-  // Onglet actif : 'photos' ou 'video'
   const [onglet,            setOnglet]            = useState<'photos' | 'video'>('photos');
   const [imageActive,       setImageActive]       = useState(0);
   const [quantite,          setQuantite]          = useState(1);
@@ -92,12 +99,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   const aVideo = !!produit.video;
 
   const swipe = useSwipe(
-    () => {
-      if (onglet === 'photos') setImageActive(i => Math.min(imagesAffichees.length - 1, i + 1));
-    },
-    () => {
-      if (onglet === 'photos') setImageActive(i => Math.max(0, i - 1));
-    },
+    () => { if (onglet === 'photos') setImageActive(i => Math.min(imagesAffichees.length - 1, i + 1)); },
+    () => { if (onglet === 'photos') setImageActive(i => Math.max(0, i - 1)); },
   );
 
   const variantes: { nom: string; valeurs: string[]; images: Record<string, string[]> }[] =
@@ -178,47 +181,29 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
   const partager = () => {
     if (navigator.share) {
-      navigator.share({
-        title: produit.name,
-        text:  `Decouvrez ${produit.name} sur ${shop.name}`,
-        url:   window.location.href,
-      });
+      navigator.share({ title: produit.name, text: `Decouvrez ${produit.name} sur ${shop.name}`, url: window.location.href });
     } else {
       navigator.clipboard.writeText(window.location.href);
     }
   };
 
   const couleurCSS: Record<string, string> = {
-    noir: '#1a1a1a',   black: '#1a1a1a',
-    blanc: '#ffffff',  white: '#ffffff',
-    rouge: '#ef4444',  red: '#ef4444',
-    bleu: '#3b82f6',   blue: '#3b82f6',
-    vert: '#22c55e',   green: '#22c55e',
-    jaune: '#eab308',  yellow: '#eab308',
-    orange: '#f97316',
-    violet: '#a855f7', purple: '#a855f7',
-    rose: '#ec4899',   pink: '#ec4899',
-    marron: '#92400e', brown: '#92400e',
-    beige: '#d4b896',
-    gris: '#6b7280',   grey: '#6b7280', gray: '#6b7280',
-    or: '#f59e0b',     gold: '#f59e0b',
-    argent: '#94a3b8', silver: '#94a3b8',
+    noir: '#1a1a1a', black: '#1a1a1a', blanc: '#ffffff', white: '#ffffff',
+    rouge: '#ef4444', red: '#ef4444', bleu: '#3b82f6', blue: '#3b82f6',
+    vert: '#22c55e', green: '#22c55e', jaune: '#eab308', yellow: '#eab308',
+    orange: '#f97316', violet: '#a855f7', purple: '#a855f7',
+    rose: '#ec4899', pink: '#ec4899', marron: '#92400e', brown: '#92400e',
+    beige: '#d4b896', gris: '#6b7280', grey: '#6b7280', gray: '#6b7280',
+    or: '#f59e0b', gold: '#f59e0b', argent: '#94a3b8', silver: '#94a3b8',
   };
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
 
       {/* ── NAVBAR ── */}
-      <nav
-        style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
-        className="sticky top-0 z-40"
-      >
+      <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }} className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link
-            href="/catalogue"
-            className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
-            style={{ color: t.muted }}
-          >
+          <Link href="/catalogue" className="flex items-center gap-2 text-sm font-medium hover:opacity-70" style={{ color: t.muted }}>
             <ChevronLeft size={18} /> Retour au catalogue
           </Link>
           <div className="flex items-center gap-2">
@@ -231,99 +216,65 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       </nav>
 
       <div className="max-w-6xl mx-auto px-4 py-8">
-
-        {/* ── GRILLE PRODUIT ── */}
         <div className="grid md:grid-cols-2 gap-10">
 
           {/* ── GALERIE ── */}
           <div className="space-y-3">
 
-            {/* ── ONGLETS Photos / Video — visibles uniquement si video existe ── */}
+            {/* Onglets Photos / Video */}
             {aVideo && (
-              <div
-                className="flex rounded-xl overflow-hidden border"
-                style={{ borderColor: t.border }}
-              >
+              <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: t.border }}>
                 <button
                   onClick={() => setOnglet('photos')}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-all"
-                  style={{
-                    backgroundColor: onglet === 'photos' ? t.accent : t.surface,
-                    color:           onglet === 'photos' ? '#fff' : t.muted,
-                  }}
+                  style={{ backgroundColor: onglet === 'photos' ? t.accent : t.surface, color: onglet === 'photos' ? '#fff' : t.muted }}
                 >
-                  <ImageIcon size={15} />
-                  Photos
+                  <ImageIcon size={15} /> Photos
                 </button>
                 <button
                   onClick={() => setOnglet('video')}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-all"
-                  style={{
-                    backgroundColor: onglet === 'video' ? t.accent : t.surface,
-                    color:           onglet === 'video' ? '#fff' : t.muted,
-                  }}
+                  style={{ backgroundColor: onglet === 'video' ? t.accent : t.surface, color: onglet === 'video' ? '#fff' : t.muted }}
                 >
-                  <Video size={15} />
-                  Video
+                  <Video size={15} /> Video
                 </button>
               </div>
             )}
 
-            {/* ── CADRE PRINCIPAL — même aspect-square pour photos et video ── */}
+            {/* Cadre principal */}
             <div
               className="aspect-square rounded-2xl overflow-hidden relative"
               style={{ backgroundColor: onglet === 'video' ? '#000' : t.surface }}
               {...(onglet === 'photos' ? swipe : {})}
             >
-              {/* Mode Photos */}
               {onglet === 'photos' && (
                 <>
                   {imagesAffichees?.[imageActive]
-                    ? <Image
-                        src={imagesAffichees[imageActive]}
-                        alt={produit.name}
-                        fill
-                        className="object-cover"
-                      />
+                    ? <Image src={imagesAffichees[imageActive]} alt={produit.name} fill className="object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-6xl">...</div>
                   }
 
-                  {/* Badge réduction */}
                   {produit.comparePrice > produit.price && (
-                    <div
-                      className="absolute top-4 left-4 text-sm font-bold px-3 py-1.5 rounded-full"
-                      style={{ backgroundColor: '#ef4444', color: '#fff' }}
-                    >
+                    <div className="absolute top-4 left-4 text-sm font-bold px-3 py-1.5 rounded-full"
+                      style={{ backgroundColor: '#ef4444', color: '#fff' }}>
                       -{Math.round((1 - produit.price / produit.comparePrice) * 100)}% OFF
                     </div>
                   )}
 
-                  {/* Flèches */}
                   {imagesAffichees?.length > 1 && (
                     <>
-                      <button
-                        onClick={() => setImageActive(i => Math.max(0, i - 1))}
-                        disabled={imageActive === 0}
-                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full
-                                   flex items-center justify-center disabled:opacity-20 transition-opacity"
-                        style={{ backgroundColor: `${t.bg}dd` }}
-                      >
+                      <button onClick={() => setImageActive(i => Math.max(0, i - 1))} disabled={imageActive === 0}
+                        className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-20 transition-opacity"
+                        style={{ backgroundColor: `${t.bg}dd` }}>
                         <ChevronLeft size={20} style={{ color: t.text }} />
                       </button>
-                      <button
-                        onClick={() => setImageActive(i => Math.min(imagesAffichees.length - 1, i + 1))}
-                        disabled={imageActive === imagesAffichees.length - 1}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full
-                                   flex items-center justify-center disabled:opacity-20 transition-opacity"
-                        style={{ backgroundColor: `${t.bg}dd` }}
-                      >
+                      <button onClick={() => setImageActive(i => Math.min(imagesAffichees.length - 1, i + 1))} disabled={imageActive === imagesAffichees.length - 1}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-20 transition-opacity"
+                        style={{ backgroundColor: `${t.bg}dd` }}>
                         <ChevronRight size={20} style={{ color: t.text }} />
                       </button>
-
-                      <div
-                        className="absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-bold"
-                        style={{ backgroundColor: `${t.bg}cc`, color: t.text }}
-                      >
+                      <div className="absolute bottom-3 right-3 px-2 py-1 rounded-full text-xs font-bold"
+                        style={{ backgroundColor: `${t.bg}cc`, color: t.text }}>
                         {imageActive + 1} / {imagesAffichees.length}
                       </div>
                     </>
@@ -331,47 +282,25 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 </>
               )}
 
-              {/* Mode Video */}
               {onglet === 'video' && produit.video && (
-                <video
-                  src={produit.video}
-                  controls
-                  playsInline
-                  autoPlay
-                  className="w-full h-full"
-                  style={{ objectFit: 'contain' }}
-                />
+                <video src={produit.video} controls playsInline autoPlay className="w-full h-full" style={{ objectFit: 'contain' }} />
               )}
             </div>
 
-            {/* Navigation images — uniquement en mode Photos ── */}
+            {/* Navigation images */}
             {onglet === 'photos' && imagesAffichees?.length > 1 && (
               <>
-                {/* DOTS — mobile */}
                 <div className="flex md:hidden justify-center gap-2 py-1">
                   {imagesAffichees.map((_: string, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => setImageActive(i)}
-                      className="rounded-full transition-all duration-200"
-                      style={{
-                        width:           imageActive === i ? '24px' : '8px',
-                        height:          '8px',
-                        backgroundColor: imageActive === i ? t.accent : t.border,
-                      }}
-                    />
+                    <button key={i} onClick={() => setImageActive(i)} className="rounded-full transition-all duration-200"
+                      style={{ width: imageActive === i ? '24px' : '8px', height: '8px', backgroundColor: imageActive === i ? t.accent : t.border }} />
                   ))}
                 </div>
-
-                {/* MINIATURES — desktop */}
                 <div className="hidden md:flex gap-2 overflow-x-auto pb-1">
                   {imagesAffichees.map((img: string, i: number) => (
-                    <button
-                      key={i}
-                      onClick={() => setImageActive(i)}
+                    <button key={i} onClick={() => setImageActive(i)}
                       className="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-all relative"
-                      style={{ borderColor: imageActive === i ? t.accent : t.border }}
-                    >
+                      style={{ borderColor: imageActive === i ? t.accent : t.border }}>
                       <Image src={img} alt="" fill className="object-cover" />
                     </button>
                   ))}
@@ -383,31 +312,39 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           {/* ── INFOS PRODUIT ── */}
           <div className="space-y-4">
 
+            {/* Badge boutique vérifiée */}
+            {shop.isVerified && (
+              <div className="flex items-center gap-1.5 text-xs font-medium w-fit px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: `${t.accent}15`, color: t.accent }}>
+                <BadgeCheck size={13} />
+                Boutique officielle vérifiée
+              </div>
+            )}
+
             {/* Titre + favori */}
             <div className="flex items-start justify-between gap-3">
-              <h1 className="text-2xl font-bold" style={{ color: t.text }}>
+              <h1 className="text-2xl font-bold leading-tight" style={{ color: t.text }}>
                 {produit.name}
               </h1>
               <BoutonFavori
-                shopSlug={shop.slug}
-                produitId={produit._id}
-                nom={produit.name}
-                prix={produit.price}
-                image={produit.images?.[0] ?? null}
-                accent={t.accent}
-                className="w-10 h-10 flex-shrink-0"
+                shopSlug={shop.slug} produitId={produit._id} nom={produit.name}
+                prix={produit.price} image={produit.images?.[0] ?? null}
+                accent={t.accent} className="w-10 h-10 flex-shrink-0"
               />
             </div>
 
-            {/* Visiteurs en live */}
-            <div
-              className="flex items-center gap-2 text-xs px-3 py-2 rounded-xl w-fit"
-              style={{ backgroundColor: `${t.accent}15`, color: t.accent }}
-            >
-              <Eye size={13} />
-              <span>
-                <strong>{visiteurs} personnes</strong> regardent ce produit en ce moment
-              </span>
+            {/* Preuve sociale — visiteurs + commandes */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl"
+                style={{ backgroundColor: `${t.accent}15`, color: t.accent }}>
+                <Eye size={12} />
+                <span><strong>{visiteurs}</strong> personnes regardent en ce moment</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl"
+                style={{ backgroundColor: `${t.elevated}`, color: t.muted }}>
+                <Star size={12} style={{ color: '#f59e0b' }} />
+                <span><strong style={{ color: t.text }}>{commandes}</strong> commandes cette semaine</span>
+              </div>
             </div>
 
             {/* Prix */}
@@ -428,15 +365,10 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             </div>
 
             {/* Compte à rebours */}
-            <div
-              className="p-3 rounded-xl border"
-              style={{ backgroundColor: '#ef444415', borderColor: '#ef444430' }}
-            >
+            <div className="p-3 rounded-xl border" style={{ backgroundColor: '#ef444415', borderColor: '#ef444430' }}>
               <div className="flex items-center gap-2 mb-2">
                 <Flame size={15} className="text-red-400" />
-                <span className="text-xs font-bold text-red-400">
-                  Offre limitée — se termine dans
-                </span>
+                <span className="text-xs font-bold text-red-400">Prix spécial — offre limitée dans le temps</span>
               </div>
               <div className="flex items-center gap-2">
                 {[
@@ -445,11 +377,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   { val: String(temps.s).padStart(2, '0'), label: 'sec' },
                 ].map((item, i) => (
                   <div key={i} className="flex items-center gap-1">
-                    <div className="px-2 py-1 rounded-lg text-center min-w-[40px]"
-                      style={{ backgroundColor: t.elevated }}>
-                      <span className="text-lg font-bold font-mono" style={{ color: t.text }}>
-                        {item.val}
-                      </span>
+                    <div className="px-2 py-1 rounded-lg text-center min-w-[40px]" style={{ backgroundColor: t.elevated }}>
+                      <span className="text-lg font-bold font-mono" style={{ color: t.text }}>{item.val}</span>
                     </div>
                     <span className="text-xs" style={{ color: t.muted }}>{item.label}</span>
                     {i < 2 && <span className="font-bold text-red-400">:</span>}
@@ -460,20 +389,33 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
             {/* Stock */}
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full"
-                style={{ backgroundColor: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.accent }} />
-              <span className="text-sm font-medium"
-                style={{ color: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.muted }}>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.accent }} />
+              <span className="text-sm font-medium" style={{ color: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.muted }}>
                 {enRupture
-                  ? 'Rupture de stock'
+                  ? 'Ce produit est actuellement épuisé'
                   : stockFaible
-                    ? `Plus que ${stockDispo} en stock — commandez vite !`
+                    ? `Seulement ${stockDispo} restant${stockDispo > 1 ? 's' : ''} — commandez avant rupture`
                     : stockVariante !== null
                       ? `${stockDispo} disponible${stockDispo > 1 ? 's' : ''} pour cette variante`
-                      : 'En stock'
+                      : 'Disponible — livraison sous 24h/48h'
                 }
               </span>
             </div>
+
+            {/* Barre de stock visuelle si stock faible */}
+            {stockFaible && (
+              <div className="space-y-1">
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: t.elevated }}>
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${(stockDispo / 10) * 100}%`, backgroundColor: '#f59e0b' }}
+                  />
+                </div>
+                <p className="text-xs" style={{ color: t.muted }}>
+                  Stock presque épuisé — {stockDispo} unité{stockDispo > 1 ? 's' : ''} restante{stockDispo > 1 ? 's' : ''}
+                </p>
+              </div>
+            )}
 
             {/* Description */}
             {produit.description && (
@@ -485,17 +427,13 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
             {/* Variantes */}
             {variantes.map(variant => {
-              const estCouleur =
-                variant.nom.toLowerCase().includes('couleur') ||
-                variant.nom.toLowerCase().includes('color');
+              const estCouleur = variant.nom.toLowerCase().includes('couleur') || variant.nom.toLowerCase().includes('color');
               return (
                 <div key={variant.nom} className="space-y-2">
                   <p className="text-sm font-semibold" style={{ color: t.text }}>
                     {variant.nom}
                     {variantesChoisies[variant.nom] && (
-                      <span className="font-normal ml-2" style={{ color: t.accent }}>
-                        — {variantesChoisies[variant.nom]}
-                      </span>
+                      <span className="font-normal ml-2" style={{ color: t.accent }}>— {variantesChoisies[variant.nom]}</span>
                     )}
                   </p>
                   <div className="flex flex-wrap gap-2">
@@ -503,10 +441,8 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                       const choisi  = variantesChoisies[variant.nom] === valeur;
                       const couleur = couleurCSS[valeur.toLowerCase()];
                       return (
-                        <button key={valeur}
-                          onClick={() => choisirVariante(variant.nom, valeur)}
-                          className="relative flex items-center gap-2 px-3 py-2 rounded-xl border
-                                     text-sm font-medium transition-all"
+                        <button key={valeur} onClick={() => choisirVariante(variant.nom, valeur)}
+                          className="relative flex items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-all"
                           style={{
                             backgroundColor: choisi ? t.accent : t.surface,
                             borderColor:     choisi ? t.accent : t.border,
@@ -536,81 +472,76 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   style={{ backgroundColor: t.surface, borderColor: t.border }}>
                   <Minus size={16} style={{ color: t.text }} />
                 </button>
-                <span className="w-12 text-center font-bold text-lg" style={{ color: t.text }}>
-                  {quantite}
-                </span>
-                <button onClick={() => setQuantite(Math.min(stockDispo, quantite + 1))}
-                  disabled={quantite >= stockDispo}
+                <span className="w-12 text-center font-bold text-lg" style={{ color: t.text }}>{quantite}</span>
+                <button onClick={() => setQuantite(Math.min(stockDispo, quantite + 1))} disabled={quantite >= stockDispo}
                   className="w-10 h-10 rounded-xl border flex items-center justify-center disabled:opacity-30"
                   style={{ backgroundColor: t.surface, borderColor: t.border }}>
                   <Plus size={16} style={{ color: t.text }} />
                 </button>
                 <span className="text-sm ml-2" style={{ color: t.muted }}>
-                  Total :{' '}
-                  <strong style={{ color: t.accent }}>
-                    {formatFcfa(produit.price * quantite)}
-                  </strong>
+                  Total : <strong style={{ color: t.accent }}>{formatFcfa(produit.price * quantite)}</strong>
                 </span>
               </div>
             </div>
 
-            {/* CTA */}
+            {/* ── CTA — copywriting optimisé ── */}
             <div className="space-y-3 pt-2">
-              <button onClick={ajouterAuPanier}
-                disabled={!toutesVariantesChoisies || enRupture}
-                className="w-full py-4 rounded-2xl font-bold text-base flex items-center
-                           justify-center gap-2 transition-all disabled:opacity-40 hover:opacity-90"
+
+              {/* Bouton principal */}
+              <button onClick={ajouterAuPanier} disabled={!toutesVariantesChoisies || enRupture}
+                className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-40"
                 style={{
                   backgroundColor: ajoutePanier ? '#10b981' : t.accent,
                   color:           '#fff',
-                  boxShadow:       `0 4px 20px ${t.accent}50`,
+                  boxShadow:       `0 4px 24px ${t.accent}60`,
+                  transform:       ajoutePanier ? 'scale(0.98)' : 'scale(1)',
                 }}>
                 {ajoutePanier
-                  ? <><Check size={20} /> Ajouté au panier !</>
-                  : <><ShoppingCart size={20} /> Ajouter au panier</>
+                  ? <><Check size={20} /> Produit ajouté au panier</>
+                  : <><ShoppingCart size={20} /> Je veux ce produit</>
                 }
               </button>
 
+              {/* Bouton WhatsApp */}
               {shop.whatsapp && (
-                <button onClick={commanderWhatsApp}
-                  disabled={!toutesVariantesChoisies || enRupture}
-                  className="w-full py-4 rounded-2xl font-bold text-base flex items-center
-                             justify-center gap-2 transition-all disabled:opacity-40 hover:opacity-90"
+                <button onClick={commanderWhatsApp} disabled={!toutesVariantesChoisies || enRupture}
+                  className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-40 hover:opacity-90"
                   style={{ backgroundColor: '#25D366', color: '#fff' }}>
-                  <MessageCircle size={20} /> Commander via WhatsApp
+                  <MessageCircle size={20} /> Commander maintenant — Paiement à la livraison
                 </button>
               )}
 
+              {/* Message si variantes non choisies */}
               {variantes.length > 0 && !toutesVariantesChoisies && (
-                <p className="text-xs text-center" style={{ color: '#f59e0b' }}>
-                  Veuillez sélectionner toutes les options avant de commander
-                </p>
+                <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl border"
+                  style={{ borderColor: '#f59e0b40', backgroundColor: '#f59e0b10' }}>
+                  <Zap size={14} style={{ color: '#f59e0b' }} />
+                  <p className="text-xs font-medium" style={{ color: '#f59e0b' }}>
+                    Choisissez vos options pour passer commande
+                  </p>
+                </div>
               )}
             </div>
 
-            {/* Garanties */}
+            {/* ── Garanties — copywriting renforcé ── */}
             <div className="grid grid-cols-3 gap-2 pt-2">
               {[
-                { icone: <Truck     size={16} />, titre: 'Livraison', desc: 'Rapide et fiable'    },
-                { icone: <Shield    size={16} />, titre: 'Sécurisé',  desc: 'Paiement à la livr.' },
-                { icone: <RotateCcw size={16} />, titre: 'Retour',    desc: 'Politique flexible'  },
+                { icone: <Truck     size={16} />, titre: 'Livraison',   desc: 'À domicile partout en CI'  },
+                { icone: <Shield    size={16} />, titre: 'Sécurisé',    desc: 'Vous payez à la réception' },
+                { icone: <RotateCcw size={16} />, titre: 'Satisfaction', desc: 'Retour sans questions'     },
               ].map((g, i) => (
-                <div key={i}
-                  className="flex flex-col items-center text-center p-3 rounded-xl border gap-1"
+                <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl border gap-1"
                   style={{ backgroundColor: t.surface, borderColor: t.border }}>
                   <span style={{ color: t.accent }}>{g.icone}</span>
                   <p className="text-xs font-bold" style={{ color: t.text }}>{g.titre}</p>
-                  <p className="text-xs"           style={{ color: t.muted }}>{g.desc}</p>
+                  <p className="text-xs leading-tight" style={{ color: t.muted }}>{g.desc}</p>
                 </div>
               ))}
             </div>
 
             {/* Infos boutique */}
-            <div className="p-4 rounded-2xl border space-y-2"
-              style={{ backgroundColor: t.surface, borderColor: t.border }}>
-              <Link href="/"
-                className="flex items-center gap-2 font-semibold text-sm hover:opacity-80"
-                style={{ color: t.text }}>
+            <div className="p-4 rounded-2xl border space-y-2" style={{ backgroundColor: t.surface, borderColor: t.border }}>
+              <Link href="/" className="flex items-center gap-2 font-semibold text-sm hover:opacity-80" style={{ color: t.text }}>
                 {shop.name}
               </Link>
               {shop.about?.location && (
@@ -632,39 +563,30 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
         {/* Politique de retour */}
         {shop.about?.returnPolicy && (
-          <div className="mt-6 p-4 rounded-2xl border space-y-2"
-            style={{ backgroundColor: t.surface, borderColor: t.border }}>
+          <div className="mt-6 p-4 rounded-2xl border space-y-2" style={{ backgroundColor: t.surface, borderColor: t.border }}>
             <p className="text-sm font-semibold" style={{ color: t.text }}>Politique de retour</p>
-            <p className="text-xs leading-relaxed" style={{ color: t.muted }}>
-              {shop.about.returnPolicy}
-            </p>
+            <p className="text-xs leading-relaxed" style={{ color: t.muted }}>{shop.about.returnPolicy}</p>
           </div>
         )}
 
         {/* Produits similaires */}
         {similaires.length > 0 && (
           <div className="mt-16 space-y-6">
-            <h2 className="text-xl font-bold" style={{ color: t.text }}>Produits similaires</h2>
+            <h2 className="text-xl font-bold" style={{ color: t.text }}>Vous aimerez aussi</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {similaires.map(p => (
                 <Link key={p._id} href={`/produits/${p._id}`}
                   className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02]"
                   style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
-                  <div className="aspect-square relative overflow-hidden"
-                    style={{ backgroundColor: t.elevated }}>
+                  <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
                     {p.images?.[0]
-                      ? <Image src={p.images[0]} alt={p.name} fill
-                          className="object-cover group-hover:scale-105 transition-transform" />
+                      ? <Image src={p.images[0]} alt={p.name} fill className="object-cover group-hover:scale-105 transition-transform" />
                       : <div className="w-full h-full flex items-center justify-center text-3xl">...</div>
                     }
                   </div>
                   <div className="p-3 space-y-1">
-                    <p className="text-sm font-medium line-clamp-2" style={{ color: t.text }}>
-                      {p.name}
-                    </p>
-                    <p className="text-sm font-bold" style={{ color: t.accent }}>
-                      {formatFcfa(p.price)}
-                    </p>
+                    <p className="text-sm font-medium line-clamp-2" style={{ color: t.text }}>{p.name}</p>
+                    <p className="text-sm font-bold" style={{ color: t.accent }}>{formatFcfa(p.price)}</p>
                   </div>
                 </Link>
               ))}
@@ -678,32 +600,18 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       <div className="max-w-6xl mx-auto px-4 mt-12 space-y-8">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">
-            <h2 className="text-xl font-bold" style={{ color: t.text }}>Avis clients</h2>
+            <h2 className="text-xl font-bold" style={{ color: t.text }}>Ce que disent nos clients</h2>
             <ListeAvis
-              shopSlug={shop.slug}
-              productId={produit._id}
-              type="produit"
-              accent={t.accent}
-              surface={t.surface}
-              border={t.border}
-              text={t.text}
-              muted={t.muted}
-              refresh={refreshAvis}
+              shopSlug={shop.slug} productId={produit._id} type="produit"
+              accent={t.accent} surface={t.surface} border={t.border}
+              text={t.text} muted={t.muted} refresh={refreshAvis}
             />
           </div>
-          <div className="p-5 rounded-2xl border space-y-4"
-            style={{ backgroundColor: t.surface, borderColor: t.border }}>
+          <div className="p-5 rounded-2xl border space-y-4" style={{ backgroundColor: t.surface, borderColor: t.border }}>
             <FormulaireAvis
-              shopSlug={shop.slug}
-              productId={produit._id}
-              type="produit"
-              accent={t.accent}
-              bg={t.bg}
-              surface={t.surface}
-              border={t.border}
-              text={t.text}
-              muted={t.muted}
-              onSuccess={() => setRefreshAvis(r => r + 1)}
+              shopSlug={shop.slug} productId={produit._id} type="produit"
+              accent={t.accent} bg={t.bg} surface={t.surface} border={t.border}
+              text={t.text} muted={t.muted} onSuccess={() => setRefreshAvis(r => r + 1)}
             />
           </div>
         </div>
@@ -714,8 +622,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
         <Link
           href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par ${produit.name}`}
           target="_blank" rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg
-                     flex items-center justify-center transition-transform hover:scale-110"
+          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
           style={{ backgroundColor: '#25D366' }}>
           <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
