@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, X, SlidersHorizontal, ChevronLeft,
   ShoppingCart, ChevronRight, Grid3X3, List, Flame,
-  Clock, Users, Zap,
+  Users, Zap, TrendingUp, Tag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -23,7 +23,6 @@ const formatFcfa = (n: number) =>
 
 const PAR_PAGE = 12;
 
-// ── Compte à rebours vente flash ─────────────────────────────────────────────
 function useCompteurFlash() {
   const [temps, setTemps] = useState({ h: 3, m: 47, s: 22 });
   useEffect(() => {
@@ -33,7 +32,7 @@ function useCompteurFlash() {
         if (s > 0) return { h, m, s: s - 1 };
         if (m > 0) return { h, m: m - 1, s: 59 };
         if (h > 0) return { h: h - 1, m: 59, s: 59 };
-        return { h: 3, m: 47, s: 22 }; // Repart
+        return { h: 3, m: 47, s: 22 };
       });
     }, 1000);
     return () => clearInterval(interval);
@@ -41,7 +40,6 @@ function useCompteurFlash() {
   return temps;
 }
 
-// ── Visiteurs actifs simulés ──────────────────────────────────────────────────
 function useVisiteursActifs() {
   const [nb, setNb] = useState(Math.floor(Math.random() * 15) + 8);
   useEffect(() => {
@@ -54,9 +52,9 @@ function useVisiteursActifs() {
 }
 
 export default function CatalogueClient({ shop, categories, produits }: Props) {
-  const t           = getThemeConfig(shop.selectedTheme);
-  const temps       = useCompteurFlash();
-  const visiteurs   = useVisiteursActifs();
+  const t         = getThemeConfig(shop.selectedTheme);
+  const temps     = useCompteurFlash();
+  const visiteurs = useVisiteursActifs();
 
   const [recherche,      setRecherche]      = useState('');
   const [categorie,      setCategorie]      = useState('');
@@ -70,6 +68,21 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
     () => Math.max(...produits.map(p => p.price), 10000),
     [produits]
   );
+
+  const achatsSim = useMemo(() => {
+    const map: Record<string, number> = {};
+    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 40) + 5; });
+    return map;
+  }, [produits]);
+
+  const topVendeurs = useMemo(() => {
+    return new Set(
+      Object.entries(achatsSim)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([id]) => id)
+    );
+  }, [achatsSim]);
 
   const produitsFiltres = useMemo(() => {
     let liste = [...produits];
@@ -104,29 +117,19 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
   const filtresActifs = recherche || categorie ||
     filtrePrix[0] > 0 || filtrePrix[1] < prixMax || tri !== 'recent';
 
-  // ── Vérifie si un produit est nouveau (moins de 7 jours) ─────────────────
   const estNouveau = (createdAt: string) => {
     const diff = Date.now() - new Date(createdAt).getTime();
     return diff < 7 * 24 * 60 * 60 * 1000;
   };
-
-  // ── Nombre d'achats récents simulés par produit ───────────────────────────
-  const achatsSim = useMemo(() => {
-    const map: Record<string, number> = {};
-    produits.forEach(p => {
-      map[p._id] = Math.floor(Math.random() * 18) + 2;
-    });
-    return map;
-  }, [produits]);
 
   const ContenuFiltres = () => (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-sm" style={{ color: t.text }}>Filtres</h3>
         {filtresActifs && (
-          <button onClick={reinitialiserFiltres} className="text-xs hover:underline"
+          <button onClick={reinitialiserFiltres} className="text-xs hover:underline font-medium"
             style={{ color: t.accent }}>
-            Reinitialiser
+            Tout effacer
           </button>
         )}
       </div>
@@ -145,7 +148,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                 color:      !categorie ? t.accent : t.muted,
                 fontWeight: !categorie ? 600 : 400,
               }}>
-              Tous ({produits.length})
+              Tous les produits ({produits.length})
             </button>
             {categories.map(cat => {
               const count = produits.filter(p => p.categoryId === cat._id).length;
@@ -159,7 +162,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                     fontWeight: categorie === cat._id ? 600 : 400,
                   }}>
                   <span>{cat.name}</span>
-                  <span className="text-xs">{count}</span>
+                  <span className="text-xs opacity-60">{count}</span>
                 </button>
               );
             })}
@@ -169,7 +172,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
 
       <div className="space-y-3">
         <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: t.muted }}>
-          Prix maximum
+          Budget maximum
         </p>
         <input type="range" min={0} max={prixMax} step={500} value={filtrePrix[1]}
           onChange={e => { setFiltrePrix([filtrePrix[0], Number(e.target.value)]); setPage(1); }}
@@ -185,7 +188,6 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
 
-      {/* ── DRAWER FILTRES MOBILE ── */}
       {filtresOuverts && (
         <>
           <div className="fixed inset-0 z-50 bg-black/60 lg:hidden"
@@ -204,7 +206,6 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         </>
       )}
 
-      {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
         className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -237,40 +238,34 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         </div>
       </nav>
 
-      {/* ── BANDEAU VENTE FLASH ── */}
-      <div style={{ backgroundColor: '#ef444410', borderBottom: '1px solid #ef444425' }}>
+      <div style={{ backgroundColor: '#ef444412', borderBottom: '1px solid #ef444428' }}>
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
-
-          {/* Gauche : vente flash + compte à rebours */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <Flame size={14} className="text-red-400" />
-              <span className="text-xs font-bold text-red-400">VENTE FLASH</span>
+              <span className="text-xs font-bold text-red-400">PRIX SPECIAUX</span>
             </div>
-            <div className="flex items-center gap-1 text-xs font-mono font-bold"
-              style={{ color: t.text }}>
-              <span className="px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: t.elevated }}>
+            <span className="text-xs hidden sm:inline" style={{ color: t.muted }}>
+              — Offre valable encore
+            </span>
+            <div className="flex items-center gap-1 text-xs font-mono font-bold" style={{ color: t.text }}>
+              <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: t.elevated }}>
                 {String(temps.h).padStart(2, '0')}
               </span>
               <span className="text-red-400">:</span>
-              <span className="px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: t.elevated }}>
+              <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: t.elevated }}>
                 {String(temps.m).padStart(2, '0')}
               </span>
               <span className="text-red-400">:</span>
-              <span className="px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: t.elevated }}>
+              <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: t.elevated }}>
                 {String(temps.s).padStart(2, '0')}
               </span>
             </div>
           </div>
-
-          {/* Droite : visiteurs actifs */}
           <div className="flex items-center gap-1.5 text-xs" style={{ color: t.muted }}>
             <Users size={12} style={{ color: t.accent }} />
             <span>
-              <strong style={{ color: t.text }}>{visiteurs} personnes</strong> sur la boutique en ce moment
+              <strong style={{ color: t.text }}>{visiteurs} personnes</strong> visitent la boutique maintenant
             </span>
           </div>
         </div>
@@ -278,13 +273,17 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
 
       <div className="max-w-6xl mx-auto px-4 py-5">
 
-        {/* ── EN-TETE ── */}
         <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
           <div>
-            <h1 className="text-xl font-bold" style={{ color: t.text }}>Nos produits</h1>
+            <h1 className="text-xl font-bold" style={{ color: t.text }}>
+              {categorie
+                ? categories.find(c => c._id === categorie)?.name ?? 'Produits'
+                : 'Decouvrez notre selection'
+              }
+            </h1>
             <p className="text-sm mt-0.5" style={{ color: t.muted }}>
-              {produitsFiltres.length} produit{produitsFiltres.length > 1 ? 's' : ''}
-              {filtresActifs && ' (filtre)'}
+              {produitsFiltres.length} produit{produitsFiltres.length > 1 ? 's' : ''} disponible{produitsFiltres.length > 1 ? 's' : ''}
+              {filtresActifs && ' — filtre actif'}
             </p>
           </div>
 
@@ -328,7 +327,6 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
 
         <div className="flex gap-6">
 
-          {/* ── SIDEBAR FILTRES DESKTOP ── */}
           <aside className="hidden lg:block flex-shrink-0 w-56">
             <div className="rounded-2xl border p-5 sticky top-20"
               style={{ backgroundColor: t.surface, borderColor: t.border }}>
@@ -336,43 +334,49 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
             </div>
           </aside>
 
-          {/* ── GRILLE PRODUITS ── */}
           <div className="flex-1 space-y-5">
             {produitsPaged.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 space-y-3">
-                <p className="font-semibold" style={{ color: t.text }}>Aucun produit trouve</p>
-                <button onClick={reinitialiserFiltres} className="text-sm hover:underline"
-                  style={{ color: t.accent }}>
-                  Reinitialiser les filtres
+              <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                  style={{ backgroundColor: t.elevated }}>
+                  <Search size={28} style={{ color: t.muted }} />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="font-semibold" style={{ color: t.text }}>Aucun produit ne correspond</p>
+                  <p className="text-sm" style={{ color: t.muted }}>
+                    Essayez d'autres mots-cles ou elargissez vos filtres
+                  </p>
+                </div>
+                <button onClick={reinitialiserFiltres}
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold"
+                  style={{ backgroundColor: t.accent, color: '#fff' }}>
+                  Voir tous les produits
                 </button>
               </div>
 
             ) : grille === 'grid' ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                 {produitsPaged.map(produit => {
-                  const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
-                  const nouveau     = estNouveau(produit.createdAt);
-                  const aReduction  = produit.comparePrice > produit.price;
-                  const pct         = aReduction
-                    ? Math.round((1 - produit.price / produit.comparePrice) * 100)
-                    : 0;
-                  const achats      = achatsSim[produit._id] ?? 5;
+                  const stockFaible   = produit.totalStock > 0 && produit.totalStock <= 5;
+                  const nouveau       = estNouveau(produit.createdAt);
+                  const aReduction    = produit.comparePrice > produit.price;
+                  const pct           = aReduction ? Math.round((1 - produit.price / produit.comparePrice) * 100) : 0;
+                  const economie      = aReduction ? produit.comparePrice - produit.price : 0;
+                  const achats        = achatsSim[produit._id] ?? 5;
+                  const estTopVendeur = topVendeurs.has(produit._id);
 
                   return (
                     <Link key={produit._id} href={`/produits/${produit._id}`}
                       className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl flex flex-col"
                       style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
 
-                      {/* ── IMAGE ── */}
-                      <div className="aspect-square relative overflow-hidden"
-                        style={{ backgroundColor: t.elevated }}>
+                      <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
                         {produit.images?.[0]
                           ? <Image src={produit.images[0]} alt={produit.name} fill
                               className="object-cover group-hover:scale-105 transition-transform duration-300" />
                           : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
                         }
 
-                        {/* Badge réduction — priorité 1 */}
                         {aReduction && (
                           <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
                             style={{ backgroundColor: '#ef4444' }}>
@@ -380,15 +384,21 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                           </div>
                         )}
 
-                        {/* Badge Nouveau — priorité 2 (si pas de réduction) */}
-                        {nouveau && !aReduction && produit.totalStock > 0 && (
+                        {estTopVendeur && !aReduction && produit.totalStock > 0 && (
+                          <div className="absolute top-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full text-white"
+                            style={{ backgroundColor: '#f59e0b' }}>
+                            <TrendingUp size={10} />
+                            Top vente
+                          </div>
+                        )}
+
+                        {nouveau && !aReduction && !estTopVendeur && produit.totalStock > 0 && (
                           <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
                             style={{ backgroundColor: t.accent }}>
                             Nouveau
                           </div>
                         )}
 
-                        {/* Badge Stock faible — en bas à gauche */}
                         {stockFaible && (
                           <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full animate-pulse"
                             style={{ backgroundColor: '#f59e0b', color: '#000' }}>
@@ -397,87 +407,84 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                           </div>
                         )}
 
-                        {/* Bouton favori */}
                         <div className="absolute top-2 right-2 z-10">
                           <BoutonFavori
-                            shopSlug={shop.slug}
-                            produitId={produit._id}
-                            nom={produit.name}
-                            prix={produit.price}
-                            image={produit.images?.[0] ?? null}
-                            accent={t.accent}
+                            shopSlug={shop.slug} produitId={produit._id}
+                            nom={produit.name} prix={produit.price}
+                            image={produit.images?.[0] ?? null} accent={t.accent}
                             className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
                           />
                         </div>
 
-                        {/* Rupture de stock */}
                         {produit.totalStock === 0 && (
                           <div className="absolute inset-0 flex items-center justify-center"
                             style={{ backgroundColor: `${t.bg}bb` }}>
-                            <span className="text-xs font-semibold px-2 py-1 rounded-full"
+                            <span className="text-xs font-semibold px-3 py-1.5 rounded-full"
                               style={{ backgroundColor: t.elevated, color: t.muted }}>
-                              Rupture
+                              Epuise
                             </span>
                           </div>
                         )}
                       </div>
 
-                      {/* ── INFOS ── */}
                       <div className="p-3 space-y-2 flex-1 flex flex-col justify-between">
                         <p className="font-medium text-sm line-clamp-2" style={{ color: t.text }}>
                           {produit.name}
                         </p>
 
-                        {/* Prix */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm" style={{ color: t.accent }}>
-                            {formatFcfa(produit.price)}
-                          </span>
-                          {aReduction && (
-                            <span className="text-xs line-through" style={{ color: t.muted }}>
-                              {formatFcfa(produit.comparePrice)}
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-sm" style={{ color: t.accent }}>
+                              {formatFcfa(produit.price)}
                             </span>
+                            {aReduction && (
+                              <span className="text-xs line-through" style={{ color: t.muted }}>
+                                {formatFcfa(produit.comparePrice)}
+                              </span>
+                            )}
+                          </div>
+                          {aReduction && economie > 0 && (
+                            <div className="flex items-center gap-1 text-xs font-medium"
+                              style={{ color: '#10b981' }}>
+                              <Tag size={10} />
+                              Vous economisez {formatFcfa(economie)}
+                            </div>
                           )}
                         </div>
 
-                        {/* Preuve sociale — achats récents */}
                         {produit.totalStock > 0 && (
-                          <div className="flex items-center gap-1 text-xs"
-                            style={{ color: t.muted }}>
+                          <div className="flex items-center gap-1 text-xs" style={{ color: t.muted }}>
                             <Zap size={10} style={{ color: t.accent }} />
-                            <span>
-                              <strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine
-                            </span>
+                            <span><strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine</span>
                           </div>
                         )}
 
-                        {/* Barre de stock visuelle — uniquement si stock faible */}
                         {stockFaible && (
                           <div className="space-y-1">
-                            <div className="flex justify-between text-xs" style={{ color: t.muted }}>
-                              <span>Stock restant</span>
-                              <span className="font-bold" style={{ color: '#f59e0b' }}>
-                                {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''}
-                              </span>
+                            <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: t.elevated }}>
+                              <div className="h-full rounded-full" style={{
+                                width: `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
+                                backgroundColor: '#f59e0b',
+                              }} />
                             </div>
-                            <div className="w-full h-1.5 rounded-full overflow-hidden"
-                              style={{ backgroundColor: t.elevated }}>
-                              <div
-                                className="h-full rounded-full transition-all"
-                                style={{
-                                  width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
-                                  backgroundColor: '#f59e0b',
-                                }}
-                              />
-                            </div>
+                            <p className="text-xs" style={{ color: '#f59e0b' }}>
+                              {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''} seulement
+                            </p>
                           </div>
                         )}
 
-                        {/* CTA Voir le produit */}
                         <div
-                          className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all group-hover:opacity-90"
-                          style={{ backgroundColor: `${t.accent}20`, color: t.accent }}>
-                          Voir le produit →
+                          className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all"
+                          style={{ backgroundColor: `${t.accent}20`, color: t.accent }}
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = t.accent;
+                            (e.currentTarget as HTMLElement).style.color = '#fff';
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = `${t.accent}20`;
+                            (e.currentTarget as HTMLElement).style.color = t.accent;
+                          }}>
+                          Je veux ce produit →
                         </div>
                       </div>
                     </Link>
@@ -486,11 +493,14 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
               </div>
 
             ) : (
-              /* ── VUE LISTE ── */
               <div className="space-y-3">
                 {produitsPaged.map(produit => {
-                  const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
-                  const achats      = achatsSim[produit._id] ?? 5;
+                  const stockFaible   = produit.totalStock > 0 && produit.totalStock <= 5;
+                  const aReduction    = produit.comparePrice > produit.price;
+                  const economie      = aReduction ? produit.comparePrice - produit.price : 0;
+                  const achats        = achatsSim[produit._id] ?? 5;
+                  const estTopVendeur = topVendeurs.has(produit._id);
+
                   return (
                     <Link key={produit._id} href={`/produits/${produit._id}`}
                       className="flex gap-4 p-4 rounded-2xl border transition-all hover:shadow-md"
@@ -503,9 +513,15 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                         }
                       </div>
                       <div className="flex-1 min-w-0 space-y-1">
-                        <p className="font-semibold text-sm" style={{ color: t.text }}>
-                          {produit.name}
-                        </p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-sm" style={{ color: t.text }}>{produit.name}</p>
+                          {estTopVendeur && (
+                            <span className="text-xs px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1"
+                              style={{ backgroundColor: '#f59e0b20', color: '#f59e0b' }}>
+                              <TrendingUp size={9} /> Top vente
+                            </span>
+                          )}
+                        </div>
                         {produit.description && (
                           <p className="text-xs line-clamp-2" style={{ color: t.muted }}>
                             {produit.description}
@@ -515,34 +531,36 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
                           <span className="font-bold text-sm" style={{ color: t.accent }}>
                             {formatFcfa(produit.price)}
                           </span>
-                          {produit.comparePrice > produit.price && (
+                          {aReduction && (
                             <span className="text-xs line-through" style={{ color: t.muted }}>
                               {formatFcfa(produit.comparePrice)}
+                            </span>
+                          )}
+                          {aReduction && economie > 0 && (
+                            <span className="text-xs font-medium flex items-center gap-1"
+                              style={{ color: '#10b981' }}>
+                              <Tag size={9} /> -{formatFcfa(economie)}
                             </span>
                           )}
                           {stockFaible && (
                             <span className="text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
                               style={{ backgroundColor: '#f59e0b20', color: '#f59e0b' }}>
-                              <Flame size={10} />
-                              Plus que {produit.totalStock} !
+                              <Flame size={10} /> Plus que {produit.totalStock} !
                             </span>
                           )}
                         </div>
-                        {/* Preuve sociale vue liste */}
                         <div className="flex items-center gap-1 text-xs" style={{ color: t.muted }}>
                           <Zap size={10} style={{ color: t.accent }} />
                           <span><strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine</span>
                         </div>
                       </div>
-                      <ChevronRight size={18} className="flex-shrink-0 self-center"
-                        style={{ color: t.muted }} />
+                      <ChevronRight size={18} className="flex-shrink-0 self-center" style={{ color: t.muted }} />
                     </Link>
                   );
                 })}
               </div>
             )}
 
-            {/* ── PAGINATION ── */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-2 pt-4">
                 <button onClick={() => changerPage(page - 1)} disabled={page === 1}
@@ -578,7 +596,6 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         </div>
       </div>
 
-      {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (
         <Link
           href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}
