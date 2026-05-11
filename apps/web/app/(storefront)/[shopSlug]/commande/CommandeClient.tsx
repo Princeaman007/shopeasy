@@ -7,6 +7,7 @@ import { useRouter }           from 'next/navigation';
 import {
   ChevronLeft, User, Phone, MapPin, Mail,
   Package, Check, Loader2, ShoppingCart, Tag,
+  Shield, Truck, RotateCcw,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -25,6 +26,37 @@ interface Props { shop: ShopPublic; }
 
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
+
+// ── Barre de progression ──────────────────────────────────────────────────────
+function BarreProgression({ etape }: { etape: number }) {
+  const etapes = ['Panier', 'Livraison', 'Confirmation'];
+  return (
+    <div className="flex items-center justify-center gap-0 w-full max-w-xs mx-auto">
+      {etapes.map((label, i) => (
+        <div key={i} className="flex items-center flex-1">
+          <div className="flex flex-col items-center">
+            <div
+              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+              style={{
+                backgroundColor: i < etape ? '#10b981' : i === etape ? '#06C167' : '#2a2a2a',
+                color: i <= etape ? '#fff' : '#888',
+              }}>
+              {i < etape ? <Check size={13} /> : i + 1}
+            </div>
+            <span className="text-xs mt-1 whitespace-nowrap"
+              style={{ color: i <= etape ? '#06C167' : '#888' }}>
+              {label}
+            </span>
+          </div>
+          {i < etapes.length - 1 && (
+            <div className="flex-1 h-0.5 mx-1 mb-4 rounded-full"
+              style={{ backgroundColor: i < etape ? '#10b981' : '#2a2a2a' }} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function CommandeClient({ shop }: Props) {
   const t      = getThemeConfig(shop.selectedTheme);
@@ -54,13 +86,11 @@ export default function CommandeClient({ shop }: Props) {
     const data = localStorage.getItem(`panier_${shop.slug}`);
     if (data) {
       const parsed = JSON.parse(data);
-      if (parsed.length === 0) router.push("/panier");
+      if (parsed.length === 0) router.push('/panier');
       else setArticles(parsed);
     } else {
-      router.push("/panier");
+      router.push('/panier');
     }
-
-    // ✅ Récupère le promo depuis localStorage
     const promoData = localStorage.getItem(`promo_${shop.slug}`);
     if (promoData) {
       try { setPromoApplique(JSON.parse(promoData)); } catch {}
@@ -100,7 +130,7 @@ export default function CommandeClient({ shop }: Props) {
         method:  'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: 'include',
         body: JSON.stringify({
@@ -115,7 +145,7 @@ export default function CommandeClient({ shop }: Props) {
           subtotal:      sousTotal,
           discount:      reduction,
           promoCode:     promoApplique?.code,
-          total:         total,
+          total,
           customer: {
             name:    form.nomClient.trim(),
             phone:   form.telephone.trim(),
@@ -128,7 +158,6 @@ export default function CommandeClient({ shop }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? 'Erreur serveur');
 
-      // ✅ Vide le panier et le promo
       localStorage.removeItem(`panier_${shop.slug}`);
       localStorage.removeItem(`promo_${shop.slug}`);
       window.dispatchEvent(new Event('panier-updated'));
@@ -146,12 +175,12 @@ export default function CommandeClient({ shop }: Props) {
       {/* ── MODAL CONFIRMATION ── */}
       {commandeCreee && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4"
-             style={{ backgroundColor: 'rgba(0,0,0,0.75)' }}>
+          style={{ backgroundColor: 'rgba(0,0,0,0.80)' }}>
           <div className="w-full max-w-sm rounded-3xl p-8 space-y-5 text-center"
-               style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
+            style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
 
             <div className="w-20 h-20 rounded-full flex items-center justify-center mx-auto"
-                 style={{ backgroundColor: `${t.accent}20` }}>
+              style={{ backgroundColor: `${t.accent}20` }}>
               <Check size={40} style={{ color: t.accent }} />
             </div>
 
@@ -160,24 +189,25 @@ export default function CommandeClient({ shop }: Props) {
                 Commande confirmee !
               </h2>
               <p className="text-sm" style={{ color: t.muted }}>
-                Ta commande a bien ete enregistree chez{' '}
-                <span style={{ color: t.accent }}>{shop.name}</span>
+                Merci pour votre commande chez{' '}
+                <span style={{ color: t.accent }}>{shop.name}</span>.
+                Vous serez contacte pour la livraison.
               </p>
             </div>
 
             <div className="px-4 py-3 rounded-2xl border"
-                 style={{ backgroundColor: `${t.accent}10`, borderColor: `${t.accent}30` }}>
-              <p className="text-xs mb-1" style={{ color: t.muted }}>
-                Numero de commande
-              </p>
+              style={{ backgroundColor: `${t.accent}10`, borderColor: `${t.accent}30` }}>
+              <p className="text-xs mb-1" style={{ color: t.muted }}>Numero de commande</p>
               <p className="font-mono font-bold text-lg" style={{ color: t.accent }}>
                 {commandeCreee.orderNumber}
               </p>
             </div>
 
-            <p className="text-xs" style={{ color: t.muted }}>
-              Le marchand va traiter ta commande et te contacter pour confirmer la livraison.
-            </p>
+            <div className="flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium"
+              style={{ backgroundColor: '#10b98115', color: '#10b981' }}>
+              <Shield size={13} />
+              Vous payez uniquement a la livraison
+            </div>
 
             <div className="space-y-2 pt-2">
               <button
@@ -199,9 +229,9 @@ export default function CommandeClient({ shop }: Props) {
 
       {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
-           className="sticky top-0 z-40">
+        className="sticky top-0 z-40">
         <div className="max-w-3xl mx-auto px-4 py-4">
-          <Link href={"/panier"}
+          <Link href="/panier"
             className="flex items-center gap-2 text-sm font-medium hover:opacity-70"
             style={{ color: t.muted }}>
             <ChevronLeft size={18} />
@@ -212,26 +242,46 @@ export default function CommandeClient({ shop }: Props) {
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
 
-        <div>
+        {/* ── BARRE DE PROGRESSION ── */}
+        <BarreProgression etape={1} />
+
+        {/* ── EN-TETE ── */}
+        <div className="text-center space-y-1">
           <h1 className="text-2xl font-bold" style={{ color: t.text }}>
-            Finaliser la commande
+            Derniere etape
           </h1>
-          <p className="text-sm mt-0.5" style={{ color: t.muted }}>
-            {nbArticles} article{nbArticles > 1 ? 's' : ''} — {formatFcfa(total)}
+          <p className="text-sm" style={{ color: t.muted }}>
+            Vous y etes presque — {nbArticles} article{nbArticles > 1 ? 's' : ''} — {formatFcfa(total)}
           </p>
         </div>
 
-        {/* Recap articles */}
+        {/* ── BLOC REASSURANCE ── */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { icone: <Shield    size={15} />, label: 'Vous payez a la reception'  },
+            { icone: <Truck     size={15} />, label: 'Livraison a domicile'        },
+            { icone: <RotateCcw size={15} />, label: 'Retour sans questions'       },
+          ].map((g, i) => (
+            <div key={i}
+              className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl border"
+              style={{ backgroundColor: t.surface, borderColor: t.border }}>
+              <span style={{ color: t.accent }}>{g.icone}</span>
+              <p className="text-xs leading-tight" style={{ color: t.muted }}>{g.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── RECAP ARTICLES ── */}
         <div className="rounded-2xl border p-4 space-y-3"
-             style={{ backgroundColor: t.surface, borderColor: t.border }}>
+          style={{ backgroundColor: t.surface, borderColor: t.border }}>
           <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: t.text }}>
             <ShoppingCart size={16} style={{ color: t.accent }} />
-            Articles ({nbArticles})
+            Votre commande ({nbArticles} article{nbArticles > 1 ? 's' : ''})
           </h2>
           {articles.map(a => (
             <div key={a.cle} className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 relative"
-                   style={{ backgroundColor: t.elevated }}>
+                style={{ backgroundColor: t.elevated }}>
                 {a.image
                   ? <Image src={a.image} alt={a.nom} fill className="object-cover" />
                   : <div className="w-full h-full flex items-center justify-center">
@@ -243,7 +293,7 @@ export default function CommandeClient({ shop }: Props) {
                 <p className="text-sm font-medium truncate" style={{ color: t.text }}>{a.nom}</p>
                 {Object.entries(a.variantes).length > 0 && (
                   <p className="text-xs" style={{ color: t.muted }}>
-                    {Object.entries(a.variantes).map(([k,v]) => `${k}: ${v}`).join(', ')}
+                    {Object.entries(a.variantes).map(([k, v]) => `${k}: ${v}`).join(', ')}
                   </p>
                 )}
               </div>
@@ -256,39 +306,38 @@ export default function CommandeClient({ shop }: Props) {
             </div>
           ))}
 
-          {/* ✅ Réduction code promo */}
           {reduction > 0 && (
             <div className="flex items-center justify-between pt-2 border-t text-sm"
-                 style={{ borderColor: t.border }}>
+              style={{ borderColor: t.border }}>
               <span className="flex items-center gap-1.5" style={{ color: t.muted }}>
                 <Tag size={13} style={{ color: t.accent }} />
-                Réduction ({promoApplique?.code})
+                Reduction ({promoApplique?.code})
               </span>
               <span className="text-green-400 font-semibold">-{formatFcfa(reduction)}</span>
             </div>
           )}
 
           <div className="flex justify-between font-bold pt-3 border-t text-sm"
-               style={{ borderColor: t.border }}>
-            <span style={{ color: t.text }}>Total</span>
+            style={{ borderColor: t.border }}>
+            <span style={{ color: t.text }}>Total a payer</span>
             <span style={{ color: t.accent }}>{formatFcfa(total)}</span>
           </div>
         </div>
 
-        {/* Formulaire */}
+        {/* ── FORMULAIRE ── */}
         <div className="rounded-2xl border p-5 space-y-5"
-             style={{ backgroundColor: t.surface, borderColor: t.border }}>
+          style={{ backgroundColor: t.surface, borderColor: t.border }}>
           <h2 className="font-semibold flex items-center gap-2" style={{ color: t.text }}>
             <User size={18} style={{ color: t.accent }} />
-            Tes coordonnees
+            Vos informations de livraison
           </h2>
 
           {/* Nom */}
           <div className="space-y-1.5">
-            <label className="text-sm" style={{ color: t.muted }}>Nom complet *</label>
+            <label className="text-sm font-medium" style={{ color: t.muted }}>Nom complet *</label>
             <div className="relative">
               <User size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                    style={{ color: t.muted }} />
+                style={{ color: t.muted }} />
               <input value={form.nomClient}
                 onChange={e => setForm(p => ({ ...p, nomClient: e.target.value }))}
                 placeholder="Aminata Kone"
@@ -299,10 +348,10 @@ export default function CommandeClient({ shop }: Props) {
 
           {/* Telephone */}
           <div className="space-y-1.5">
-            <label className="text-sm" style={{ color: t.muted }}>Telephone *</label>
+            <label className="text-sm font-medium" style={{ color: t.muted }}>Telephone *</label>
             <div className="relative">
               <Phone size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                     style={{ color: t.muted }} />
+                style={{ color: t.muted }} />
               <input value={form.telephone} type="tel"
                 onChange={e => setForm(p => ({ ...p, telephone: e.target.value }))}
                 placeholder="+225 07 00 00 00 00"
@@ -313,12 +362,12 @@ export default function CommandeClient({ shop }: Props) {
 
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="text-sm" style={{ color: t.muted }}>
-              Email (pour recevoir la confirmation)
+            <label className="text-sm font-medium" style={{ color: t.muted }}>
+              Email — pour recevoir la confirmation (optionnel)
             </label>
             <div className="relative">
               <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                    style={{ color: t.muted }} />
+                style={{ color: t.muted }} />
               <input value={form.email} type="email"
                 onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                 placeholder="votre@email.com"
@@ -329,7 +378,9 @@ export default function CommandeClient({ shop }: Props) {
 
           {/* Mode de recuperation */}
           <div className="space-y-2">
-            <label className="text-sm" style={{ color: t.muted }}>Mode de recuperation *</label>
+            <label className="text-sm font-medium" style={{ color: t.muted }}>
+              Mode de recuperation *
+            </label>
             <div className="grid grid-cols-2 gap-2">
               {([
                 { val: 'livraison', label: 'Livraison', desc: 'A domicile'  },
@@ -353,10 +404,10 @@ export default function CommandeClient({ shop }: Props) {
           {form.modeLivraison === 'livraison' && (
             <>
               <div className="space-y-1.5">
-                <label className="text-sm" style={{ color: t.muted }}>Adresse *</label>
+                <label className="text-sm font-medium" style={{ color: t.muted }}>Adresse *</label>
                 <div className="relative">
                   <MapPin size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                          style={{ color: t.muted }} />
+                    style={{ color: t.muted }} />
                   <input value={form.adresse}
                     onChange={e => setForm(p => ({ ...p, adresse: e.target.value }))}
                     placeholder="Rue, quartier, immeuble..."
@@ -365,7 +416,7 @@ export default function CommandeClient({ shop }: Props) {
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm" style={{ color: t.muted }}>Ville</label>
+                <label className="text-sm font-medium" style={{ color: t.muted }}>Ville</label>
                 <input value={form.ville}
                   onChange={e => setForm(p => ({ ...p, ville: e.target.value }))}
                   placeholder="Abidjan, Bouake..."
@@ -377,7 +428,7 @@ export default function CommandeClient({ shop }: Props) {
 
           {/* Notes */}
           <div className="space-y-1.5">
-            <label className="text-sm" style={{ color: t.muted }}>
+            <label className="text-sm font-medium" style={{ color: t.muted }}>
               Instructions speciales (optionnel)
             </label>
             <textarea value={form.notes} rows={3}
@@ -388,25 +439,43 @@ export default function CommandeClient({ shop }: Props) {
           </div>
         </div>
 
+        {/* Erreur */}
         {erreur && (
           <p className="px-4 py-3 rounded-xl text-sm border"
-             style={{ backgroundColor: '#ef444420', borderColor: '#ef4444', color: '#ef4444' }}>
+            style={{ backgroundColor: '#ef444420', borderColor: '#ef4444', color: '#ef4444' }}>
             {erreur}
           </p>
         )}
 
-        <button onClick={soumettre} disabled={loading || articles.length === 0}
-          className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
-          style={{ backgroundColor: t.accent, color: '#fff' }}>
-          {loading
-            ? <><Loader2 size={18} className="animate-spin" /> Envoi en cours...</>
-            : <><Check size={18} /> Confirmer la commande — {formatFcfa(total)}</>
-          }
-        </button>
+        {/* ── BOUTON FINAL ── */}
+        <div className="space-y-3">
+          <button onClick={soumettre} disabled={loading || articles.length === 0}
+            className="w-full py-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            style={{
+              backgroundColor: t.accent,
+              color:           '#fff',
+              boxShadow:       `0 4px 24px ${t.accent}50`,
+            }}>
+            {loading
+              ? <><Loader2 size={18} className="animate-spin" /> Envoi en cours...</>
+              : <><Check size={18} /> Confirmer ma commande — {formatFcfa(total)}</>
+            }
+          </button>
 
-        <p className="text-xs text-center" style={{ color: t.muted }}>
-          En confirmant, tu acceptes que tes informations soient transmises a {shop.name}.
-        </p>
+          {/* Reassurance finale */}
+          <div className="flex items-center justify-center gap-2 text-xs"
+            style={{ color: t.muted }}>
+            <Shield size={12} style={{ color: t.accent }} />
+            <span>
+              Paiement uniquement a la livraison — vous ne payez rien maintenant
+            </span>
+          </div>
+
+          <p className="text-xs text-center" style={{ color: t.muted }}>
+            En confirmant, vous acceptez que vos informations soient transmises a{' '}
+            <span style={{ color: t.text }}>{shop.name}</span>.
+          </p>
+        </div>
       </div>
     </div>
   );
