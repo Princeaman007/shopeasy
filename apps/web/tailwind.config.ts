@@ -1,12 +1,12 @@
 import type { Config } from 'tailwindcss'
 
 const config: Config = {
-content: [
-  './app/**/*.{js,ts,jsx,tsx,mdx}',
-  './components/**/*.{js,ts,jsx,tsx,mdx}',
-  './contexts/**/*.{js,ts,jsx,tsx,mdx}',
-  './pages/**/*.{js,ts,jsx,tsx,mdx}',
-],
+  content: [
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './contexts/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
   theme: {
     extend: {
       colors: {
@@ -33,13 +33,20 @@ content: [
           '0%':   { transform: 'translateX(-100%)' },
           '100%': { transform: 'translateX(0)' },
         },
+        // ── Bandeau défilant ──────────────────────────────────────────────
+        marquee: {
+          '0%':   { transform: 'translateX(0%)' },
+          '100%': { transform: 'translateX(-50%)' },
+        },
       },
       animation: {
         fadeIn:  'fadeIn 0.3s ease-out',
         slideIn: 'slideIn 0.3s ease-out',
+        // ── Bandeau défilant — 25s pour un défilement fluide ─────────────
+        marquee: 'marquee 25s linear infinite',
       },
       borderRadius: {
-        xl:   '1rem',
+        xl:    '1rem',
         '2xl': '1.5rem',
         '3xl': '2rem',
       },

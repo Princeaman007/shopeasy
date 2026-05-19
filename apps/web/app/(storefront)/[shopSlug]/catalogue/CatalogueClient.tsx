@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, X, SlidersHorizontal, ChevronLeft,
   ShoppingCart, ChevronRight, Grid3X3, List, Flame,
-  Users, Zap, TrendingUp, Tag,
+  Users, Zap, TrendingUp, Tag, ShoppingBag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -23,6 +23,38 @@ const formatFcfa = (n: number) =>
 
 const PAR_PAGE = 12;
 
+// ── Prénoms ivoiriens ─────────────────────────────────────────────────────────
+const PRENOMS = [
+  'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
+  'Brice', 'Mariama', 'Seydou', 'Aïcha', 'Kouadio', 'Natacha',
+  'Abou', 'Clarisse', 'Mamadou', 'Estelle', 'Drissa', 'Fatoumata',
+];
+
+// ── Toast notification — achat récent simulé ──────────────────────────────────
+function useToastAchat() {
+  const [toast,   setToast]   = useState<{ prenom: string; minutes: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const premier = setTimeout(() => afficherToast(), 10000);
+    return () => clearTimeout(premier);
+  }, []);
+
+  const afficherToast = () => {
+    const prenom  = PRENOMS[Math.floor(Math.random() * PRENOMS.length)];
+    const minutes = Math.floor(Math.random() * 25) + 2;
+    setToast({ prenom, minutes });
+    setVisible(true);
+    setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => afficherToast(), Math.random() * 20000 + 25000);
+    }, 4000);
+  };
+
+  return { toast, visible };
+}
+
+// ── Compte à rebours vente flash ─────────────────────────────────────────────
 function useCompteurFlash() {
   const [temps, setTemps] = useState({ h: 3, m: 47, s: 22 });
   useEffect(() => {
@@ -40,6 +72,7 @@ function useCompteurFlash() {
   return temps;
 }
 
+// ── Visiteurs actifs simulés ──────────────────────────────────────────────────
 function useVisiteursActifs() {
   const [nb, setNb] = useState(Math.floor(Math.random() * 15) + 8);
   useEffect(() => {
@@ -55,6 +88,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
   const t         = getThemeConfig(shop.selectedTheme);
   const temps     = useCompteurFlash();
   const visiteurs = useVisiteursActifs();
+  const { toast, visible: toastVisible } = useToastAchat();
 
   const [recherche,      setRecherche]      = useState('');
   const [categorie,      setCategorie]      = useState('');
@@ -188,6 +222,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
 
+      {/* ── DRAWER FILTRES MOBILE ── */}
       {filtresOuverts && (
         <>
           <div className="fixed inset-0 z-50 bg-black/60 lg:hidden"
@@ -206,6 +241,25 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         </>
       )}
 
+      {/* ── BANDEAU DEFILANT ── */}
+      <div className="overflow-hidden py-2" style={{ backgroundColor: t.accent }}>
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...Array(4)].map((_, i) => (
+            <span key={i} className="flex items-center gap-6 mx-6 text-xs font-semibold text-black">
+              <span>Livraison a domicile partout en CI</span>
+              <span>·</span>
+              <span>Paiement uniquement a la livraison</span>
+              <span>·</span>
+              <span>Retour sans questions</span>
+              <span>·</span>
+              <span>Commandez en 2 minutes</span>
+              <span>·</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
         className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-3">
@@ -238,6 +292,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         </div>
       </nav>
 
+      {/* ── BANDEAU URGENCE ── */}
       <div style={{ backgroundColor: '#ef444412', borderBottom: '1px solid #ef444428' }}>
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
@@ -596,6 +651,34 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
         </div>
       </div>
 
+      {/* ── TOAST NOTIFICATION — achat récent simulé ── */}
+      {toast && (
+        <div className={`fixed left-4 bottom-6 z-50 transition-all duration-500 ${
+          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+        }`}>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl max-w-[260px]"
+            style={{
+              backgroundColor: t.surface,
+              border:          `1px solid ${t.border}`,
+              boxShadow:       '0 8px 32px rgba(0,0,0,0.4)',
+            }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${t.accent}20` }}>
+              <ShoppingBag size={16} style={{ color: t.accent }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold leading-tight" style={{ color: t.text }}>
+                {toast.prenom} vient d'acheter
+              </p>
+              <p className="text-xs leading-tight" style={{ color: t.muted }}>
+                il y a {toast.minutes} min
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (
         <Link
           href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}
@@ -607,6 +690,7 @@ export default function CatalogueClient({ shop, categories, produits }: Props) {
           </svg>
         </Link>
       )}
+
     </div>
   );
 }
