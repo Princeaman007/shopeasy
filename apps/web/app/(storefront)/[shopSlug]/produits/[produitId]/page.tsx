@@ -1,13 +1,17 @@
 import { notFound }      from 'next/navigation';
 import type { Metadata } from 'next';
+import Script            from 'next/script';
 import ThemeProvider     from '../../ThemeProvider';
 import ProduitClient     from './ProduitClient';
 
 const API = process.env.API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000/api';
 
+// ── Cache 60s — bien plus rapide que no-store ─────────────────────────────────
+const FETCH_OPTIONS = { next: { revalidate: 60 } };
+
 async function getShop(slug: string) {
   try {
-    const res = await fetch(`${API}/shops/${slug}`, { cache: 'no-store' });
+    const res = await fetch(`${API}/shops/${slug}`, FETCH_OPTIONS);
     if (!res.ok) return null;
     const data = await res.json();
     return data.success ? data.data : null;
@@ -16,7 +20,7 @@ async function getShop(slug: string) {
 
 async function getProduit(produitId: string) {
   try {
-    const res = await fetch(`${API}/products/${produitId}`, { cache: 'no-store' });
+    const res = await fetch(`${API}/products/${produitId}`, FETCH_OPTIONS);
     if (!res.ok) return null;
     const data = await res.json();
     return data.success ? data.data : null;
@@ -27,7 +31,7 @@ async function getProduitsSimilaires(shopId: string, categoryId: string, produit
   try {
     const res = await fetch(
       `${API}/products/shop/${shopId}?limit=4&categoryId=${categoryId}`,
-      { cache: 'no-store' }
+      FETCH_OPTIONS
     );
     const data = await res.json();
     return data.success
@@ -36,9 +40,7 @@ async function getProduitsSimilaires(shopId: string, categoryId: string, produit
   } catch { return []; }
 }
 
-// ---------------------------------------------------------------------------
-// SEO dynamique par produit
-// ---------------------------------------------------------------------------
+// ── SEO dynamique par produit ─────────────────────────────────────────────────
 export async function generateMetadata({
   params,
 }: {
@@ -54,19 +56,27 @@ export async function generateMetadata({
   }
 
   const prix        = new Intl.NumberFormat('fr-FR').format(produit.price) + ' FCFA';
-  const description = produit.description
-    ? produit.description.slice(0, 160)
-    : `${produit.name} — ${prix} chez ${shop.name} sur ShopEasy CI.`;
+  const url         = `https://${shop.slug}.shopeasyci.store/produits/${produit._id}`;
+  const imageOg     = produit.images?.[0] ?? shop.logo ?? 'https://shopeasyci.store/og-default.png';
 
-  const imageOg = produit.images?.[0] ?? shop.logo ?? 'https://shopeasyci.ci/og-default.png';
+  // Description enrichie avec mention paiement livraison
+  const description = produit.description
+    ? produit.description.slice(0, 155)
+    : `${produit.name} — ${prix} chez ${shop.name}. Commandez en ligne, paiement a la livraison partout en Cote d'Ivoire.`;
 
   return {
-    title:       `${produit.name} — ${shop.name}`,
+    // Prix dans le titre — augmente le taux de clic sur Google
+    title:       `${produit.name} — ${prix} | ${shop.name}`,
     description,
+
+    // URL canonique — evite le contenu duplique
+    alternates: { canonical: url },
+
     openGraph: {
-      title:       `${produit.name} — ${shop.name}`,
+      title:       `${produit.name} — ${prix} | ${shop.name}`,
       description,
       type:        'website',
+      url,
       locale:      'fr_CI',
       siteName:    'ShopEasy CI',
       images: [
@@ -74,29 +84,32 @@ export async function generateMetadata({
           url:    imageOg,
           width:  1200,
           height: 630,
-          alt:    produit.name,
+          alt:    `${produit.name} — ${shop.name}`,
         },
       ],
     },
+
     twitter: {
       card:        'summary_large_image',
-      title:       `${produit.name} — ${shop.name}`,
+      title:       `${produit.name} — ${prix} | ${shop.name}`,
       description,
       images:      [imageOg],
     },
+
     keywords: [
       produit.name,
       shop.name,
       'boutique en ligne',
-      "Côte d'Ivoire",
+      "Cote d'Ivoire",
+      'Abidjan',
       'ShopEasy CI',
+      'paiement livraison',
+      'commander en ligne',
     ],
   };
 }
 
-// ---------------------------------------------------------------------------
-// Page
-// ---------------------------------------------------------------------------
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default async function ProduitPage({
   params,
 }: {
@@ -115,9 +128,48 @@ export default async function ProduitPage({
     produit._id
   );
 
+  // ── JSON-LD — Google Shopping ─────────────────────────────────────────────
+  // Permet à Google d'afficher prix + disponibilité dans les résultats
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type':    'Product',
+    name:        produit.name,
+    description: produit.description ?? '',
+    image:       produit.images ?? [],
+    sku:         produit._id,
+    brand: {
+      '@type': 'Brand',
+      name:    shop.name,
+    },
+    offers: {
+      '@type':         'Offer',
+      url:             `https://${shop.slug}.shopeasyci.store/produits/${produit._id}`,
+      priceCurrency:   'XOF',
+      price:           produit.price,
+      priceValidUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        .toISOString().split('T')[0],
+      availability:    produit.totalStock > 0
+        ? 'https://schema.org/InStock'
+        : 'https://schema.org/OutOfStock',
+      itemCondition:   'https://schema.org/NewCondition',
+      seller: {
+        '@type': 'Organization',
+        name:    shop.name,
+      },
+    },
+  };
+
   return (
-    <ThemeProvider themeId={shop.selectedTheme}>
-      <ProduitClient shop={shop} produit={produit} similaires={similaires} />
-    </ThemeProvider>
+    <>
+      {/* JSON-LD injecté dans le head — lu par Google */}
+      <Script
+        id="produit-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <ThemeProvider themeId={shop.selectedTheme}>
+        <ProduitClient shop={shop} produit={produit} similaires={similaires} />
+      </ThemeProvider>
+    </>
   );
 }
