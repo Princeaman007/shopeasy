@@ -1,24 +1,24 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
   ChevronLeft, Trash2, Plus, Minus,
   ShoppingCart, MessageCircle, Tag, X, Check,
-  Shield, Truck, RotateCcw, Zap,
+  Shield, Truck, RotateCcw, Zap, ShoppingBag, Users,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
 
 interface ArticlePanier {
-  cle:      string;
+  cle:       string;
   produitId: string;
-  nom:      string;
-  prix:     number;
-  image:    string | null;
+  nom:       string;
+  prix:      number;
+  image:     string | null;
   variantes: Record<string, string>;
-  quantite: number;
+  quantite:  number;
 }
 
 interface Props { shop: ShopPublic; }
@@ -26,10 +26,51 @@ interface Props { shop: ShopPublic; }
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
+// ── Prénoms ivoiriens ─────────────────────────────────────────────────────────
+const PRENOMS = [
+  'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
+  'Brice', 'Mariama', 'Seydou', 'Aïcha', 'Kouadio', 'Natacha',
+  'Abou', 'Clarisse', 'Mamadou', 'Estelle', 'Drissa', 'Fatoumata',
+];
+
+// ── Toast notification — ajout récent simulé ─────────────────────────────────
+function useToastPanier() {
+  const [toast,   setToast]   = useState<{ prenom: string; minutes: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Premier toast après 8 secondes
+    const premier = setTimeout(() => afficherToast(), 8000);
+    return () => clearTimeout(premier);
+  }, []);
+
+  const afficherToast = () => {
+    const prenom  = PRENOMS[Math.floor(Math.random() * PRENOMS.length)];
+    const minutes = Math.floor(Math.random() * 20) + 2;
+    setToast({ prenom, minutes });
+    setVisible(true);
+    setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => afficherToast(), Math.random() * 20000 + 25000);
+    }, 4000);
+  };
+
+  return { toast, visible };
+}
+
+// ── Commandes du jour simulées ────────────────────────────────────────────────
+function useCommandesJour(shopSlug: string) {
+  const seed = shopSlug.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+  return (seed % 18) + 7; // entre 7 et 24
+}
+
 export default function PanierClient({ shop }: Props) {
   const t = getThemeConfig(shop.selectedTheme);
+  const { toast, visible: toastVisible } = useToastPanier();
+  const commandesJour = useCommandesJour(shop.slug);
 
   const [articles,        setArticles]        = useState<ArticlePanier[]>([]);
+  const [articlesSupprime, setArticlesSupprime] = useState<Set<string>>(new Set());
   const [codePromo,       setCodePromo]       = useState('');
   const [promoApplique,   setPromoApplique]   = useState<{
     code: string; type: string; value: number; discount: number;
@@ -54,9 +95,15 @@ export default function PanierClient({ shop }: Props) {
     ));
   };
 
+  // ── Suppression avec animation de sortie ─────────────────────────────────
   const supprimer = (cle: string) => {
-    sauvegarder(articles.filter(a => a.cle !== cle));
-    if (promoApplique) setPromoApplique(null);
+    setArticlesSupprime(prev => new Set(prev).add(cle));
+    setTimeout(() => {
+      const nouvellesListe = articles.filter(a => a.cle !== cle);
+      sauvegarder(nouvellesListe);
+      setArticlesSupprime(prev => { const s = new Set(prev); s.delete(cle); return s; });
+      if (promoApplique) setPromoApplique(null);
+    }, 300);
   };
 
   const vider = () => { sauvegarder([]); setPromoApplique(null); };
@@ -139,11 +186,17 @@ export default function PanierClient({ shop }: Props) {
 
       <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
 
-        {/* En-tete */}
+        {/* ── EN-TETE avec animation sur nbArticles ── */}
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: t.text }}>Votre commande</h1>
+          <h1 className="text-2xl font-bold" style={{ color: t.text }}>
+            Votre commande
+            {nbArticles > 0 && (
+              <span className="ml-2 text-lg font-normal transition-all" style={{ color: t.accent }}>
+                ({nbArticles} article{nbArticles > 1 ? 's' : ''})
+              </span>
+            )}
+          </h1>
           <p className="text-sm mt-0.5" style={{ color: t.muted }}>
-            {nbArticles} article{nbArticles > 1 ? 's' : ''} —{' '}
             <span style={{ color: t.accent }}>{shop.name}</span>
           </p>
         </div>
@@ -171,11 +224,20 @@ export default function PanierClient({ shop }: Props) {
           </div>
         ) : (
           <>
-            {/* ── LISTE ARTICLES ── */}
+            {/* ── LISTE ARTICLES avec animation de suppression ── */}
             <div className="space-y-3">
               {articles.map(article => (
-                <div key={article.cle} className="flex gap-3 p-3 sm:p-4 rounded-2xl border"
-                  style={{ backgroundColor: t.surface, borderColor: t.border }}>
+                <div
+                  key={article.cle}
+                  className="flex gap-3 p-3 sm:p-4 rounded-2xl border transition-all duration-300"
+                  style={{
+                    backgroundColor: t.surface,
+                    borderColor:     t.border,
+                    opacity:         articlesSupprime.has(article.cle) ? 0 : 1,
+                    transform:       articlesSupprime.has(article.cle) ? 'translateX(40px)' : 'translateX(0)',
+                    maxHeight:       articlesSupprime.has(article.cle) ? '0' : '200px',
+                    overflow:        'hidden',
+                  }}>
 
                   {/* Image */}
                   <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden flex-shrink-0 relative"
@@ -192,7 +254,6 @@ export default function PanierClient({ shop }: Props) {
                       {article.nom}
                     </p>
 
-                    {/* Variantes */}
                     {Object.entries(article.variantes).length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {Object.entries(article.variantes).map(([k, v]) => (
@@ -208,7 +269,6 @@ export default function PanierClient({ shop }: Props) {
                       {formatFcfa(article.prix)} / unite
                     </p>
 
-                    {/* Quantite + prix + supprimer */}
                     <div className="flex items-center justify-between pt-1 gap-2">
                       <div className="flex items-center gap-1.5">
                         <button onClick={() => modifierQuantite(article.cle, -1)}
@@ -319,7 +379,6 @@ export default function PanierClient({ shop }: Props) {
                   </span>
                 </div>
 
-                {/* Economie totale si promo */}
                 {reduction > 0 && (
                   <div className="flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-medium"
                     style={{ backgroundColor: '#10b98115', color: '#10b981' }}>
@@ -342,6 +401,16 @@ export default function PanierClient({ shop }: Props) {
                     <p className="text-xs leading-tight" style={{ color: t.muted }}>{g.label}</p>
                   </div>
                 ))}
+              </div>
+
+              {/* ── MESSAGE URGENCE — commandes du jour ── */}
+              <div className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-medium"
+                style={{ backgroundColor: `${t.accent}12`, border: `1px solid ${t.accent}25` }}>
+                <Users size={13} style={{ color: t.accent }} />
+                <span style={{ color: t.muted }}>
+                  <strong style={{ color: t.text }}>{commandesJour} personnes</strong> ont commande chez{' '}
+                  <strong style={{ color: t.accent }}>{shop.name}</strong> aujourd'hui
+                </span>
               </div>
 
               {/* Bouton confirmer commande */}
@@ -371,7 +440,6 @@ export default function PanierClient({ shop }: Props) {
                 </button>
               )}
 
-              {/* Message reassurance final */}
               <p className="text-xs text-center" style={{ color: t.muted }}>
                 Paiement uniquement a la livraison — vous ne payez rien maintenant
               </p>
@@ -379,6 +447,33 @@ export default function PanierClient({ shop }: Props) {
           </>
         )}
       </div>
+
+      {/* ── TOAST NOTIFICATION — ajout récent simulé ── */}
+      {toast && (
+        <div className={`fixed left-4 bottom-6 z-50 transition-all duration-500 ${
+          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+        }`}>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl max-w-[270px]"
+            style={{
+              backgroundColor: t.surface,
+              border:          `1px solid ${t.border}`,
+              boxShadow:       '0 8px 32px rgba(0,0,0,0.4)',
+            }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${t.accent}20` }}>
+              <ShoppingBag size={16} style={{ color: t.accent }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold leading-tight" style={{ color: t.text }}>
+                {toast.prenom} vient de commander
+              </p>
+              <p className="text-xs leading-tight" style={{ color: t.muted }}>
+                il y a {toast.minutes} min chez {shop.name}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
