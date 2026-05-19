@@ -7,7 +7,7 @@ import {
   ChevronLeft, ChevronRight, ShoppingCart,
   MessageCircle, Check, Minus, Plus, Share2,
   MapPin, Clock, Shield, Truck, RotateCcw, Flame, Eye, Video, ImageIcon,
-  Star, BadgeCheck, Zap,
+  Star, BadgeCheck, Zap, ShoppingBag,
 } from 'lucide-react';
 import { getThemeConfig } from '../../theme.config';
 import type { ShopPublic } from '../../types';
@@ -24,6 +24,41 @@ interface Props {
 
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
+
+// ── Prénoms ivoiriens ─────────────────────────────────────────────────────────
+const PRENOMS = [
+  'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
+  'Brice', 'Mariama', 'Seydou', 'Aïcha', 'Kouadio', 'Natacha',
+  'Abou', 'Clarisse', 'Mamadou', 'Estelle', 'Drissa', 'Fatoumata',
+];
+
+// ── Toast notification — achat récent simulé ──────────────────────────────────
+function useToastAchat(accent: string) {
+  const [toast, setToast] = useState<{ prenom: string; minutes: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    // Premier toast après 8 secondes
+    const premier = setTimeout(() => afficherToast(), 8000);
+    return () => clearTimeout(premier);
+  }, []);
+
+  const afficherToast = () => {
+    const prenom  = PRENOMS[Math.floor(Math.random() * PRENOMS.length)];
+    const minutes = Math.floor(Math.random() * 25) + 2; // 2 à 27 min
+    setToast({ prenom, minutes });
+    setVisible(true);
+
+    // Cache après 4 secondes
+    setTimeout(() => {
+      setVisible(false);
+      // Prochain toast dans 25 à 45 secondes
+      setTimeout(() => afficherToast(), Math.random() * 20000 + 25000);
+    }, 4000);
+  };
+
+  return { toast, visible };
+}
 
 // ── Compte à rebours ──────────────────────────────────────────────────────────
 function useCompteur() {
@@ -86,6 +121,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   const temps     = useCompteur();
   const visiteurs = useVisiteurs();
   const commandes = useCommandes();
+  const { toast, visible: toastVisible } = useToastAchat(t.accent);
 
   const [onglet,            setOnglet]            = useState<'photos' | 'video'>('photos');
   const [imageActive,       setImageActive]       = useState(0);
@@ -96,6 +132,21 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   const [stockVariante,     setStockVariante]     = useState<number | null>(null);
   const [refreshAvis,       setRefreshAvis]       = useState(0);
 
+  // ── Sticky CTA ────────────────────────────────────────────────────────────
+  const boutonPrincipalRef              = useRef<HTMLButtonElement>(null);
+  const [stickyVisible, setStickyVisible] = useState(false);
+
+  useEffect(() => {
+    const bouton = boutonPrincipalRef.current;
+    if (!bouton) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setStickyVisible(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '0px' }
+    );
+    observer.observe(bouton);
+    return () => observer.disconnect();
+  }, []);
+
   const aVideo = !!produit.video;
 
   const swipe = useSwipe(
@@ -105,15 +156,14 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
   const variantes: { nom: string; valeurs: string[]; images: Record<string, string[]> }[] =
     (produit.variants ?? []).map((v: any) => ({
-      nom:    v.nom    ?? v.name  ?? v.label   ?? '',
+      nom:     v.nom    ?? v.name  ?? v.label   ?? '',
       valeurs: v.valeurs ?? v.values ?? v.options ?? [],
-      images: v.images ?? {},
+      images:  v.images ?? {},
     }));
 
   const choisirVariante = (nomVariante: string, valeur: string) => {
     const nouvellesVariantes = { ...variantesChoisies, [nomVariante]: valeur };
     setVariantesChoisies(nouvellesVariantes);
-
     const varianteAvecImages = variantes.find(v => v.nom === nomVariante);
     const imagesVariante     = varianteAvecImages?.images?.[valeur];
     if (imagesVariante && imagesVariante.length > 0) {
@@ -123,7 +173,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
     }
     setImageActive(0);
     setOnglet('photos');
-
     const toutesChoisies = variantes.every(v =>
       v.nom === nomVariante ? true : !!nouvellesVariantes[v.nom]
     );
@@ -220,47 +269,36 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
 
           {/* ── GALERIE ── */}
           <div className="space-y-3">
-
-            {/* Onglets Photos / Video */}
             {aVideo && (
               <div className="flex rounded-xl overflow-hidden border" style={{ borderColor: t.border }}>
-                <button
-                  onClick={() => setOnglet('photos')}
+                <button onClick={() => setOnglet('photos')}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-all"
-                  style={{ backgroundColor: onglet === 'photos' ? t.accent : t.surface, color: onglet === 'photos' ? '#fff' : t.muted }}
-                >
+                  style={{ backgroundColor: onglet === 'photos' ? t.accent : t.surface, color: onglet === 'photos' ? '#fff' : t.muted }}>
                   <ImageIcon size={15} /> Photos
                 </button>
-                <button
-                  onClick={() => setOnglet('video')}
+                <button onClick={() => setOnglet('video')}
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-all"
-                  style={{ backgroundColor: onglet === 'video' ? t.accent : t.surface, color: onglet === 'video' ? '#fff' : t.muted }}
-                >
+                  style={{ backgroundColor: onglet === 'video' ? t.accent : t.surface, color: onglet === 'video' ? '#fff' : t.muted }}>
                   <Video size={15} /> Video
                 </button>
               </div>
             )}
 
-            {/* Cadre principal */}
-            <div
-              className="aspect-square rounded-2xl overflow-hidden relative"
+            <div className="aspect-square rounded-2xl overflow-hidden relative"
               style={{ backgroundColor: onglet === 'video' ? '#000' : t.surface }}
-              {...(onglet === 'photos' ? swipe : {})}
-            >
+              {...(onglet === 'photos' ? swipe : {})}>
               {onglet === 'photos' && (
                 <>
                   {imagesAffichees?.[imageActive]
                     ? <Image src={imagesAffichees[imageActive]} alt={produit.name} fill className="object-cover" />
                     : <div className="w-full h-full flex items-center justify-center text-6xl">...</div>
                   }
-
                   {produit.comparePrice > produit.price && (
                     <div className="absolute top-4 left-4 text-sm font-bold px-3 py-1.5 rounded-full"
                       style={{ backgroundColor: '#ef4444', color: '#fff' }}>
                       -{Math.round((1 - produit.price / produit.comparePrice) * 100)}% OFF
                     </div>
                   )}
-
                   {imagesAffichees?.length > 1 && (
                     <>
                       <button onClick={() => setImageActive(i => Math.max(0, i - 1))} disabled={imageActive === 0}
@@ -281,13 +319,11 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                   )}
                 </>
               )}
-
               {onglet === 'video' && produit.video && (
                 <video src={produit.video} controls playsInline autoPlay className="w-full h-full" style={{ objectFit: 'contain' }} />
               )}
             </div>
 
-            {/* Navigation images */}
             {onglet === 'photos' && imagesAffichees?.length > 1 && (
               <>
                 <div className="flex md:hidden justify-center gap-2 py-1">
@@ -312,7 +348,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           {/* ── INFOS PRODUIT ── */}
           <div className="space-y-4">
 
-            {/* Badge boutique vérifiée */}
             {shop.isVerified && (
               <div className="flex items-center gap-1.5 text-xs font-medium w-fit px-3 py-1.5 rounded-full"
                 style={{ backgroundColor: `${t.accent}15`, color: t.accent }}>
@@ -321,19 +356,13 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             )}
 
-            {/* Titre + favori */}
             <div className="flex items-start justify-between gap-3">
-              <h1 className="text-2xl font-bold leading-tight" style={{ color: t.text }}>
-                {produit.name}
-              </h1>
-              <BoutonFavori
-                shopSlug={shop.slug} produitId={produit._id} nom={produit.name}
+              <h1 className="text-2xl font-bold leading-tight" style={{ color: t.text }}>{produit.name}</h1>
+              <BoutonFavori shopSlug={shop.slug} produitId={produit._id} nom={produit.name}
                 prix={produit.price} image={produit.images?.[0] ?? null}
-                accent={t.accent} className="w-10 h-10 flex-shrink-0"
-              />
+                accent={t.accent} className="w-10 h-10 flex-shrink-0" />
             </div>
 
-            {/* Preuve sociale — visiteurs + commandes */}
             <div className="flex items-center gap-3 flex-wrap">
               <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl"
                 style={{ backgroundColor: `${t.accent}15`, color: t.accent }}>
@@ -341,13 +370,12 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 <span><strong>{visiteurs}</strong> personnes regardent en ce moment</span>
               </div>
               <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl"
-                style={{ backgroundColor: `${t.elevated}`, color: t.muted }}>
+                style={{ backgroundColor: t.elevated, color: t.muted }}>
                 <Star size={12} style={{ color: '#f59e0b' }} />
                 <span><strong style={{ color: t.text }}>{commandes}</strong> commandes cette semaine</span>
               </div>
             </div>
 
-            {/* Prix */}
             <div className="flex items-center gap-3">
               <span className="text-3xl font-extrabold" style={{ color: t.accent }}>
                 {formatFcfa(produit.price)}
@@ -364,7 +392,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               )}
             </div>
 
-            {/* Compte à rebours */}
             <div className="p-3 rounded-xl border" style={{ backgroundColor: '#ef444415', borderColor: '#ef444430' }}>
               <div className="flex items-center gap-2 mb-2">
                 <Flame size={15} className="text-red-400" />
@@ -387,7 +414,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             </div>
 
-            {/* Stock */}
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.accent }} />
               <span className="text-sm font-medium" style={{ color: enRupture ? '#ef4444' : stockFaible ? '#f59e0b' : t.muted }}>
@@ -402,14 +428,11 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </span>
             </div>
 
-            {/* Barre de stock visuelle si stock faible */}
             {stockFaible && (
               <div className="space-y-1">
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: t.elevated }}>
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${(stockDispo / 10) * 100}%`, backgroundColor: '#f59e0b' }}
-                  />
+                  <div className="h-full rounded-full transition-all"
+                    style={{ width: `${(stockDispo / 10) * 100}%`, backgroundColor: '#f59e0b' }} />
                 </div>
                 <p className="text-xs" style={{ color: t.muted }}>
                   Stock presque épuisé — {stockDispo} unité{stockDispo > 1 ? 's' : ''} restante{stockDispo > 1 ? 's' : ''}
@@ -417,7 +440,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             )}
 
-            {/* Description */}
             {produit.description && (
               <div className="p-4 rounded-xl border text-sm leading-relaxed"
                 style={{ backgroundColor: t.surface, borderColor: t.border, color: t.muted }}>
@@ -425,7 +447,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             )}
 
-            {/* Variantes */}
             {variantes.map(variant => {
               const estCouleur = variant.nom.toLowerCase().includes('couleur') || variant.nom.toLowerCase().includes('color');
               return (
@@ -448,8 +469,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                             borderColor:     choisi ? t.accent : t.border,
                             color:           choisi ? '#fff'   : t.text,
                             transform:       choisi ? 'scale(1.05)' : 'scale(1)',
-                          }}
-                        >
+                          }}>
                           {estCouleur && couleur && (
                             <span className="w-4 h-4 rounded-full flex-shrink-0 border"
                               style={{ backgroundColor: couleur, borderColor: couleur === '#ffffff' ? '#ccc' : couleur }} />
@@ -463,7 +483,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               );
             })}
 
-            {/* Quantité */}
             <div className="space-y-2">
               <p className="text-sm font-semibold" style={{ color: t.text }}>Quantite</p>
               <div className="flex items-center gap-3">
@@ -484,11 +503,9 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             </div>
 
-            {/* ── CTA — copywriting optimisé ── */}
             <div className="space-y-3 pt-2">
-
-              {/* Bouton principal */}
-              <button onClick={ajouterAuPanier} disabled={!toutesVariantesChoisies || enRupture}
+              <button ref={boutonPrincipalRef} onClick={ajouterAuPanier}
+                disabled={!toutesVariantesChoisies || enRupture}
                 className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-40"
                 style={{
                   backgroundColor: ajoutePanier ? '#10b981' : t.accent,
@@ -502,7 +519,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 }
               </button>
 
-              {/* Bouton WhatsApp */}
               {shop.whatsapp && (
                 <button onClick={commanderWhatsApp} disabled={!toutesVariantesChoisies || enRupture}
                   className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all disabled:opacity-40 hover:opacity-90"
@@ -511,7 +527,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 </button>
               )}
 
-              {/* Message si variantes non choisies */}
               {variantes.length > 0 && !toutesVariantesChoisies && (
                 <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl border"
                   style={{ borderColor: '#f59e0b40', backgroundColor: '#f59e0b10' }}>
@@ -523,12 +538,11 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               )}
             </div>
 
-            {/* ── Garanties — copywriting renforcé ── */}
             <div className="grid grid-cols-3 gap-2 pt-2">
               {[
-                { icone: <Truck     size={16} />, titre: 'Livraison',   desc: 'À domicile partout en CI'  },
-                { icone: <Shield    size={16} />, titre: 'Sécurisé',    desc: 'Vous payez à la réception' },
-                { icone: <RotateCcw size={16} />, titre: 'Satisfaction', desc: 'Retour sans questions'     },
+                { icone: <Truck     size={16} />, titre: 'Livraison',    desc: 'À domicile partout en CI'  },
+                { icone: <Shield    size={16} />, titre: 'Sécurisé',     desc: 'Vous payez à la réception' },
+                { icone: <RotateCcw size={16} />, titre: 'Satisfaction', desc: 'Retour sans questions'      },
               ].map((g, i) => (
                 <div key={i} className="flex flex-col items-center text-center p-3 rounded-xl border gap-1"
                   style={{ backgroundColor: t.surface, borderColor: t.border }}>
@@ -539,7 +553,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               ))}
             </div>
 
-            {/* Infos boutique */}
             <div className="p-4 rounded-2xl border space-y-2" style={{ backgroundColor: t.surface, borderColor: t.border }}>
               <Link href="/" className="flex items-center gap-2 font-semibold text-sm hover:opacity-80" style={{ color: t.text }}>
                 {shop.name}
@@ -557,11 +570,9 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
                 </div>
               )}
             </div>
-
           </div>
         </div>
 
-        {/* Politique de retour */}
         {shop.about?.returnPolicy && (
           <div className="mt-6 p-4 rounded-2xl border space-y-2" style={{ backgroundColor: t.surface, borderColor: t.border }}>
             <p className="text-sm font-semibold" style={{ color: t.text }}>Politique de retour</p>
@@ -569,7 +580,6 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
           </div>
         )}
 
-        {/* Produits similaires */}
         {similaires.length > 0 && (
           <div className="mt-16 space-y-6">
             <h2 className="text-xl font-bold" style={{ color: t.text }}>Vous aimerez aussi</h2>
@@ -593,36 +603,103 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
             </div>
           </div>
         )}
-
       </div>
 
-      {/* Avis clients */}
       <div className="max-w-6xl mx-auto px-4 mt-12 space-y-8">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <h2 className="text-xl font-bold" style={{ color: t.text }}>Ce que disent nos clients</h2>
-            <ListeAvis
-              shopSlug={shop.slug} productId={produit._id} type="produit"
+            <ListeAvis shopSlug={shop.slug} productId={produit._id} type="produit"
               accent={t.accent} surface={t.surface} border={t.border}
-              text={t.text} muted={t.muted} refresh={refreshAvis}
-            />
+              text={t.text} muted={t.muted} refresh={refreshAvis} />
           </div>
           <div className="p-5 rounded-2xl border space-y-4" style={{ backgroundColor: t.surface, borderColor: t.border }}>
-            <FormulaireAvis
-              shopSlug={shop.slug} productId={produit._id} type="produit"
+            <FormulaireAvis shopSlug={shop.slug} productId={produit._id} type="produit"
               accent={t.accent} bg={t.bg} surface={t.surface} border={t.border}
-              text={t.text} muted={t.muted} onSuccess={() => setRefreshAvis(r => r + 1)}
-            />
+              text={t.text} muted={t.muted} onSuccess={() => setRefreshAvis(r => r + 1)} />
           </div>
         </div>
       </div>
 
-      {/* WhatsApp flottant */}
+      {/* ── TOAST NOTIFICATION — achat récent simulé ── */}
+      {toast && (
+        <div
+          className={`fixed left-4 z-50 transition-all duration-500 ${
+            toastVisible
+              ? 'translate-y-0 opacity-100'
+              : 'translate-y-4 opacity-0 pointer-events-none'
+          } ${stickyVisible ? 'bottom-28' : 'bottom-6'}`}>
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl max-w-[260px]"
+            style={{
+              backgroundColor: t.surface,
+              border:          `1px solid ${t.border}`,
+              boxShadow:       '0 8px 32px rgba(0,0,0,0.4)',
+            }}>
+            {/* Icone achat */}
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${t.accent}20` }}>
+              <ShoppingBag size={16} style={{ color: t.accent }} />
+            </div>
+            {/* Texte */}
+            <div className="min-w-0">
+              <p className="text-xs font-bold leading-tight" style={{ color: t.text }}>
+                {toast.prenom} vient d'acheter
+              </p>
+              <p className="text-xs leading-tight truncate" style={{ color: t.muted }}>
+                il y a {toast.minutes} min
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── STICKY CTA MOBILE ── */}
+      <div
+        className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ${
+          stickyVisible ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}`, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <div className="px-4 py-3 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium truncate pr-4" style={{ color: t.text }}>{produit.name}</p>
+            <span className="font-bold text-sm flex-shrink-0" style={{ color: t.accent }}>
+              {formatFcfa(produit.price * quantite)}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={ajouterAuPanier} disabled={!toutesVariantesChoisies || enRupture}
+              className="flex-1 py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-40"
+              style={{ backgroundColor: ajoutePanier ? '#10b981' : t.accent, color: '#fff', boxShadow: `0 2px 12px ${t.accent}50` }}>
+              {ajoutePanier
+                ? <><Check size={16} /> Ajoute !</>
+                : <><ShoppingCart size={16} /> Je veux ce produit</>
+              }
+            </button>
+            {shop.whatsapp && (
+              <button onClick={commanderWhatsApp} disabled={!toutesVariantesChoisies || enRupture}
+                className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+                style={{ backgroundColor: '#25D366' }}>
+                <MessageCircle size={20} color="#fff" />
+              </button>
+            )}
+          </div>
+          {variantes.length > 0 && !toutesVariantesChoisies && (
+            <p className="text-xs text-center" style={{ color: '#f59e0b' }}>
+              Selectionnez vos options d'abord
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (
         <Link
           href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par ${produit.name}`}
           target="_blank" rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110"
+          className={`fixed right-6 z-50 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300 hover:scale-110 ${
+            stickyVisible ? 'bottom-28' : 'bottom-6'
+          }`}
           style={{ backgroundColor: '#25D366' }}>
           <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
