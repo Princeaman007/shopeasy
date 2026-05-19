@@ -133,17 +133,33 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   const [refreshAvis,       setRefreshAvis]       = useState(0);
 
   // ── Sticky CTA ────────────────────────────────────────────────────────────
-  const boutonPrincipalRef              = useRef<HTMLButtonElement>(null);
-  const [stickyVisible, setStickyVisible] = useState(false);
+  const boutonPrincipalRef                    = useRef<HTMLButtonElement>(null);
+  const sectionAvisRef                        = useRef<HTMLDivElement>(null);
+  const [boutonHorsEcran, setBoutonHorsEcran] = useState(false);
+  const [avisVisible,     setAvisVisible]     = useState(false);
+
+  // Sticky visible seulement si bouton hors ecran ET section avis pas visible
+  const stickyVisible = boutonHorsEcran && !avisVisible;
 
   useEffect(() => {
     const bouton = boutonPrincipalRef.current;
     if (!bouton) return;
     const observer = new IntersectionObserver(
-      ([entry]) => setStickyVisible(!entry.isIntersecting),
+      ([entry]) => setBoutonHorsEcran(!entry.isIntersecting),
       { threshold: 0, rootMargin: '0px' }
     );
     observer.observe(bouton);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const avis = sectionAvisRef.current;
+    if (!avis) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setAvisVisible(entry.isIntersecting),
+      { threshold: 0.1, rootMargin: '0px' }
+    );
+    observer.observe(avis);
     return () => observer.disconnect();
   }, []);
 
@@ -605,7 +621,7 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
         )}
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 mt-12 space-y-8">
+      <div ref={sectionAvisRef} className="max-w-6xl mx-auto px-4 mt-12 space-y-8">
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <h2 className="text-xl font-bold" style={{ color: t.text }}>Ce que disent nos clients</h2>
