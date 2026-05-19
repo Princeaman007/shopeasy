@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, Menu, X, CheckCircle,
   MapPin, Clock, ChevronRight,
-  Flame, Users, Zap, ShoppingBag,
+  Flame, Users, Zap, ShoppingBag, TrendingUp, Tag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -21,7 +21,38 @@ interface Props { shop: ShopPublic; produits: any[]; }
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
-// ── Compte à rebours vente flash ─────────────────────────────────────────────
+// ── Prénoms ivoiriens ─────────────────────────────────────────────────────────
+const PRENOMS = [
+  'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
+  'Brice', 'Mariama', 'Seydou', 'Aïcha', 'Kouadio', 'Natacha',
+  'Abou', 'Clarisse', 'Mamadou', 'Estelle', 'Drissa', 'Fatoumata',
+];
+
+// ── Toast notification ────────────────────────────────────────────────────────
+function useToastAchat() {
+  const [toast,   setToast]   = useState<{ prenom: string; minutes: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const premier = setTimeout(() => afficherToast(), 10000);
+    return () => clearTimeout(premier);
+  }, []);
+
+  const afficherToast = () => {
+    const prenom  = PRENOMS[Math.floor(Math.random() * PRENOMS.length)];
+    const minutes = Math.floor(Math.random() * 25) + 2;
+    setToast({ prenom, minutes });
+    setVisible(true);
+    setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => afficherToast(), Math.random() * 20000 + 25000);
+    }, 4000);
+  };
+
+  return { toast, visible };
+}
+
+// ── Compte à rebours ──────────────────────────────────────────────────────────
 function useCompteurFlash() {
   const [temps, setTemps] = useState({ h: 2, m: 45, s: 0 });
   useEffect(() => {
@@ -39,7 +70,7 @@ function useCompteurFlash() {
   return temps;
 }
 
-// ── Visiteurs actifs simulés ──────────────────────────────────────────────────
+// ── Visiteurs actifs ──────────────────────────────────────────────────────────
 function useVisiteursActifs() {
   const [nb, setNb] = useState(Math.floor(Math.random() * 12) + 5);
   useEffect(() => {
@@ -55,23 +86,49 @@ export default function VitrinModerne({ shop, produits }: Props) {
   const t         = getThemeConfig('vitrine-moderne');
   const temps     = useCompteurFlash();
   const visiteurs = useVisiteursActifs();
+  const { toast, visible: toastVisible } = useToastAchat();
 
   const [menuOuvert,  setMenuOuvert]  = useState(false);
   const [refreshAvis, setRefreshAvis] = useState(0);
 
-  // Achats récents simulés par produit
   const achatsSim = useMemo(() => {
     const map: Record<string, number> = {};
-    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 20) + 3; });
+    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 40) + 5; });
     return map;
   }, [produits]);
 
-  // Vérifie si un produit est nouveau (moins de 7 jours)
+  const topVendeurs = useMemo(() => {
+    return new Set(
+      Object.entries(achatsSim)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([id]) => id)
+    );
+  }, [achatsSim]);
+
   const estNouveau = (createdAt: string) =>
     Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
+
+      {/* ── BANDEAU DEFILANT ── */}
+      <div className="overflow-hidden py-2" style={{ backgroundColor: t.accent }}>
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...Array(4)].map((_, i) => (
+            <span key={i} className="flex items-center gap-6 mx-6 text-xs font-semibold text-white">
+              <span>Livraison a domicile partout en CI</span>
+              <span>·</span>
+              <span>Paiement uniquement a la livraison</span>
+              <span>·</span>
+              <span>Retour sans questions</span>
+              <span>·</span>
+              <span>Commandez en 2 minutes</span>
+              <span>·</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
@@ -91,8 +148,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
               <div>
                 <span className="font-bold text-lg" style={{ color: t.text }}>{shop.name}</span>
                 {shop.isVerified && (
-                  <CheckCircle size={14} className="inline ml-1 mb-0.5"
-                    style={{ color: t.accent }} />
+                  <CheckCircle size={14} className="inline ml-1 mb-0.5" style={{ color: t.accent }} />
                 )}
               </div>
             </Link>
@@ -104,23 +160,16 @@ export default function VitrinModerne({ shop, produits }: Props) {
           </div>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/catalogue"
-              className="text-sm font-medium hover:opacity-80 transition-opacity"
-              style={{ color: t.muted }}>
-              Catalogue
-            </Link>
-            <Link href="/about"
-              className="text-sm font-medium hover:opacity-80 transition-opacity"
-              style={{ color: t.muted }}>
-              A propos
-            </Link>
+            <Link href="/catalogue" className="text-sm font-medium hover:opacity-80 transition-opacity"
+              style={{ color: t.muted }}>Catalogue</Link>
+            <Link href="/about" className="text-sm font-medium hover:opacity-80 transition-opacity"
+              style={{ color: t.muted }}>A propos</Link>
           </div>
 
           <div className="flex items-center gap-2">
             <BoutonPanier shopSlug={shop.slug} accent={t.accent} />
             <button onClick={() => setMenuOuvert(!menuOuvert)}
-              className="md:hidden p-2 rounded-xl"
-              style={{ backgroundColor: t.elevated }}>
+              className="md:hidden p-2 rounded-xl" style={{ backgroundColor: t.elevated }}>
               {menuOuvert
                 ? <X    size={20} style={{ color: t.text }} />
                 : <Menu size={20} style={{ color: t.text }} />
@@ -132,23 +181,12 @@ export default function VitrinModerne({ shop, produits }: Props) {
         {menuOuvert && (
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-4 py-4 space-y-3">
-            <Link href="/catalogue"
-              className="block text-sm font-medium py-2"
-              style={{ color: t.muted }}
-              onClick={() => setMenuOuvert(false)}>
-              Catalogue
-            </Link>
-            <Link href="/about"
-              className="block text-sm font-medium py-2"
-              style={{ color: t.muted }}
-              onClick={() => setMenuOuvert(false)}>
-              A propos
-            </Link>
-            <Link href="https://www.shopeasyci.store"
-              className="block text-sm font-medium py-2"
-              style={{ color: t.accent }}>
-              ShopEasy CI
-            </Link>
+            <Link href="/catalogue" className="block text-sm font-medium py-2"
+              style={{ color: t.muted }} onClick={() => setMenuOuvert(false)}>Catalogue</Link>
+            <Link href="/about" className="block text-sm font-medium py-2"
+              style={{ color: t.muted }} onClick={() => setMenuOuvert(false)}>A propos</Link>
+            <Link href="https://www.shopeasyci.store" className="block text-sm font-medium py-2"
+              style={{ color: t.accent }}>ShopEasy CI</Link>
           </div>
         )}
       </nav>
@@ -156,35 +194,25 @@ export default function VitrinModerne({ shop, produits }: Props) {
       {/* ── BANDEAU URGENCE ── */}
       <div style={{ backgroundColor: '#ef444410', borderBottom: `1px solid #ef444425` }}>
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
-
-          {/* Vente flash + compte à rebours */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <Flame size={14} className="text-red-400" />
-              <span className="text-xs font-bold text-red-400 uppercase tracking-wide">
-                Vente flash
-              </span>
+              <span className="text-xs font-bold text-red-400 uppercase tracking-wide">Vente flash</span>
             </div>
-            <div className="flex items-center gap-1 font-mono font-bold text-xs"
-              style={{ color: t.text }}>
-              <span className="px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: t.elevated }}>
+            <div className="flex items-center gap-1 font-mono font-bold text-xs" style={{ color: t.text }}>
+              <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: t.elevated }}>
                 {String(temps.h).padStart(2, '0')}
               </span>
               <span className="text-red-400">:</span>
-              <span className="px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: t.elevated }}>
+              <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: t.elevated }}>
                 {String(temps.m).padStart(2, '0')}
               </span>
               <span className="text-red-400">:</span>
-              <span className="px-1.5 py-0.5 rounded"
-                style={{ backgroundColor: t.elevated }}>
+              <span className="px-1.5 py-0.5 rounded" style={{ backgroundColor: t.elevated }}>
                 {String(temps.s).padStart(2, '0')}
               </span>
             </div>
           </div>
-
-          {/* Visiteurs actifs */}
           <div className="flex items-center gap-1.5 text-xs" style={{ color: t.muted }}>
             <Users size={12} style={{ color: t.accent }} />
             <span>
@@ -207,8 +235,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
                   Boutique verifiee
                 </div>
               )}
-              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight"
-                style={{ color: t.text }}>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: t.text }}>
                 {shop.name}
               </h1>
               {shop.about?.description && (
@@ -267,30 +294,27 @@ export default function VitrinModerne({ shop, produits }: Props) {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {produits.map(produit => {
-                const aReduction  = produit.comparePrice > produit.price;
-                const pct         = aReduction
-                  ? Math.round((1 - produit.price / produit.comparePrice) * 100)
-                  : 0;
-                const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
-                const nouveau     = estNouveau(produit.createdAt);
-                const enRupture   = produit.totalStock === 0;
-                const achats      = achatsSim[produit._id] ?? 5;
+                const aReduction    = produit.comparePrice > produit.price;
+                const pct           = aReduction ? Math.round((1 - produit.price / produit.comparePrice) * 100) : 0;
+                const economie      = aReduction ? produit.comparePrice - produit.price : 0;
+                const stockFaible   = produit.totalStock > 0 && produit.totalStock <= 5;
+                const nouveau       = estNouveau(produit.createdAt);
+                const enRupture     = produit.totalStock === 0;
+                const achats        = achatsSim[produit._id] ?? 5;
+                const estTopVendeur = topVendeurs.has(produit._id);
 
                 return (
                   <Link key={produit._id} href={`/produits/${produit._id}`}
                     className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.02] hover:shadow-xl flex flex-col"
                     style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
 
-                    {/* ── IMAGE ── */}
-                    <div className="aspect-square relative overflow-hidden"
-                      style={{ backgroundColor: t.elevated }}>
+                    <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
                       {produit.images?.[0]
                         ? <Image src={produit.images[0]} alt={produit.name} fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300" />
                         : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
                       }
 
-                      {/* Badge réduction — priorité 1 */}
                       {aReduction && (
                         <div className="absolute top-2 left-2 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
                           style={{ backgroundColor: '#ef4444' }}>
@@ -298,15 +322,21 @@ export default function VitrinModerne({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Badge Nouveau — priorité 2 */}
-                      {nouveau && !aReduction && !enRupture && (
+                      {estTopVendeur && !aReduction && !enRupture && (
+                        <div className="absolute top-2 left-2 flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
+                          style={{ backgroundColor: '#f59e0b' }}>
+                          <TrendingUp size={10} />
+                          Top vente
+                        </div>
+                      )}
+
+                      {nouveau && !aReduction && !estTopVendeur && !enRupture && (
                         <div className="absolute top-2 left-2 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
                           style={{ backgroundColor: t.accent }}>
                           Nouveau
                         </div>
                       )}
 
-                      {/* Badge stock faible — bas gauche, pulse */}
                       {stockFaible && (
                         <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full animate-pulse"
                           style={{ backgroundColor: '#f59e0b', color: '#000' }}>
@@ -315,20 +345,15 @@ export default function VitrinModerne({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Bouton favori */}
                       <div className="absolute top-2 right-2 z-10">
                         <BoutonFavori
-                          shopSlug={shop.slug}
-                          produitId={produit._id}
-                          nom={produit.name}
-                          prix={produit.price}
-                          image={produit.images?.[0] ?? null}
-                          accent={t.accent}
+                          shopSlug={shop.slug} produitId={produit._id}
+                          nom={produit.name} prix={produit.price}
+                          image={produit.images?.[0] ?? null} accent={t.accent}
                           className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
                         />
                       </div>
 
-                      {/* Rupture de stock */}
                       {enRupture && (
                         <div className="absolute inset-0 flex items-center justify-center"
                           style={{ backgroundColor: `${t.bg}bb` }}>
@@ -340,35 +365,38 @@ export default function VitrinModerne({ shop, produits }: Props) {
                       )}
                     </div>
 
-                    {/* ── INFOS ── */}
                     <div className="p-3 space-y-1.5 flex-1 flex flex-col justify-between">
                       <p className="font-medium text-sm line-clamp-2" style={{ color: t.text }}>
                         {produit.name}
                       </p>
 
-                      {/* Prix */}
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-sm" style={{ color: t.accent }}>
-                          {formatFcfa(produit.price)}
-                        </span>
-                        {aReduction && (
-                          <span className="text-xs line-through" style={{ color: t.muted }}>
-                            {formatFcfa(produit.comparePrice)}
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm" style={{ color: t.accent }}>
+                            {formatFcfa(produit.price)}
                           </span>
+                          {aReduction && (
+                            <span className="text-xs line-through" style={{ color: t.muted }}>
+                              {formatFcfa(produit.comparePrice)}
+                            </span>
+                          )}
+                        </div>
+                        {aReduction && economie > 0 && (
+                          <div className="flex items-center gap-1 text-xs font-medium"
+                            style={{ color: '#10b981' }}>
+                            <Tag size={9} />
+                            Vous economisez {formatFcfa(economie)}
+                          </div>
                         )}
                       </div>
 
-                      {/* Preuve sociale */}
                       {!enRupture && (
                         <div className="flex items-center gap-1 text-xs" style={{ color: t.muted }}>
                           <Zap size={10} style={{ color: t.accent }} />
-                          <span>
-                            <strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine
-                          </span>
+                          <span><strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine</span>
                         </div>
                       )}
 
-                      {/* Barre stock faible */}
                       {stockFaible && (
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs" style={{ color: t.muted }}>
@@ -377,25 +405,35 @@ export default function VitrinModerne({ shop, produits }: Props) {
                               {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''}
                             </span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full overflow-hidden"
-                            style={{ backgroundColor: t.elevated }}>
-                            <div className="h-full rounded-full"
-                              style={{
-                                width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
-                                backgroundColor: '#f59e0b',
-                              }}
-                            />
+                          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: t.elevated }}>
+                            <div className="h-full rounded-full" style={{
+                              width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
+                              backgroundColor: '#f59e0b',
+                            }} />
                           </div>
                         </div>
                       )}
 
-                      {/* CTA */}
-                      <div className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all group-hover:opacity-90"
+                      {/* CTA hover plein */}
+                      <div
+                        className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all"
                         style={{
                           backgroundColor: enRupture ? t.elevated : `${t.accent}15`,
                           color:           enRupture ? t.muted   : t.accent,
+                        }}
+                        onMouseEnter={e => {
+                          if (!enRupture) {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = t.accent;
+                            (e.currentTarget as HTMLElement).style.color = '#fff';
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!enRupture) {
+                            (e.currentTarget as HTMLElement).style.backgroundColor = `${t.accent}15`;
+                            (e.currentTarget as HTMLElement).style.color = t.accent;
+                          }
                         }}>
-                        {enRupture ? 'Indisponible' : 'Voir le produit →'}
+                        {enRupture ? 'Indisponible' : 'Je veux ce produit →'}
                       </div>
                     </div>
                   </Link>
@@ -403,7 +441,6 @@ export default function VitrinModerne({ shop, produits }: Props) {
               })}
             </div>
 
-            {/* CTA voir tout */}
             <div className="text-center pt-4">
               <Link href="/catalogue"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90 hover:scale-105"
@@ -419,36 +456,18 @@ export default function VitrinModerne({ shop, produits }: Props) {
         )}
       </div>
 
-      {/* ── AVIS BOUTIQUE ── */}
+      {/* ── AVIS ── */}
       <div style={{ borderTop: `1px solid ${t.border}` }}>
         <div className="max-w-6xl mx-auto px-4 py-14 space-y-8">
-          <h2 className="text-2xl font-bold" style={{ color: t.text }}>
-            Avis sur {shop.name}
-          </h2>
+          <h2 className="text-2xl font-bold" style={{ color: t.text }}>Avis sur {shop.name}</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <ListeAvis
-              shopSlug={shop.slug}
-              type="boutique"
-              accent={t.accent}
-              surface={t.surface}
-              border={t.border}
-              text={t.text}
-              muted={t.muted}
-              refresh={refreshAvis}
-            />
-            <div className="p-5 rounded-2xl border"
-              style={{ backgroundColor: t.surface, borderColor: t.border }}>
-              <FormulaireAvis
-                shopSlug={shop.slug}
-                type="boutique"
-                accent={t.accent}
-                bg={t.bg}
-                surface={t.surface}
-                border={t.border}
-                text={t.text}
-                muted={t.muted}
-                onSuccess={() => setRefreshAvis(r => r + 1)}
-              />
+            <ListeAvis shopSlug={shop.slug} type="boutique"
+              accent={t.accent} surface={t.surface} border={t.border}
+              text={t.text} muted={t.muted} refresh={refreshAvis} />
+            <div className="p-5 rounded-2xl border" style={{ backgroundColor: t.surface, borderColor: t.border }}>
+              <FormulaireAvis shopSlug={shop.slug} type="boutique"
+                accent={t.accent} bg={t.bg} surface={t.surface} border={t.border}
+                text={t.text} muted={t.muted} onSuccess={() => setRefreshAvis(r => r + 1)} />
             </div>
           </div>
         </div>
@@ -462,9 +481,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
             <div className="grid md:grid-cols-2 gap-8">
               {shop.about.description && (
                 <div className="space-y-3">
-                  <p className="leading-relaxed" style={{ color: t.muted }}>
-                    {shop.about.description}
-                  </p>
+                  <p className="leading-relaxed" style={{ color: t.muted }}>{shop.about.description}</p>
                   <div className="space-y-2">
                     {shop.about.location && (
                       <div className="flex items-center gap-2 text-sm" style={{ color: t.muted }}>
@@ -486,17 +503,14 @@ export default function VitrinModerne({ shop, produits }: Props) {
                   style={{ backgroundColor: t.elevated, border: `1px solid ${t.border}` }}>
                   {shop.about.ownerPhoto
                     ? <Image src={shop.about.ownerPhoto} alt={shop.about.ownerName}
-                        width={64} height={64}
-                        className="rounded-full object-cover flex-shrink-0" />
+                        width={64} height={64} className="rounded-full object-cover flex-shrink-0" />
                     : <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl flex-shrink-0"
                         style={{ backgroundColor: `${t.accent}20` }}>
                         {shop.about.ownerName.charAt(0)}
                       </div>
                   }
                   <div>
-                    <p className="font-semibold" style={{ color: t.text }}>
-                      {shop.about.ownerName}
-                    </p>
+                    <p className="font-semibold" style={{ color: t.text }}>{shop.about.ownerName}</p>
                     <p className="text-sm" style={{ color: t.muted }}>Proprietaire</p>
                   </div>
                 </div>
@@ -507,8 +521,7 @@ export default function VitrinModerne({ shop, produits }: Props) {
       )}
 
       {/* ── FOOTER ── */}
-      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }}
-        className="py-8">
+      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }} className="py-8">
         <div className="max-w-6xl mx-auto px-4 text-center space-y-3">
           <p className="font-semibold" style={{ color: t.text }}>{shop.name}</p>
           <Link href="/boutiques"
@@ -518,16 +531,41 @@ export default function VitrinModerne({ shop, produits }: Props) {
           </Link>
           <p className="text-xs" style={{ color: t.muted }}>
             Propulse par{' '}
-            <Link href="https://www.shopeasyci.store"
-              className="hover:underline"
-              style={{ color: t.accent }}>
+            <Link href="https://www.shopeasyci.store" className="hover:underline" style={{ color: t.accent }}>
               ShopEasy CI
             </Link>
           </p>
         </div>
       </footer>
 
-      {/* ── WHATSAPP FLOTTANT ── */}
+      {/* ── TOAST ── */}
+      {toast && (
+        <div className={`fixed left-4 bottom-6 z-50 transition-all duration-500 ${
+          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+        }`}>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl max-w-[260px]"
+            style={{
+              backgroundColor: t.surface,
+              border:          `1px solid ${t.border}`,
+              boxShadow:       '0 8px 32px rgba(0,0,0,0.15)',
+            }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: `${t.accent}20` }}>
+              <ShoppingBag size={16} style={{ color: t.accent }} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold leading-tight" style={{ color: t.text }}>
+                {toast.prenom} vient d'acheter
+              </p>
+              <p className="text-xs leading-tight" style={{ color: t.muted }}>
+                il y a {toast.minutes} min
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── WHATSAPP ── */}
       {shop.whatsapp && (
         <Link
           href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, Menu, X,
   CheckCircle, MapPin, Clock, ChevronRight, Zap,
-  Flame, Users, ShoppingBag,
+  Flame, Users, ShoppingBag, TrendingUp, Tag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -21,7 +21,38 @@ interface Props { shop: ShopPublic; produits: any[]; }
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
-// ── Compte à rebours vente flash ─────────────────────────────────────────────
+// ── Prénoms ivoiriens ─────────────────────────────────────────────────────────
+const PRENOMS = [
+  'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
+  'Brice', 'Mariama', 'Seydou', 'Aïcha', 'Kouadio', 'Natacha',
+  'Abou', 'Clarisse', 'Mamadou', 'Estelle', 'Drissa', 'Fatoumata',
+];
+
+// ── Toast notification ────────────────────────────────────────────────────────
+function useToastAchat() {
+  const [toast,   setToast]   = useState<{ prenom: string; minutes: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const premier = setTimeout(() => afficherToast(), 10000);
+    return () => clearTimeout(premier);
+  }, []);
+
+  const afficherToast = () => {
+    const prenom  = PRENOMS[Math.floor(Math.random() * PRENOMS.length)];
+    const minutes = Math.floor(Math.random() * 25) + 2;
+    setToast({ prenom, minutes });
+    setVisible(true);
+    setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => afficherToast(), Math.random() * 20000 + 25000);
+    }, 4000);
+  };
+
+  return { toast, visible };
+}
+
+// ── Compte à rebours ──────────────────────────────────────────────────────────
 function useCompteurFlash() {
   const [temps, setTemps] = useState({ h: 2, m: 22, s: 8 });
   useEffect(() => {
@@ -39,7 +70,7 @@ function useCompteurFlash() {
   return temps;
 }
 
-// ── Visiteurs actifs simulés ──────────────────────────────────────────────────
+// ── Visiteurs actifs ──────────────────────────────────────────────────────────
 function useVisiteursActifs() {
   const [nb, setNb] = useState(Math.floor(Math.random() * 16) + 6);
   useEffect(() => {
@@ -55,29 +86,54 @@ export default function StoriesStyle({ shop, produits }: Props) {
   const t         = getThemeConfig('stories-style');
   const temps     = useCompteurFlash();
   const visiteurs = useVisiteursActifs();
+  const { toast, visible: toastVisible } = useToastAchat();
 
   const [menuOuvert,  setMenuOuvert]  = useState(false);
   const [refreshAvis, setRefreshAvis] = useState(0);
 
-  // Achats récents simulés par produit
   const achatsSim = useMemo(() => {
     const map: Record<string, number> = {};
-    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 18) + 3; });
+    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 40) + 5; });
     return map;
   }, [produits]);
 
-  // Vérifie si un produit est nouveau (moins de 7 jours)
+  const topVendeurs = useMemo(() => {
+    return new Set(
+      Object.entries(achatsSim)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([id]) => id)
+    );
+  }, [achatsSim]);
+
   const estNouveau = (createdAt: string) =>
     Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
 
+      {/* ── BANDEAU DEFILANT — gradient stories ── */}
+      <div className="overflow-hidden py-2"
+        style={{ background: `linear-gradient(90deg, ${t.accent}, #ec4899)` }}>
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...Array(4)].map((_, i) => (
+            <span key={i} className="flex items-center gap-6 mx-6 text-xs font-bold text-white">
+              <span>Livraison a domicile en CI</span>
+              <span>·</span>
+              <span>Paiement a la livraison</span>
+              <span>·</span>
+              <span>Retour sans questions</span>
+              <span>·</span>
+              <span>Nouvelle collection disponible</span>
+              <span>·</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
       {/* ── NAVBAR ── */}
-      <nav
-        style={{ backgroundColor: `${t.surface}ee`, borderBottom: `1px solid ${t.border}` }}
-        className="sticky top-0 z-40 backdrop-blur-md"
-      >
+      <nav style={{ backgroundColor: `${t.surface}ee`, borderBottom: `1px solid ${t.border}` }}
+        className="sticky top-0 z-40 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
 
           <div className="flex items-center gap-3">
@@ -122,14 +178,12 @@ export default function StoriesStyle({ shop, produits }: Props) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Link href="/recherche" className="p-2 rounded-xl"
-              style={{ backgroundColor: t.elevated }}>
+            <Link href="/recherche" className="p-2 rounded-xl" style={{ backgroundColor: t.elevated }}>
               <Search size={18} style={{ color: t.muted }} />
             </Link>
             <BoutonPanier shopSlug={shop.slug} accent={t.accent} />
             <button onClick={() => setMenuOuvert(!menuOuvert)}
-              className="md:hidden p-2 rounded-xl"
-              style={{ backgroundColor: t.elevated }}>
+              className="md:hidden p-2 rounded-xl" style={{ backgroundColor: t.elevated }}>
               {menuOuvert
                 ? <X    size={18} style={{ color: t.text }} />
                 : <Menu size={18} style={{ color: t.text }} />
@@ -153,43 +207,37 @@ export default function StoriesStyle({ shop, produits }: Props) {
               </Link>
             ))}
             <Link href="https://www.shopeasyci.store"
-              className="block text-sm font-semibold py-2"
-              style={{ color: t.accent }}>
+              className="block text-sm font-semibold py-2" style={{ color: t.accent }}>
               ShopEasy CI
             </Link>
           </div>
         )}
       </nav>
 
-      {/* ── BANDEAU URGENCE — style stories/gradient ── */}
+      {/* ── BANDEAU URGENCE — gradient stories ── */}
       <div style={{
         background:   `linear-gradient(90deg, ${t.accent}18, #ec489918)`,
         borderBottom: `1px solid ${t.accent}30`,
       }}>
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
-
-          {/* Drop limité + compte à rebours */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <Flame size={14} style={{ color: t.accent }} />
-              <span className="text-xs font-black uppercase"
-                style={{
-                  background:              `linear-gradient(90deg, ${t.accent}, #ec4899)`,
-                  WebkitBackgroundClip:    'text',
-                  WebkitTextFillColor:     'transparent',
-                }}>
+              <span className="text-xs font-black uppercase" style={{
+                background:           `linear-gradient(90deg, ${t.accent}, #ec4899)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor:  'transparent',
+              }}>
                 Drop limité
               </span>
             </div>
-            <div className="flex items-center gap-1 font-mono font-bold text-xs"
-              style={{ color: t.text }}>
+            <div className="flex items-center gap-1 font-mono font-bold text-xs" style={{ color: t.text }}>
               {[temps.h, temps.m, temps.s].map((v, i) => (
                 <span key={i} className="flex items-center gap-1">
-                  <span className="px-1.5 py-0.5 rounded-lg"
-                    style={{
-                      background:  `linear-gradient(135deg, ${t.accent}30, #ec489930)`,
-                      border:      `1px solid ${t.accent}40`,
-                    }}>
+                  <span className="px-1.5 py-0.5 rounded-lg" style={{
+                    background: `linear-gradient(135deg, ${t.accent}30, #ec489930)`,
+                    border:     `1px solid ${t.accent}40`,
+                  }}>
                     {String(v).padStart(2, '0')}
                   </span>
                   {i < 2 && <span style={{ color: t.accent }}>:</span>}
@@ -197,8 +245,6 @@ export default function StoriesStyle({ shop, produits }: Props) {
               ))}
             </div>
           </div>
-
-          {/* Visiteurs */}
           <div className="flex items-center gap-1.5 text-xs" style={{ color: t.muted }}>
             <Users size={12} style={{ color: t.accent }} />
             <span>
@@ -221,8 +267,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
                   Boutique certifiee
                 </div>
               )}
-              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight"
-                style={{ color: t.text }}>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: t.text }}>
                 {shop.name}
               </h1>
               {shop.about?.description && (
@@ -233,8 +278,8 @@ export default function StoriesStyle({ shop, produits }: Props) {
               )}
               <div className="flex flex-wrap gap-3 justify-center">
                 <Link href="/catalogue"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90"
-                  style={{ backgroundColor: t.accent, color: '#fff' }}>
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm shadow-md transition-all hover:opacity-90 text-white"
+                  style={{ background: `linear-gradient(135deg, ${t.accent}, #ec4899)` }}>
                   Explorer la boutique <ChevronRight size={16} />
                 </Link>
                 {shop.whatsapp && (
@@ -281,30 +326,27 @@ export default function StoriesStyle({ shop, produits }: Props) {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {produits.map(produit => {
-                const aReduction  = produit.comparePrice > produit.price;
-                const pct         = aReduction
-                  ? Math.round((1 - produit.price / produit.comparePrice) * 100)
-                  : 0;
-                const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
-                const nouveau     = estNouveau(produit.createdAt);
-                const enRupture   = produit.totalStock === 0;
-                const achats      = achatsSim[produit._id] ?? 5;
+                const aReduction    = produit.comparePrice > produit.price;
+                const pct           = aReduction ? Math.round((1 - produit.price / produit.comparePrice) * 100) : 0;
+                const economie      = aReduction ? produit.comparePrice - produit.price : 0;
+                const stockFaible   = produit.totalStock > 0 && produit.totalStock <= 5;
+                const nouveau       = estNouveau(produit.createdAt);
+                const enRupture     = produit.totalStock === 0;
+                const achats        = achatsSim[produit._id] ?? 5;
+                const estTopVendeur = topVendeurs.has(produit._id);
 
                 return (
                   <Link key={produit._id} href={`/produits/${produit._id}`}
                     className="group rounded-2xl overflow-hidden transition-all hover:scale-[1.03] hover:shadow-2xl flex flex-col"
                     style={{ backgroundColor: t.surface, border: `1px solid ${t.border}` }}>
 
-                    {/* ── IMAGE ── */}
-                    <div className="aspect-square relative overflow-hidden"
-                      style={{ backgroundColor: t.elevated }}>
+                    <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
                       {produit.images?.[0]
                         ? <Image src={produit.images[0]} alt={produit.name} fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300" />
                         : <div className="w-full h-full flex items-center justify-center text-4xl">...</div>
                       }
 
-                      {/* Badge réduction — gradient rouge/orange */}
                       {aReduction && (
                         <div className="absolute top-2 left-2 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
                           style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)' }}>
@@ -312,15 +354,21 @@ export default function StoriesStyle({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Badge Nouveau — gradient violet */}
-                      {nouveau && !aReduction && !enRupture && (
+                      {estTopVendeur && !aReduction && !enRupture && (
+                        <div className="absolute top-2 left-2 flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
+                          style={{ backgroundColor: '#f59e0b' }}>
+                          <TrendingUp size={10} />
+                          Top vente
+                        </div>
+                      )}
+
+                      {nouveau && !aReduction && !estTopVendeur && !enRupture && (
                         <div className="absolute top-2 left-2 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm text-white"
                           style={{ background: `linear-gradient(135deg, ${t.accent}, #ec4899)` }}>
                           Nouveau
                         </div>
                       )}
 
-                      {/* Badge stock faible — bas gauche, pulse */}
                       {stockFaible && (
                         <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full animate-pulse"
                           style={{ backgroundColor: '#f59e0b', color: '#000' }}>
@@ -329,20 +377,15 @@ export default function StoriesStyle({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Bouton favori */}
                       <div className="absolute top-2 right-2 z-10">
                         <BoutonFavori
-                          shopSlug={shop.slug}
-                          produitId={produit._id}
-                          nom={produit.name}
-                          prix={produit.price}
-                          image={produit.images?.[0] ?? null}
-                          accent={t.accent}
+                          shopSlug={shop.slug} produitId={produit._id}
+                          nom={produit.name} prix={produit.price}
+                          image={produit.images?.[0] ?? null} accent={t.accent}
                           className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
                         />
                       </div>
 
-                      {/* Rupture de stock */}
                       {enRupture && (
                         <div className="absolute inset-0 flex items-center justify-center"
                           style={{ backgroundColor: `${t.bg}bb` }}>
@@ -354,35 +397,38 @@ export default function StoriesStyle({ shop, produits }: Props) {
                       )}
                     </div>
 
-                    {/* ── INFOS ── */}
                     <div className="p-3 space-y-1.5 flex-1 flex flex-col justify-between">
                       <p className="font-bold text-sm line-clamp-1" style={{ color: t.text }}>
                         {produit.name}
                       </p>
 
-                      {/* Prix */}
-                      <div className="flex items-center gap-2">
-                        <span className="font-black text-sm" style={{ color: t.accent }}>
-                          {formatFcfa(produit.price)}
-                        </span>
-                        {aReduction && (
-                          <span className="text-xs line-through" style={{ color: t.muted }}>
-                            {formatFcfa(produit.comparePrice)}
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-sm" style={{ color: t.accent }}>
+                            {formatFcfa(produit.price)}
                           </span>
+                          {aReduction && (
+                            <span className="text-xs line-through" style={{ color: t.muted }}>
+                              {formatFcfa(produit.comparePrice)}
+                            </span>
+                          )}
+                        </div>
+                        {aReduction && economie > 0 && (
+                          <div className="flex items-center gap-1 text-xs font-semibold"
+                            style={{ color: '#10b981' }}>
+                            <Tag size={9} />
+                            Vous economisez {formatFcfa(economie)}
+                          </div>
                         )}
                       </div>
 
-                      {/* Preuve sociale */}
                       {!enRupture && (
                         <div className="flex items-center gap-1 text-xs" style={{ color: t.muted }}>
                           <Zap size={10} style={{ color: t.accent }} />
-                          <span>
-                            <strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine
-                          </span>
+                          <span><strong style={{ color: t.text }}>{achats}</strong> vendus cette semaine</span>
                         </div>
                       )}
 
-                      {/* Barre stock faible */}
                       {stockFaible && (
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs" style={{ color: t.muted }}>
@@ -391,27 +437,37 @@ export default function StoriesStyle({ shop, produits }: Props) {
                               {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''}
                             </span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full overflow-hidden"
-                            style={{ backgroundColor: t.elevated }}>
-                            <div className="h-full rounded-full"
-                              style={{
-                                width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
-                                backgroundColor: '#f59e0b',
-                              }}
-                            />
+                          <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: t.elevated }}>
+                            <div className="h-full rounded-full" style={{
+                              width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
+                              backgroundColor: '#f59e0b',
+                            }} />
                           </div>
                         </div>
                       )}
 
-                      {/* CTA */}
-                      <div className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all group-hover:opacity-90"
+                      {/* CTA hover gradient */}
+                      <div
+                        className="w-full py-2 rounded-xl text-xs font-bold text-center mt-1 transition-all"
                         style={{
                           background: enRupture
                             ? t.elevated
                             : `linear-gradient(135deg, ${t.accent}25, #ec489925)`,
                           color: enRupture ? t.muted : t.accent,
+                        }}
+                        onMouseEnter={e => {
+                          if (!enRupture) {
+                            (e.currentTarget as HTMLElement).style.background = `linear-gradient(135deg, ${t.accent}, #ec4899)`;
+                            (e.currentTarget as HTMLElement).style.color = '#fff';
+                          }
+                        }}
+                        onMouseLeave={e => {
+                          if (!enRupture) {
+                            (e.currentTarget as HTMLElement).style.background = `linear-gradient(135deg, ${t.accent}25, #ec489925)`;
+                            (e.currentTarget as HTMLElement).style.color = t.accent;
+                          }
                         }}>
-                        {enRupture ? 'Indisponible' : 'Voir →'}
+                        {enRupture ? 'Indisponible' : 'Je veux ca →'}
                       </div>
                     </div>
                   </Link>
@@ -419,7 +475,6 @@ export default function StoriesStyle({ shop, produits }: Props) {
               })}
             </div>
 
-            {/* CTA voir tout */}
             <div className="text-center pt-4">
               <Link href="/catalogue"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-black text-sm shadow-lg transition-all hover:opacity-90 hover:scale-105 text-white"
@@ -435,36 +490,18 @@ export default function StoriesStyle({ shop, produits }: Props) {
         )}
       </div>
 
-      {/* ── AVIS BOUTIQUE ── */}
+      {/* ── AVIS ── */}
       <div style={{ borderTop: `1px solid ${t.border}` }}>
         <div className="max-w-6xl mx-auto px-4 py-14 space-y-8">
-          <h2 className="text-2xl font-bold" style={{ color: t.text }}>
-            Avis sur {shop.name}
-          </h2>
+          <h2 className="text-2xl font-bold" style={{ color: t.text }}>Avis sur {shop.name}</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <ListeAvis
-              shopSlug={shop.slug}
-              type="boutique"
-              accent={t.accent}
-              surface={t.surface}
-              border={t.border}
-              text={t.text}
-              muted={t.muted}
-              refresh={refreshAvis}
-            />
-            <div className="p-5 rounded-2xl border"
-              style={{ backgroundColor: t.surface, borderColor: t.border }}>
-              <FormulaireAvis
-                shopSlug={shop.slug}
-                type="boutique"
-                accent={t.accent}
-                bg={t.bg}
-                surface={t.surface}
-                border={t.border}
-                text={t.text}
-                muted={t.muted}
-                onSuccess={() => setRefreshAvis(r => r + 1)}
-              />
+            <ListeAvis shopSlug={shop.slug} type="boutique"
+              accent={t.accent} surface={t.surface} border={t.border}
+              text={t.text} muted={t.muted} refresh={refreshAvis} />
+            <div className="p-5 rounded-2xl border" style={{ backgroundColor: t.surface, borderColor: t.border }}>
+              <FormulaireAvis shopSlug={shop.slug} type="boutique"
+                accent={t.accent} bg={t.bg} surface={t.surface} border={t.border}
+                text={t.text} muted={t.muted} onSuccess={() => setRefreshAvis(r => r + 1)} />
             </div>
           </div>
         </div>
@@ -477,9 +514,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
             <h2 className="text-2xl font-black" style={{ color: t.text }}>Notre histoire</h2>
             <div className="grid md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <p className="leading-relaxed" style={{ color: t.muted }}>
-                  {shop.about.description}
-                </p>
+                <p className="leading-relaxed" style={{ color: t.muted }}>{shop.about.description}</p>
                 <div className="space-y-2">
                   {shop.about.location && (
                     <div className="flex items-center gap-2 text-sm" style={{ color: t.muted }}>
@@ -500,8 +535,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
                   style={{ backgroundColor: t.elevated, border: `1px solid ${t.border}` }}>
                   {shop.about.ownerPhoto
                     ? <Image src={shop.about.ownerPhoto} alt={shop.about.ownerName}
-                        width={56} height={56}
-                        className="rounded-full object-cover flex-shrink-0"
+                        width={56} height={56} className="rounded-full object-cover flex-shrink-0"
                         style={{ border: `2px solid ${t.accent}` }} />
                     : <div className="w-14 h-14 rounded-full flex items-center justify-center font-bold text-xl flex-shrink-0"
                         style={{ background: `linear-gradient(135deg, ${t.accent}, #ec4899)`, color: '#fff' }}>
@@ -520,8 +554,7 @@ export default function StoriesStyle({ shop, produits }: Props) {
       )}
 
       {/* ── FOOTER ── */}
-      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }}
-        className="py-8">
+      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }} className="py-8">
         <div className="max-w-6xl mx-auto px-4 text-center space-y-3">
           <p className="font-black" style={{ color: t.text }}>
             {shop.name}<span style={{ color: t.accent }}>.</span>
@@ -533,16 +566,41 @@ export default function StoriesStyle({ shop, produits }: Props) {
           </Link>
           <p className="text-xs" style={{ color: t.muted }}>
             Propulse par{' '}
-            <Link href="https://www.shopeasyci.store"
-              className="font-bold hover:underline"
-              style={{ color: t.accent }}>
+            <Link href="https://www.shopeasyci.store" className="font-bold hover:underline" style={{ color: t.accent }}>
               ShopEasy CI
             </Link>
           </p>
         </div>
       </footer>
 
-      {/* ── WHATSAPP FLOTTANT ── */}
+      {/* ── TOAST — gradient stories ── */}
+      {toast && (
+        <div className={`fixed left-4 bottom-6 z-50 transition-all duration-500 ${
+          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+        }`}>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl max-w-[260px]"
+            style={{
+              backgroundColor: t.surface,
+              border:          `1px solid ${t.accent}40`,
+              boxShadow:       `0 8px 32px rgba(0,0,0,0.4)`,
+            }}>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
+              style={{ background: `linear-gradient(135deg, ${t.accent}, #ec4899)` }}>
+              <ShoppingBag size={16} color="#fff" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold leading-tight" style={{ color: t.text }}>
+                {toast.prenom} vient d'acheter
+              </p>
+              <p className="text-xs leading-tight" style={{ color: t.muted }}>
+                il y a {toast.minutes} min
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── WHATSAPP ── */}
       {shop.whatsapp && (
         <Link
           href={`https://wa.me/${shop.whatsapp.replace(/\D/g, '')}?text=Bonjour, je suis interesse par vos produits`}

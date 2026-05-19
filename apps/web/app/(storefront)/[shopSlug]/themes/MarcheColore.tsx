@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ShoppingCart, Search, Menu, X,
   CheckCircle, MapPin, Clock, ChevronRight,
-  Flame, Users, Zap,
+  Flame, Users, Zap, TrendingUp, Tag, ShoppingBag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -20,6 +20,37 @@ interface Props { shop: ShopPublic; produits: any[]; }
 
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
+
+// ── Prénoms ivoiriens ─────────────────────────────────────────────────────────
+const PRENOMS = [
+  'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
+  'Brice', 'Mariama', 'Seydou', 'Aïcha', 'Kouadio', 'Natacha',
+  'Abou', 'Clarisse', 'Mamadou', 'Estelle', 'Drissa', 'Fatoumata',
+];
+
+// ── Toast notification ────────────────────────────────────────────────────────
+function useToastAchat() {
+  const [toast,   setToast]   = useState<{ prenom: string; minutes: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const premier = setTimeout(() => afficherToast(), 10000);
+    return () => clearTimeout(premier);
+  }, []);
+
+  const afficherToast = () => {
+    const prenom  = PRENOMS[Math.floor(Math.random() * PRENOMS.length)];
+    const minutes = Math.floor(Math.random() * 25) + 2;
+    setToast({ prenom, minutes });
+    setVisible(true);
+    setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => afficherToast(), Math.random() * 20000 + 25000);
+    }, 4000);
+  };
+
+  return { toast, visible };
+}
 
 // ── Compte à rebours vente flash ─────────────────────────────────────────────
 function useCompteurFlash() {
@@ -55,28 +86,50 @@ export default function MarcheColore({ shop, produits }: Props) {
   const t         = getThemeConfig('marche-colore');
   const temps     = useCompteurFlash();
   const visiteurs = useVisiteursActifs();
+  const { toast, visible: toastVisible } = useToastAchat();
 
   const [menuOuvert,  setMenuOuvert]  = useState(false);
   const [refreshAvis, setRefreshAvis] = useState(0);
 
-  // Achats récents simulés par produit
+  // ── Achats simulés + top vendeurs ────────────────────────────────────────
   const achatsSim = useMemo(() => {
     const map: Record<string, number> = {};
-    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 22) + 3; });
+    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 40) + 5; });
     return map;
   }, [produits]);
 
-  // Vérifie si un produit est nouveau (moins de 7 jours)
+  const topVendeurs = useMemo(() => {
+    return new Set(
+      Object.entries(achatsSim)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([id]) => id)
+    );
+  }, [achatsSim]);
+
   const estNouveau = (createdAt: string) =>
     Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
 
-      {/* ── BANNIERE TOP — livraison ── */}
-      <div className="text-center py-2 text-xs font-medium"
-        style={{ backgroundColor: t.accent, color: '#000' }}>
-        Livraison disponible partout en Cote d'Ivoire !
+      {/* ── BANDEAU DEFILANT — style marché coloré, énergique ── */}
+      <div className="overflow-hidden py-2" style={{ backgroundColor: t.accent }}>
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...Array(4)].map((_, i) => (
+            <span key={i} className="flex items-center gap-6 mx-6 text-xs font-extrabold uppercase"
+              style={{ color: '#000' }}>
+              <span>Livraison partout en CI</span>
+              <span>·</span>
+              <span>Paiement a la livraison</span>
+              <span>·</span>
+              <span>Retour sans questions</span>
+              <span>·</span>
+              <span>Commandez maintenant !</span>
+              <span>·</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* ── NAVBAR ── */}
@@ -113,8 +166,7 @@ export default function MarcheColore({ shop, produits }: Props) {
 
           <div className="hidden md:flex items-center gap-6">
             {(['Catalogue', 'A propos'] as const).map(lien => (
-              <Link key={lien}
-                href={lien === 'Catalogue' ? '/catalogue' : '/about'}
+              <Link key={lien} href={lien === 'Catalogue' ? '/catalogue' : '/about'}
                 className="text-sm font-semibold hover:opacity-70 transition-opacity"
                 style={{ color: t.text }}>
                 {lien}
@@ -139,8 +191,7 @@ export default function MarcheColore({ shop, produits }: Props) {
           <div style={{ backgroundColor: t.surface, borderTop: `1px solid ${t.border}` }}
             className="md:hidden px-4 py-4 space-y-2">
             {(['Catalogue', 'A propos'] as const).map(lien => (
-              <Link key={lien}
-                href={lien === 'Catalogue' ? '/catalogue' : '/about'}
+              <Link key={lien} href={lien === 'Catalogue' ? '/catalogue' : '/about'}
                 className="block text-sm font-semibold py-2"
                 style={{ color: t.text }}
                 onClick={() => setMenuOuvert(false)}>
@@ -156,20 +207,15 @@ export default function MarcheColore({ shop, produits }: Props) {
         )}
       </nav>
 
-      {/* ── BANDEAU URGENCE — style marché coloré ── */}
+      {/* ── BANDEAU URGENCE ── */}
       <div style={{ backgroundColor: '#ef444418', borderBottom: `2px solid #ef444430` }}>
         <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
-
-          {/* Vente flash + compte à rebours */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <Flame size={15} className="text-red-500" />
-              <span className="text-xs font-extrabold text-red-500 uppercase">
-                Vente flash !
-              </span>
+              <span className="text-xs font-extrabold text-red-500 uppercase">Vente flash !</span>
             </div>
-            <div className="flex items-center gap-1 font-mono font-bold text-xs"
-              style={{ color: t.text }}>
+            <div className="flex items-center gap-1 font-mono font-bold text-xs" style={{ color: t.text }}>
               <span className="px-1.5 py-0.5 rounded-md font-extrabold"
                 style={{ backgroundColor: t.accent, color: '#000' }}>
                 {String(temps.h).padStart(2, '0')}
@@ -186,8 +232,6 @@ export default function MarcheColore({ shop, produits }: Props) {
               </span>
             </div>
           </div>
-
-          {/* Visiteurs */}
           <div className="flex items-center gap-1.5 text-xs" style={{ color: t.muted }}>
             <Users size={13} style={{ color: t.accent }} />
             <span>
@@ -210,8 +254,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                   Boutique professionnelle certifiee
                 </div>
               )}
-              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight"
-                style={{ color: t.text }}>
+              <h1 className="text-4xl md:text-5xl font-extrabold leading-tight" style={{ color: t.text }}>
                 {shop.name}
               </h1>
               {shop.about?.description && (
@@ -272,14 +315,14 @@ export default function MarcheColore({ shop, produits }: Props) {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {produits.map(produit => {
-                const aReduction  = produit.comparePrice > produit.price;
-                const pct         = aReduction
-                  ? Math.round((1 - produit.price / produit.comparePrice) * 100)
-                  : 0;
-                const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
-                const nouveau     = estNouveau(produit.createdAt);
-                const enRupture   = produit.totalStock === 0;
-                const achats      = achatsSim[produit._id] ?? 5;
+                const aReduction    = produit.comparePrice > produit.price;
+                const pct           = aReduction ? Math.round((1 - produit.price / produit.comparePrice) * 100) : 0;
+                const economie      = aReduction ? produit.comparePrice - produit.price : 0;
+                const stockFaible   = produit.totalStock > 0 && produit.totalStock <= 5;
+                const nouveau       = estNouveau(produit.createdAt);
+                const enRupture     = produit.totalStock === 0;
+                const achats        = achatsSim[produit._id] ?? 5;
+                const estTopVendeur = topVendeurs.has(produit._id);
 
                 return (
                   <Link key={produit._id} href={`/produits/${produit._id}`}
@@ -287,8 +330,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                     style={{ backgroundColor: t.surface, border: `2px solid ${t.border}` }}>
 
                     {/* ── IMAGE ── */}
-                    <div className="aspect-square relative overflow-hidden"
-                      style={{ backgroundColor: t.elevated }}>
+                    <div className="aspect-square relative overflow-hidden" style={{ backgroundColor: t.elevated }}>
                       {produit.images?.[0]
                         ? <Image src={produit.images[0]} alt={produit.name} fill
                             className="object-cover group-hover:scale-105 transition-transform duration-300" />
@@ -303,15 +345,24 @@ export default function MarcheColore({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Badge Nouveau — priorité 2 */}
-                      {nouveau && !aReduction && !enRupture && (
+                      {/* Badge Top vente — priorité 2 */}
+                      {estTopVendeur && !aReduction && !enRupture && (
+                        <div className="absolute top-2 left-2 flex items-center gap-1 text-xs font-extrabold px-2.5 py-1 rounded-full shadow-sm"
+                          style={{ backgroundColor: '#f59e0b', color: '#000' }}>
+                          <TrendingUp size={10} />
+                          Top vente
+                        </div>
+                      )}
+
+                      {/* Badge Nouveau — priorité 3 */}
+                      {nouveau && !aReduction && !estTopVendeur && !enRupture && (
                         <div className="absolute top-2 left-2 text-xs font-extrabold px-2.5 py-1 rounded-full shadow-sm"
                           style={{ backgroundColor: t.accent, color: '#000' }}>
                           Nouveau
                         </div>
                       )}
 
-                      {/* Badge stock faible — bas gauche, pulse */}
+                      {/* Badge stock faible */}
                       {stockFaible && (
                         <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full animate-pulse"
                           style={{ backgroundColor: '#f59e0b', color: '#000' }}>
@@ -323,12 +374,9 @@ export default function MarcheColore({ shop, produits }: Props) {
                       {/* Bouton favori */}
                       <div className="absolute top-2 right-2 z-10">
                         <BoutonFavori
-                          shopSlug={shop.slug}
-                          produitId={produit._id}
-                          nom={produit.name}
-                          prix={produit.price}
-                          image={produit.images?.[0] ?? null}
-                          accent={t.accent}
+                          shopSlug={shop.slug} produitId={produit._id}
+                          nom={produit.name} prix={produit.price}
+                          image={produit.images?.[0] ?? null} accent={t.accent}
                           className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
                         />
                       </div>
@@ -351,22 +399,31 @@ export default function MarcheColore({ shop, produits }: Props) {
                         {produit.name}
                       </p>
 
-                      {/* Prix + icône panier */}
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-extrabold text-sm" style={{ color: t.accent }}>
-                            {formatFcfa(produit.price)}
-                          </p>
-                          {aReduction && (
-                            <p className="text-xs line-through" style={{ color: t.muted }}>
-                              {formatFcfa(produit.comparePrice)}
+                      {/* Prix + économie + icône panier */}
+                      <div className="space-y-0.5">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-extrabold text-sm" style={{ color: t.accent }}>
+                              {formatFcfa(produit.price)}
                             </p>
+                            {aReduction && (
+                              <p className="text-xs line-through" style={{ color: t.muted }}>
+                                {formatFcfa(produit.comparePrice)}
+                              </p>
+                            )}
+                          </div>
+                          {!enRupture && (
+                            <div className="w-8 h-8 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
+                              style={{ backgroundColor: t.accent }}>
+                              <ShoppingCart size={14} color="#000" />
+                            </div>
                           )}
                         </div>
-                        {!enRupture && (
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform"
-                            style={{ backgroundColor: t.accent }}>
-                            <ShoppingCart size={14} color="#000" />
+                        {aReduction && economie > 0 && (
+                          <div className="flex items-center gap-1 text-xs font-semibold"
+                            style={{ color: '#10b981' }}>
+                            <Tag size={9} />
+                            Vous economisez {formatFcfa(economie)}
                           </div>
                         )}
                       </div>
@@ -381,7 +438,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Barre de stock si stock faible */}
+                      {/* Barre de stock */}
                       {stockFaible && (
                         <div className="space-y-1">
                           <div className="flex justify-between text-xs" style={{ color: t.muted }}>
@@ -390,14 +447,11 @@ export default function MarcheColore({ shop, produits }: Props) {
                               {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''}
                             </span>
                           </div>
-                          <div className="w-full h-2 rounded-full overflow-hidden"
-                            style={{ backgroundColor: t.elevated }}>
-                            <div className="h-full rounded-full"
-                              style={{
-                                width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
-                                backgroundColor: '#f59e0b',
-                              }}
-                            />
+                          <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: t.elevated }}>
+                            <div className="h-full rounded-full" style={{
+                              width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
+                              backgroundColor: '#f59e0b',
+                            }} />
                           </div>
                         </div>
                       )}
@@ -412,7 +466,7 @@ export default function MarcheColore({ shop, produits }: Props) {
               <Link href="/catalogue"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full font-extrabold text-sm shadow-md transition-all hover:opacity-90 hover:scale-105 border-2"
                 style={{ backgroundColor: t.accent, color: '#000', borderColor: t.accent }}>
-                <ShoppingCart size={16} />
+                <ShoppingBag size={16} />
                 Voir tous les produits
               </Link>
               <p className="text-xs mt-3 font-medium" style={{ color: t.muted }}>
@@ -426,33 +480,16 @@ export default function MarcheColore({ shop, produits }: Props) {
       {/* ── AVIS BOUTIQUE ── */}
       <div style={{ borderTop: `1px solid ${t.border}` }}>
         <div className="max-w-6xl mx-auto px-4 py-14 space-y-8">
-          <h2 className="text-2xl font-bold" style={{ color: t.text }}>
-            Avis sur {shop.name}
-          </h2>
+          <h2 className="text-2xl font-bold" style={{ color: t.text }}>Avis sur {shop.name}</h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <ListeAvis
-              shopSlug={shop.slug}
-              type="boutique"
-              accent={t.accent}
-              surface={t.surface}
-              border={t.border}
-              text={t.text}
-              muted={t.muted}
-              refresh={refreshAvis}
-            />
+            <ListeAvis shopSlug={shop.slug} type="boutique"
+              accent={t.accent} surface={t.surface} border={t.border}
+              text={t.text} muted={t.muted} refresh={refreshAvis} />
             <div className="p-5 rounded-2xl border"
               style={{ backgroundColor: t.surface, borderColor: t.border }}>
-              <FormulaireAvis
-                shopSlug={shop.slug}
-                type="boutique"
-                accent={t.accent}
-                bg={t.bg}
-                surface={t.surface}
-                border={t.border}
-                text={t.text}
-                muted={t.muted}
-                onSuccess={() => setRefreshAvis(r => r + 1)}
-              />
+              <FormulaireAvis shopSlug={shop.slug} type="boutique"
+                accent={t.accent} bg={t.bg} surface={t.surface} border={t.border}
+                text={t.text} muted={t.muted} onSuccess={() => setRefreshAvis(r => r + 1)} />
             </div>
           </div>
         </div>
@@ -473,15 +510,13 @@ export default function MarcheColore({ shop, produits }: Props) {
                   </p>
                   <div className="space-y-2">
                     {shop.about.location && (
-                      <div className="flex items-center gap-2 text-sm font-medium"
-                        style={{ color: t.text }}>
+                      <div className="flex items-center gap-2 text-sm font-medium" style={{ color: t.text }}>
                         <MapPin size={16} style={{ color: t.accent }} />
                         {shop.about.location}
                       </div>
                     )}
                     {shop.about.workingHours && (
-                      <div className="flex items-center gap-2 text-sm font-medium"
-                        style={{ color: t.text }}>
+                      <div className="flex items-center gap-2 text-sm font-medium" style={{ color: t.text }}>
                         <Clock size={16} style={{ color: t.accent }} />
                         {shop.about.workingHours}
                       </div>
@@ -494,8 +529,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                   style={{ backgroundColor: t.elevated, borderColor: t.accent }}>
                   {shop.about.ownerPhoto
                     ? <Image src={shop.about.ownerPhoto} alt={shop.about.ownerName}
-                        width={64} height={64}
-                        className="rounded-full object-cover flex-shrink-0 border-2"
+                        width={64} height={64} className="rounded-full object-cover flex-shrink-0 border-2"
                         style={{ borderColor: t.accent }} />
                     : <div className="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold flex-shrink-0"
                         style={{ backgroundColor: t.accent, color: '#000' }}>
@@ -503,9 +537,7 @@ export default function MarcheColore({ shop, produits }: Props) {
                       </div>
                   }
                   <div>
-                    <p className="font-extrabold" style={{ color: t.text }}>
-                      {shop.about.ownerName}
-                    </p>
+                    <p className="font-extrabold" style={{ color: t.text }}>{shop.about.ownerName}</p>
                     <p className="text-sm" style={{ color: t.muted }}>Proprietaire</p>
                   </div>
                 </div>
@@ -516,8 +548,7 @@ export default function MarcheColore({ shop, produits }: Props) {
       )}
 
       {/* ── FOOTER ── */}
-      <footer style={{ backgroundColor: t.bg, borderTop: `2px solid ${t.accent}` }}
-        className="py-8">
+      <footer style={{ backgroundColor: t.bg, borderTop: `2px solid ${t.accent}` }} className="py-8">
         <div className="max-w-6xl mx-auto px-4 text-center space-y-3">
           <p className="font-extrabold text-lg" style={{ color: t.text }}>{shop.name}</p>
           <Link href="/boutiques"
@@ -527,14 +558,39 @@ export default function MarcheColore({ shop, produits }: Props) {
           </Link>
           <p className="text-xs" style={{ color: t.muted }}>
             Propulse par{' '}
-            <Link href="https://www.shopeasyci.store"
-              className="font-bold hover:underline"
-              style={{ color: t.accent }}>
+            <Link href="https://www.shopeasyci.store" className="font-bold hover:underline" style={{ color: t.accent }}>
               ShopEasy CI
             </Link>
           </p>
         </div>
       </footer>
+
+      {/* ── TOAST NOTIFICATION — style marché coloré, énergique ── */}
+      {toast && (
+        <div className={`fixed left-4 bottom-6 z-50 transition-all duration-500 ${
+          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+        }`}>
+          <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl max-w-[260px] border-2"
+            style={{
+              backgroundColor: t.surface,
+              borderColor:     t.accent,
+              boxShadow:       `0 8px 32px rgba(0,0,0,0.3)`,
+            }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ backgroundColor: t.accent }}>
+              <ShoppingBag size={16} color="#000" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold leading-tight" style={{ color: t.text }}>
+                {toast.prenom} vient d'acheter !
+              </p>
+              <p className="text-xs leading-tight" style={{ color: t.muted }}>
+                il y a {toast.minutes} min
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (

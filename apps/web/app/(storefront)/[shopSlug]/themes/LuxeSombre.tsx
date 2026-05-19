@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   Search, Menu, X,
   MapPin, Clock, ChevronRight, Gem,
-  Flame, Users, Zap, ShoppingBag,
+  Flame, Users, Zap, ShoppingBag, TrendingUp, Tag,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -20,6 +20,37 @@ interface Props { shop: ShopPublic; produits: any[]; }
 
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
+
+// ── Prénoms ivoiriens ─────────────────────────────────────────────────────────
+const PRENOMS = [
+  'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
+  'Brice', 'Mariama', 'Seydou', 'Aïcha', 'Kouadio', 'Natacha',
+  'Abou', 'Clarisse', 'Mamadou', 'Estelle', 'Drissa', 'Fatoumata',
+];
+
+// ── Toast notification ────────────────────────────────────────────────────────
+function useToastAchat() {
+  const [toast,   setToast]   = useState<{ prenom: string; minutes: number } | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const premier = setTimeout(() => afficherToast(), 10000);
+    return () => clearTimeout(premier);
+  }, []);
+
+  const afficherToast = () => {
+    const prenom  = PRENOMS[Math.floor(Math.random() * PRENOMS.length)];
+    const minutes = Math.floor(Math.random() * 25) + 2;
+    setToast({ prenom, minutes });
+    setVisible(true);
+    setTimeout(() => {
+      setVisible(false);
+      setTimeout(() => afficherToast(), Math.random() * 20000 + 25000);
+    }, 4000);
+  };
+
+  return { toast, visible };
+}
 
 // ── Compte à rebours vente flash ─────────────────────────────────────────────
 function useCompteurFlash() {
@@ -55,23 +86,51 @@ export default function LuxeSombre({ shop, produits }: Props) {
   const t         = getThemeConfig('luxe-sombre');
   const temps     = useCompteurFlash();
   const visiteurs = useVisiteursActifs();
+  const { toast, visible: toastVisible } = useToastAchat();
 
   const [menuOuvert,  setMenuOuvert]  = useState(false);
   const [refreshAvis, setRefreshAvis] = useState(0);
 
-  // Achats récents simulés par produit
+  // ── Achats simulés + top vendeurs ────────────────────────────────────────
   const achatsSim = useMemo(() => {
     const map: Record<string, number> = {};
-    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 15) + 2; });
+    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 40) + 5; });
     return map;
   }, [produits]);
 
-  // Vérifie si un produit est nouveau (moins de 7 jours)
+  const topVendeurs = useMemo(() => {
+    return new Set(
+      Object.entries(achatsSim)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 3)
+        .map(([id]) => id)
+    );
+  }, [achatsSim]);
+
   const estNouveau = (createdAt: string) =>
     Date.now() - new Date(createdAt).getTime() < 7 * 24 * 60 * 60 * 1000;
 
   return (
     <div style={{ backgroundColor: t.bg, color: t.text, minHeight: '100vh' }}>
+
+      {/* ── BANDEAU DEFILANT — style luxe sobre ── */}
+      <div className="overflow-hidden py-2" style={{ backgroundColor: t.accent }}>
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...Array(4)].map((_, i) => (
+            <span key={i} className="flex items-center gap-8 mx-8 text-xs font-light tracking-[0.2em] uppercase"
+              style={{ color: t.bg }}>
+              <span>Livraison a domicile</span>
+              <span>·</span>
+              <span>Paiement a la livraison</span>
+              <span>·</span>
+              <span>Collection exclusive</span>
+              <span>·</span>
+              <span>Retour sans questions</span>
+              <span>·</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
       {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }}
@@ -157,21 +216,17 @@ export default function LuxeSombre({ shop, produits }: Props) {
         )}
       </nav>
 
-      {/* ── BANDEAU URGENCE — adapté au style luxe ── */}
+      {/* ── BANDEAU URGENCE — style luxe ── */}
       <div style={{ backgroundColor: `${t.accent}08`, borderBottom: `1px solid ${t.accent}20` }}>
         <div className="max-w-6xl mx-auto px-6 py-2.5 flex items-center justify-between flex-wrap gap-2">
-
-          {/* Offre exclusive + compte à rebours */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
               <Flame size={13} style={{ color: t.accent }} />
-              <span className="text-xs tracking-[0.15em] uppercase font-light"
-                style={{ color: t.accent }}>
+              <span className="text-xs tracking-[0.15em] uppercase font-light" style={{ color: t.accent }}>
                 Offre exclusive
               </span>
             </div>
-            <div className="flex items-center gap-1 font-mono text-xs"
-              style={{ color: t.text }}>
+            <div className="flex items-center gap-1 font-mono text-xs" style={{ color: t.text }}>
               <span className="px-1.5 py-0.5 rounded"
                 style={{ backgroundColor: t.elevated, border: `1px solid ${t.border}` }}>
                 {String(temps.h).padStart(2, '0')}
@@ -188,8 +243,6 @@ export default function LuxeSombre({ shop, produits }: Props) {
               </span>
             </div>
           </div>
-
-          {/* Visiteurs */}
           <div className="flex items-center gap-1.5 text-xs" style={{ color: t.muted }}>
             <Users size={12} style={{ color: t.accent }} />
             <span>
@@ -237,11 +290,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
             </div>
           </div>
           <div className="absolute top-0 right-0 w-96 h-96 opacity-5"
-            style={{
-              background:  `radial-gradient(circle, ${t.accent}, transparent)`,
-              transform:   'translate(30%, -30%)',
-            }}
-          />
+            style={{ background: `radial-gradient(circle, ${t.accent}, transparent)`, transform: 'translate(30%, -30%)' }} />
         </div>
       )}
 
@@ -272,14 +321,14 @@ export default function LuxeSombre({ shop, produits }: Props) {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {produits.map(produit => {
-                const aReduction  = produit.comparePrice > produit.price;
-                const pct         = aReduction
-                  ? Math.round((1 - produit.price / produit.comparePrice) * 100)
-                  : 0;
-                const stockFaible = produit.totalStock > 0 && produit.totalStock <= 5;
-                const nouveau     = estNouveau(produit.createdAt);
-                const enRupture   = produit.totalStock === 0;
-                const achats      = achatsSim[produit._id] ?? 4;
+                const aReduction    = produit.comparePrice > produit.price;
+                const pct           = aReduction ? Math.round((1 - produit.price / produit.comparePrice) * 100) : 0;
+                const economie      = aReduction ? produit.comparePrice - produit.price : 0;
+                const stockFaible   = produit.totalStock > 0 && produit.totalStock <= 5;
+                const nouveau       = estNouveau(produit.createdAt);
+                const enRupture     = produit.totalStock === 0;
+                const achats        = achatsSim[produit._id] ?? 4;
+                const estTopVendeur = topVendeurs.has(produit._id);
 
                 return (
                   <Link key={produit._id} href={`/produits/${produit._id}`}
@@ -302,15 +351,24 @@ export default function LuxeSombre({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Badge Nouveau — priorité 2 */}
-                      {nouveau && !aReduction && !enRupture && (
+                      {/* Badge Top vente — priorité 2 */}
+                      {estTopVendeur && !aReduction && !enRupture && (
+                        <div className="absolute top-2 left-2 flex items-center gap-1 text-xs font-light px-2.5 py-1 tracking-wider"
+                          style={{ backgroundColor: '#f59e0b', color: '#000' }}>
+                          <TrendingUp size={10} />
+                          Top vente
+                        </div>
+                      )}
+
+                      {/* Badge Nouveau — priorité 3 */}
+                      {nouveau && !aReduction && !estTopVendeur && !enRupture && (
                         <div className="absolute top-2 left-2 text-xs font-light px-2.5 py-1 tracking-wider"
                           style={{ border: `1px solid ${t.accent}`, color: t.accent }}>
                           Nouveau
                         </div>
                       )}
 
-                      {/* Badge stock faible — bas gauche */}
+                      {/* Badge stock faible */}
                       {stockFaible && (
                         <div className="absolute bottom-2 left-2 flex items-center gap-1 text-xs px-2 py-1 animate-pulse"
                           style={{ backgroundColor: '#f59e0b', color: '#000' }}>
@@ -322,12 +380,9 @@ export default function LuxeSombre({ shop, produits }: Props) {
                       {/* Bouton favori */}
                       <div className="absolute top-2 right-2 z-10">
                         <BoutonFavori
-                          shopSlug={shop.slug}
-                          produitId={produit._id}
-                          nom={produit.name}
-                          prix={produit.price}
-                          image={produit.images?.[0] ?? null}
-                          accent={t.accent}
+                          shopSlug={shop.slug} produitId={produit._id}
+                          nom={produit.name} prix={produit.price}
+                          image={produit.images?.[0] ?? null} accent={t.accent}
                           className="w-8 h-8 bg-black/40 backdrop-blur-sm rounded-full"
                         />
                       </div>
@@ -346,20 +401,28 @@ export default function LuxeSombre({ shop, produits }: Props) {
 
                     {/* ── INFOS ── */}
                     <div className="space-y-1.5">
-                      <p className="text-sm font-light tracking-wide line-clamp-1"
-                        style={{ color: t.text }}>
+                      <p className="text-sm font-light tracking-wide line-clamp-1" style={{ color: t.text }}>
                         {produit.name}
                       </p>
 
-                      {/* Prix */}
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm" style={{ color: t.accent }}>
-                          {formatFcfa(produit.price)}
-                        </span>
-                        {aReduction && (
-                          <span className="text-xs line-through" style={{ color: t.muted }}>
-                            {formatFcfa(produit.comparePrice)}
+                      {/* Prix + économie */}
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm" style={{ color: t.accent }}>
+                            {formatFcfa(produit.price)}
                           </span>
+                          {aReduction && (
+                            <span className="text-xs line-through" style={{ color: t.muted }}>
+                              {formatFcfa(produit.comparePrice)}
+                            </span>
+                          )}
+                        </div>
+                        {aReduction && economie > 0 && (
+                          <div className="flex items-center gap-1 text-xs font-light"
+                            style={{ color: '#10b981' }}>
+                            <Tag size={9} />
+                            Vous economisez {formatFcfa(economie)}
+                          </div>
                         )}
                       </div>
 
@@ -373,21 +436,33 @@ export default function LuxeSombre({ shop, produits }: Props) {
                         </div>
                       )}
 
-                      {/* Barre stock faible */}
+                      {/* Barre stock faible — style luxe */}
                       {stockFaible && (
                         <div className="space-y-1 pt-1">
-                          <div className="w-full h-px overflow-hidden"
-                            style={{ backgroundColor: t.elevated }}>
-                            <div className="h-full"
-                              style={{
-                                width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
-                                backgroundColor: '#f59e0b',
-                              }}
-                            />
+                          <div className="w-full h-px overflow-hidden" style={{ backgroundColor: t.elevated }}>
+                            <div className="h-full" style={{
+                              width:           `${Math.min((produit.totalStock / 20) * 100, 100)}%`,
+                              backgroundColor: '#f59e0b',
+                            }} />
                           </div>
                           <p className="text-xs" style={{ color: '#f59e0b' }}>
                             {produit.totalStock} restant{produit.totalStock > 1 ? 's' : ''}
                           </p>
+                        </div>
+                      )}
+
+                      {/* CTA hover — style luxe */}
+                      {!enRupture && (
+                        <div
+                          className="text-xs tracking-[0.15em] uppercase font-light pt-1 transition-all"
+                          style={{ color: t.muted }}
+                          onMouseEnter={e => {
+                            (e.currentTarget as HTMLElement).style.color = t.accent;
+                          }}
+                          onMouseLeave={e => {
+                            (e.currentTarget as HTMLElement).style.color = t.muted;
+                          }}>
+                          Voir la piece →
                         </div>
                       )}
                     </div>
@@ -419,29 +494,14 @@ export default function LuxeSombre({ shop, produits }: Props) {
             Avis sur {shop.name}
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
-            <ListeAvis
-              shopSlug={shop.slug}
-              type="boutique"
-              accent={t.accent}
-              surface={t.surface}
-              border={t.border}
-              text={t.text}
-              muted={t.muted}
-              refresh={refreshAvis}
-            />
+            <ListeAvis shopSlug={shop.slug} type="boutique"
+              accent={t.accent} surface={t.surface} border={t.border}
+              text={t.text} muted={t.muted} refresh={refreshAvis} />
             <div className="p-5 rounded-2xl border"
               style={{ backgroundColor: t.surface, borderColor: t.border }}>
-              <FormulaireAvis
-                shopSlug={shop.slug}
-                type="boutique"
-                accent={t.accent}
-                bg={t.bg}
-                surface={t.surface}
-                border={t.border}
-                text={t.text}
-                muted={t.muted}
-                onSuccess={() => setRefreshAvis(r => r + 1)}
-              />
+              <FormulaireAvis shopSlug={shop.slug} type="boutique"
+                accent={t.accent} bg={t.bg} surface={t.surface} border={t.border}
+                text={t.text} muted={t.muted} onSuccess={() => setRefreshAvis(r => r + 1)} />
             </div>
           </div>
         </div>
@@ -475,8 +535,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
                   <div className="flex items-center gap-3 pt-4">
                     {shop.about.ownerPhoto
                       ? <Image src={shop.about.ownerPhoto} alt={shop.about.ownerName}
-                          width={48} height={48}
-                          className="rounded-full object-cover"
+                          width={48} height={48} className="rounded-full object-cover"
                           style={{ border: `1px solid ${t.accent}` }} />
                       : <div className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-light"
                           style={{ border: `1px solid ${t.accent}`, color: t.accent }}>
@@ -484,12 +543,8 @@ export default function LuxeSombre({ shop, produits }: Props) {
                         </div>
                     }
                     <div>
-                      <p className="text-sm font-light" style={{ color: t.text }}>
-                        {shop.about.ownerName}
-                      </p>
-                      <p className="text-xs tracking-widest uppercase" style={{ color: t.muted }}>
-                        Fondateur·rice
-                      </p>
+                      <p className="text-sm font-light" style={{ color: t.text }}>{shop.about.ownerName}</p>
+                      <p className="text-xs tracking-widest uppercase" style={{ color: t.muted }}>Fondateur·rice</p>
                     </div>
                   </div>
                 )}
@@ -500,8 +555,7 @@ export default function LuxeSombre({ shop, produits }: Props) {
       )}
 
       {/* ── FOOTER ── */}
-      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }}
-        className="py-10">
+      <footer style={{ backgroundColor: t.bg, borderTop: `1px solid ${t.border}` }} className="py-10">
         <div className="max-w-6xl mx-auto px-6 text-center space-y-3">
           <p className="text-xs tracking-[0.3em] uppercase font-light" style={{ color: t.text }}>
             {shop.name}
@@ -513,14 +567,40 @@ export default function LuxeSombre({ shop, produits }: Props) {
           </Link>
           <p className="text-xs" style={{ color: t.muted }}>
             Propulse par{' '}
-            <Link href="https://www.shopeasyci.store"
-              className="hover:opacity-70 transition-opacity"
+            <Link href="https://www.shopeasyci.store" className="hover:opacity-70 transition-opacity"
               style={{ color: t.accent }}>
               ShopEasy CI
             </Link>
           </p>
         </div>
       </footer>
+
+      {/* ── TOAST NOTIFICATION — style luxe ── */}
+      {toast && (
+        <div className={`fixed left-4 bottom-6 z-50 transition-all duration-500 ${
+          toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
+        }`}>
+          <div className="flex items-center gap-3 px-4 py-3 max-w-[260px]"
+            style={{
+              backgroundColor: t.surface,
+              border:          `1px solid ${t.accent}30`,
+              boxShadow:       `0 8px 32px rgba(0,0,0,0.5)`,
+            }}>
+            <div className="w-8 h-8 flex items-center justify-center flex-shrink-0"
+              style={{ border: `1px solid ${t.accent}`, color: t.accent }}>
+              <ShoppingBag size={14} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-light tracking-wide leading-tight" style={{ color: t.text }}>
+                {toast.prenom} vient d'acheter
+              </p>
+              <p className="text-xs leading-tight" style={{ color: t.muted }}>
+                il y a {toast.minutes} min
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── WHATSAPP FLOTTANT ── */}
       {shop.whatsapp && (
