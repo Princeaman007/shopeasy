@@ -7,7 +7,7 @@ import { useRouter }           from 'next/navigation';
 import {
   ChevronLeft, User, Phone, MapPin, Mail,
   Package, Check, Loader2, ShoppingCart, Tag,
-  Shield, Truck, RotateCcw,
+  Shield, Truck, RotateCcw, CheckCircle,
 } from 'lucide-react';
 import { getThemeConfig } from '../theme.config';
 import type { ShopPublic } from '../types';
@@ -26,6 +26,8 @@ interface Props { shop: ShopPublic; }
 
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
+
+const CLE_FORM = 'shopeasy_form_draft';
 
 // ── Barre de progression ──────────────────────────────────────────────────────
 function BarreProgression({ etape }: { etape: number }) {
@@ -58,6 +60,12 @@ function BarreProgression({ etape }: { etape: number }) {
   );
 }
 
+// ── Indicateur de champ valide ────────────────────────────────────────────────
+function ChampValide({ valide }: { valide: boolean }) {
+  if (!valide) return null;
+  return <CheckCircle size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-green-400" />;
+}
+
 export default function CommandeClient({ shop }: Props) {
   const t      = getThemeConfig(shop.selectedTheme);
   const router = useRouter();
@@ -72,9 +80,10 @@ export default function CommandeClient({ shop }: Props) {
     _id: string; orderNumber: string;
   } | null>(null);
 
+  // ── Formulaire avec valeurs sauvegardées ──────────────────────────────────
   const [form, setForm] = useState({
     nomClient:     '',
-    telephone:     '',
+    telephone:     '+225 ',
     email:         '',
     adresse:       '',
     ville:         '',
@@ -82,6 +91,7 @@ export default function CommandeClient({ shop }: Props) {
     notes:         '',
   });
 
+  // ── Chargement initial — panier + promo + formulaire sauvegarde ───────────
   useEffect(() => {
     const data = localStorage.getItem(`panier_${shop.slug}`);
     if (data) {
@@ -91,21 +101,46 @@ export default function CommandeClient({ shop }: Props) {
     } else {
       router.push('/panier');
     }
+
     const promoData = localStorage.getItem(`promo_${shop.slug}`);
     if (promoData) {
       try { setPromoApplique(JSON.parse(promoData)); } catch {}
     }
+
+    // Restaurer le formulaire si l'utilisateur revient en arriere
+    const draft = localStorage.getItem(CLE_FORM);
+    if (draft) {
+      try {
+        const parsed = JSON.parse(draft);
+        setForm(prev => ({ ...prev, ...parsed }));
+      } catch {}
+    }
   }, [shop.slug]);
+
+  // ── Sauvegarde automatique du formulaire a chaque modification ────────────
+  useEffect(() => {
+    localStorage.setItem(CLE_FORM, JSON.stringify(form));
+  }, [form]);
 
   const sousTotal  = articles.reduce((s, a) => s + a.prix * a.quantite, 0);
   const reduction  = promoApplique?.discount ?? 0;
   const total      = Math.max(0, sousTotal - reduction);
   const nbArticles = articles.reduce((s, a) => s + a.quantite, 0);
 
+  // ── Validation en temps réel par champ ───────────────────────────────────
+  const champValide = {
+    nomClient:  form.nomClient.trim().length >= 2,
+    telephone:  form.telephone.replace(/\D/g, '').length >= 8,
+    email:      form.email === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email),
+    adresse:    form.adresse.trim().length >= 5,
+    ville:      form.ville.trim().length >= 2,
+  };
+
   const valider = () => {
-    if (!form.nomClient.trim()) return 'Le nom est obligatoire';
-    if (!form.telephone.trim()) return 'Le telephone est obligatoire';
-    if (form.modeLivraison === 'livraison' && !form.adresse.trim())
+    if (!champValide.nomClient)  return 'Le nom est obligatoire (minimum 2 caracteres)';
+    if (!champValide.telephone)  return 'Le telephone est invalide';
+    if (!champValide.email)      return 'L\'adresse email est invalide';
+    if (form.modeLivraison === 'livraison' && !champValide.adresse)
       return "L'adresse de livraison est obligatoire";
     return null;
   };
@@ -158,8 +193,10 @@ export default function CommandeClient({ shop }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? 'Erreur serveur');
 
+      // Nettoyer panier + promo + brouillon formulaire
       localStorage.removeItem(`panier_${shop.slug}`);
       localStorage.removeItem(`promo_${shop.slug}`);
+      localStorage.removeItem(CLE_FORM);
       window.dispatchEvent(new Event('panier-updated'));
       setCommandeCreee({ _id: data.data._id, orderNumber: data.data.orderNumber });
     } catch (err: any) {
@@ -242,28 +279,23 @@ export default function CommandeClient({ shop }: Props) {
 
       <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
 
-        {/* ── BARRE DE PROGRESSION ── */}
         <BarreProgression etape={1} />
 
-        {/* ── EN-TETE ── */}
         <div className="text-center space-y-1">
-          <h1 className="text-2xl font-bold" style={{ color: t.text }}>
-            Derniere etape
-          </h1>
+          <h1 className="text-2xl font-bold" style={{ color: t.text }}>Derniere etape</h1>
           <p className="text-sm" style={{ color: t.muted }}>
             Vous y etes presque — {nbArticles} article{nbArticles > 1 ? 's' : ''} — {formatFcfa(total)}
           </p>
         </div>
 
-        {/* ── BLOC REASSURANCE ── */}
+        {/* Bloc reassurance */}
         <div className="grid grid-cols-3 gap-2">
           {[
-            { icone: <Shield    size={15} />, label: 'Vous payez a la reception'  },
-            { icone: <Truck     size={15} />, label: 'Livraison a domicile'        },
-            { icone: <RotateCcw size={15} />, label: 'Retour sans questions'       },
+            { icone: <Shield    size={15} />, label: 'Vous payez a la reception' },
+            { icone: <Truck     size={15} />, label: 'Livraison a domicile'       },
+            { icone: <RotateCcw size={15} />, label: 'Retour sans questions'      },
           ].map((g, i) => (
-            <div key={i}
-              className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl border"
+            <div key={i} className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl border"
               style={{ backgroundColor: t.surface, borderColor: t.border }}>
               <span style={{ color: t.accent }}>{g.icone}</span>
               <p className="text-xs leading-tight" style={{ color: t.muted }}>{g.label}</p>
@@ -271,7 +303,7 @@ export default function CommandeClient({ shop }: Props) {
           ))}
         </div>
 
-        {/* ── RECAP ARTICLES ── */}
+        {/* Recap articles */}
         <div className="rounded-2xl border p-4 space-y-3"
           style={{ backgroundColor: t.surface, borderColor: t.border }}>
           <h2 className="text-sm font-semibold flex items-center gap-2" style={{ color: t.text }}>
@@ -336,28 +368,50 @@ export default function CommandeClient({ shop }: Props) {
           <div className="space-y-1.5">
             <label className="text-sm font-medium" style={{ color: t.muted }}>Nom complet *</label>
             <div className="relative">
-              <User size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                style={{ color: t.muted }} />
-              <input value={form.nomClient}
+              <User size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: t.muted }} />
+              <input
+                value={form.nomClient}
                 onChange={e => setForm(p => ({ ...p, nomClient: e.target.value }))}
                 placeholder="Aminata Kone"
-                className="w-full border rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
-                style={{ backgroundColor: t.elevated, borderColor: t.border, color: t.text }} />
+                autoComplete="name"
+                className="w-full border rounded-xl pl-10 pr-10 py-3 text-sm outline-none"
+                style={{
+                  backgroundColor: t.elevated,
+                  borderColor: champValide.nomClient ? '#10b981' : t.border,
+                  color: t.text,
+                }} />
+              <ChampValide valide={champValide.nomClient} />
             </div>
           </div>
 
-          {/* Telephone */}
+          {/* Telephone — pre-rempli avec +225 */}
           <div className="space-y-1.5">
             <label className="text-sm font-medium" style={{ color: t.muted }}>Telephone *</label>
             <div className="relative">
-              <Phone size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                style={{ color: t.muted }} />
-              <input value={form.telephone} type="tel"
-                onChange={e => setForm(p => ({ ...p, telephone: e.target.value }))}
+              <Phone size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: t.muted }} />
+              <input
+                value={form.telephone}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                onChange={e => {
+                  let val = e.target.value;
+                  // Toujours garder le prefixe +225
+                  if (!val.startsWith('+225')) val = '+225 ';
+                  setForm(p => ({ ...p, telephone: val }));
+                }}
                 placeholder="+225 07 00 00 00 00"
-                className="w-full border rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
-                style={{ backgroundColor: t.elevated, borderColor: t.border, color: t.text }} />
+                className="w-full border rounded-xl pl-10 pr-10 py-3 text-sm outline-none"
+                style={{
+                  backgroundColor: t.elevated,
+                  borderColor: champValide.telephone ? '#10b981' : t.border,
+                  color: t.text,
+                }} />
+              <ChampValide valide={champValide.telephone} />
             </div>
+            <p className="text-xs" style={{ color: t.muted }}>
+              Format : +225 07 XX XX XX XX
+            </p>
           </div>
 
           {/* Email */}
@@ -366,13 +420,21 @@ export default function CommandeClient({ shop }: Props) {
               Email — pour recevoir la confirmation (optionnel)
             </label>
             <div className="relative">
-              <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                style={{ color: t.muted }} />
-              <input value={form.email} type="email"
+              <Mail size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: t.muted }} />
+              <input
+                value={form.email}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
                 onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
                 placeholder="votre@email.com"
-                className="w-full border rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
-                style={{ backgroundColor: t.elevated, borderColor: t.border, color: t.text }} />
+                className="w-full border rounded-xl pl-10 pr-10 py-3 text-sm outline-none"
+                style={{
+                  backgroundColor: t.elevated,
+                  borderColor: form.email && champValide.email ? '#10b981' : t.border,
+                  color: t.text,
+                }} />
+              <ChampValide valide={!!form.email && champValide.email} />
             </div>
           </div>
 
@@ -406,22 +468,37 @@ export default function CommandeClient({ shop }: Props) {
               <div className="space-y-1.5">
                 <label className="text-sm font-medium" style={{ color: t.muted }}>Adresse *</label>
                 <div className="relative">
-                  <MapPin size={15} className="absolute left-4 top-1/2 -translate-y-1/2"
-                    style={{ color: t.muted }} />
-                  <input value={form.adresse}
+                  <MapPin size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: t.muted }} />
+                  <input
+                    value={form.adresse}
+                    autoComplete="street-address"
                     onChange={e => setForm(p => ({ ...p, adresse: e.target.value }))}
                     placeholder="Rue, quartier, immeuble..."
-                    className="w-full border rounded-xl pl-10 pr-4 py-3 text-sm outline-none"
-                    style={{ backgroundColor: t.elevated, borderColor: t.border, color: t.text }} />
+                    className="w-full border rounded-xl pl-10 pr-10 py-3 text-sm outline-none"
+                    style={{
+                      backgroundColor: t.elevated,
+                      borderColor: champValide.adresse ? '#10b981' : t.border,
+                      color: t.text,
+                    }} />
+                  <ChampValide valide={champValide.adresse} />
                 </div>
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-medium" style={{ color: t.muted }}>Ville</label>
-                <input value={form.ville}
-                  onChange={e => setForm(p => ({ ...p, ville: e.target.value }))}
-                  placeholder="Abidjan, Bouake..."
-                  className="w-full border rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{ backgroundColor: t.elevated, borderColor: t.border, color: t.text }} />
+                <div className="relative">
+                  <input
+                    value={form.ville}
+                    autoComplete="address-level2"
+                    onChange={e => setForm(p => ({ ...p, ville: e.target.value }))}
+                    placeholder="Abidjan, Bouake..."
+                    className="w-full border rounded-xl px-4 pr-10 py-3 text-sm outline-none"
+                    style={{
+                      backgroundColor: t.elevated,
+                      borderColor: champValide.ville ? '#10b981' : t.border,
+                      color: t.text,
+                    }} />
+                  <ChampValide valide={champValide.ville} />
+                </div>
               </div>
             </>
           )}
@@ -462,13 +539,9 @@ export default function CommandeClient({ shop }: Props) {
             }
           </button>
 
-          {/* Reassurance finale */}
-          <div className="flex items-center justify-center gap-2 text-xs"
-            style={{ color: t.muted }}>
+          <div className="flex items-center justify-center gap-2 text-xs" style={{ color: t.muted }}>
             <Shield size={12} style={{ color: t.accent }} />
-            <span>
-              Paiement uniquement a la livraison — vous ne payez rien maintenant
-            </span>
+            <span>Paiement uniquement a la livraison — vous ne payez rien maintenant</span>
           </div>
 
           <p className="text-xs text-center" style={{ color: t.muted }}>
