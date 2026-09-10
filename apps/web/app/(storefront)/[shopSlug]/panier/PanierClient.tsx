@@ -197,7 +197,7 @@ export default function PanierClient({ shop }: Props) {
             )}
           </h1>
           <p className="text-sm mt-0.5" style={{ color: t.muted }}>
-            <span style={{ color: t.accent }}>{shop.name}</span>
+            Vendu et livré par <span style={{ color: t.accent, fontWeight: 600 }}>{shop.name}</span>
           </p>
         </div>
 

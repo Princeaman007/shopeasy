@@ -372,6 +372,11 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             )}
 
+            {/* Vendu et livre par — clarte pour le client sur qui gere la commande */}
+            <p className="text-xs" style={{ color: t.muted }}>
+              Vendu et livré par <span style={{ color: t.accent, fontWeight: 600 }}>{shop.name}</span>
+            </p>
+
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-2xl font-bold leading-tight" style={{ color: t.text }}>{produit.name}</h1>
               <BoutonFavori shopSlug={shop.slug} produitId={produit._id} nom={produit.name}

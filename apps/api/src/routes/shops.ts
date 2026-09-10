@@ -436,6 +436,100 @@ router.get('/recherche-globale', async (req: Request, res: Response): Promise<vo
   }
 });
 
+// ─── GET /shops/vitrine — Flux de produits multi-boutiques pour la page /boutiques ──
+router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const page  = parseInt(req.query.page as string) || 1;
+    const limite = 20;
+    const categorie = typeof req.query.categorie === 'string' ? req.query.categorie : '';
+    const skip  = (page - 1) * limite;
+
+    // ── Boutiques premium actives uniquement ──────────────────────────────────
+    const shopsActifs = await Shop.find({
+      planType: 'premium',
+      subscriptionStatus: { $in: ['active', 'trial'] },
+    }).select('_id slug name isVerified').lean();
+
+    const shopsMap = new Map(shopsActifs.map((s) => [String(s._id), s]));
+    const shopIds  = shopsActifs.map((s) => s._id);
+
+    // ── Filtre produits ────────────────────────────────────────────────────────
+    const filtre: any = {
+      shopId: { $in: shopIds },
+      status: 'active',
+    };
+    if (categorie.trim()) {
+      filtre.categorySlug = categorie.trim();
+    }
+
+    const [produits, total] = await Promise.all([
+      Product.find(filtre)
+        .select('name price comparePrice images shopId categoryId createdAt')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limite)
+        .lean(),
+      Product.countDocuments(filtre),
+    ]);
+
+    // ── Attache la boutique a chaque produit ──────────────────────────────────
+    const produitsAvecBoutique = produits.map((p) => ({
+      ...p,
+      boutique: shopsMap.get(String(p.shopId)) || null,
+    }));
+
+    res.json({
+      produits: produitsAvecBoutique,
+      pagination: {
+        page,
+        total,
+        pages: Math.ceil(total / limite),
+        parPage: limite,
+      },
+    });
+  } catch (error) {
+    console.error('Erreur GET /shops/vitrine :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+// ─── GET /shops/populaires — Boutiques les plus actives (par nombre de commandes) ──
+router.get('/populaires', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const limite = parseInt(req.query.limite as string) || 8;
+
+    const shopsActifs = await Shop.find({
+      planType: 'premium',
+      subscriptionStatus: { $in: ['active', 'trial'] },
+    }).select('_id slug name isVerified logo').lean();
+
+    const shopIds = shopsActifs.map((s) => s._id);
+
+    // ── Compte les commandes par boutique ─────────────────────────────────────
+    const commandesParBoutique = await Order.aggregate([
+      { $match: { shopId: { $in: shopIds } } },
+      { $group: { _id: '$shopId', totalCommandes: { $sum: 1 } } },
+      { $sort: { totalCommandes: -1 } },
+      { $limit: limite },
+    ]);
+
+    const compteMap = new Map(
+      commandesParBoutique.map((c) => [String(c._id), c.totalCommandes])
+    );
+
+    const boutiquesPopulaires = shopsActifs
+      .filter((s) => compteMap.has(String(s._id)))
+      .map((s) => ({ ...s, totalCommandes: compteMap.get(String(s._id)) }))
+      .sort((a, b) => b.totalCommandes - a.totalCommandes)
+      .slice(0, limite);
+
+    res.json({ boutiques: boutiquesPopulaires });
+  } catch (error) {
+    console.error('Erreur GET /shops/populaires :', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 // ─── GET /shops/:slug — DOIT etre en dernier ──────────────────────────────────
 
 router.get('/:slug', async (req: Request, res: Response) => {
