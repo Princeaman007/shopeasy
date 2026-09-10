@@ -7,6 +7,7 @@ import {
   Search, Store, BadgeCheck, ArrowLeft, Loader2,
   MapPin, Sparkles, Users, ShoppingBag, TrendingUp,
 } from 'lucide-react';
+import BottomNavBar from '@/components/client/BottomNavBar';
 
 interface Boutique {
   _id:           string;
@@ -39,7 +40,7 @@ interface Pagination {
 const formatFcfa = (n: number) =>
   new Intl.NumberFormat('fr-FR').format(n) + ' FCFA';
 
-// ── Visiteurs simulés par boutique ────────────────────────────────────────────
+// ── Visiteurs simules par boutique ────────────────────────────────────────────
 function useVisiteursBoutique(id: string) {
   const seed = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
   const [nb, setNb] = useState((seed % 14) + 4);
@@ -52,16 +53,16 @@ function useVisiteursBoutique(id: string) {
   return nb;
 }
 
-// ── Vérifie si une boutique est nouvelle (moins de 14 jours) ─────────────────
+// ── Verifie si une boutique est nouvelle (moins de 14 jours) ─────────────────
 const estNouvelle = (createdAt?: string) => {
   if (!createdAt) return false;
   return Date.now() - new Date(createdAt).getTime() < 14 * 24 * 60 * 60 * 1000;
 };
 
-// ── Libellé du thème ──────────────────────────────────────────────────────────
+// ── Libelle du theme ──────────────────────────────────────────────────────────
 const THEMES: Record<string, string> = {
   'vitrine-moderne': 'Vitrine Moderne',
-  'marche-colore':   'Marché Coloré',
+  'marche-colore':   'Marche Colore',
   'luxe-sombre':     'Luxe Sombre',
   'boutique-pro':    'Boutique Pro',
   'stories-style':   'Stories Style',
@@ -106,7 +107,6 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
 
-        {/* Badges haut droite */}
         <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5">
           {boutique.isVerified && (
             <div className="bg-primary rounded-lg px-2 py-1 flex items-center gap-1">
@@ -129,7 +129,6 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
           )}
         </div>
 
-        {/* Logo + nom en bas */}
         <div className="absolute bottom-3 left-3 flex items-center gap-2">
           {boutique.logo ? (
             <Image src={boutique.logo} alt={boutique.name} width={40} height={40}
@@ -152,7 +151,6 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         </div>
       </div>
 
-      {/* ── VISITEURS ACTIFS ── */}
       <div className="px-4 pt-3 flex items-center gap-1.5 text-xs text-muted">
         <Users size={11} className="text-primary" />
         <span>
@@ -160,14 +158,12 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         </span>
       </div>
 
-      {/* ── DESCRIPTION ── */}
       {boutique.about?.description && (
         <div className="px-4 pt-2">
           <p className="text-muted text-xs line-clamp-2">{boutique.about.description}</p>
         </div>
       )}
 
-      {/* ── APERCU PRODUITS ── */}
       {boutique.produits?.length > 0 && (
         <div className="p-4 space-y-2 flex-1">
           <p className="text-muted text-xs font-medium uppercase tracking-wide">Quelques produits</p>
@@ -190,7 +186,6 @@ function CarteBoutique({ boutique }: { boutique: Boutique }) {
         </div>
       )}
 
-      {/* ── FOOTER CARTE ── */}
       <div className="px-4 pb-4 flex items-center justify-between mt-auto">
         <span className="text-muted text-xs">
           {boutique.produits?.length > 0 ? `${boutique.produits.length}+ produits` : 'Boutique premium'}
@@ -212,7 +207,6 @@ export default function BoutiquesPage() {
   const [chargement,     setChargement]     = useState(true);
   const [chargementPlus, setChargementPlus] = useState(false);
 
-  // Stats globales simulées
   const totalBoutiques = pagination?.total ?? 0;
   const totalProduits  = boutiques.reduce((s, b) => s + (b.produits?.length ?? 0), 0);
 
@@ -246,7 +240,7 @@ export default function BoutiquesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-20 md:pb-0">
 
       {/* ── HEADER ── */}
       <div className="border-b border-border bg-surface">
@@ -268,7 +262,6 @@ export default function BoutiquesPage() {
             </p>
           </div>
 
-          {/* ── STATS CONFIANCE ── */}
           {!chargement && totalBoutiques > 0 && (
             <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto mb-8">
               {[
@@ -286,7 +279,6 @@ export default function BoutiquesPage() {
             </div>
           )}
 
-          {/* ── RECHERCHE ── */}
           <div className="max-w-xl mx-auto relative">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted" />
             <input type="text" value={recherche}
@@ -296,7 +288,7 @@ export default function BoutiquesPage() {
             {recherche && (
               <button onClick={() => setRecherche('')}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-muted hover:text-white transition-colors text-lg">
-                ×
+                x
               </button>
             )}
           </div>
@@ -313,14 +305,12 @@ export default function BoutiquesPage() {
       {/* ── CONTENU ── */}
       <div className="max-w-6xl mx-auto px-4 py-10">
 
-        {/* Skeleton loading */}
         {chargement && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {[1, 2, 3, 4, 5, 6].map(i => <SkeletonCarte key={i} />)}
           </div>
         )}
 
-        {/* Etat vide */}
         {!chargement && boutiques.length === 0 && (
           <div className="text-center py-20">
             <div className="w-16 h-16 rounded-2xl bg-surface border border-border flex items-center justify-center mx-auto mb-4">
@@ -339,7 +329,6 @@ export default function BoutiquesPage() {
           </div>
         )}
 
-        {/* Grille boutiques */}
         {!chargement && boutiques.length > 0 && (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -348,7 +337,6 @@ export default function BoutiquesPage() {
               ))}
             </div>
 
-            {/* Charger plus */}
             {pagination && page < pagination.pages && (
               <div className="text-center mt-10">
                 <button onClick={chargerPlus} disabled={chargementPlus}
@@ -363,6 +351,8 @@ export default function BoutiquesPage() {
           </>
         )}
       </div>
+
+      <BottomNavBar />
     </div>
   );
 }
