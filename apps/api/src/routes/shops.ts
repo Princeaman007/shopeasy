@@ -7,6 +7,7 @@ import { Product }  from '../models/Product';
 import { Category } from '../models/Category';
 import { authenticate, requireMerchant } from '../middleware/auth';
 import { ShopService } from '../services/ShopService';
+import { Order } from '../models/Order';
 
 // ─── Multer ───────────────────────────────────────────────────────────────────
 
@@ -435,6 +436,8 @@ router.get('/recherche-globale', async (req: Request, res: Response): Promise<vo
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+// ─── A ajouter en haut de shops.ts, avec les autres imports ───────────────────
+// import { Order } from '../models/Order';
 
 // ─── GET /shops/vitrine — Flux de produits multi-boutiques pour la page /boutiques ──
 router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
@@ -444,7 +447,6 @@ router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
     const categorie = typeof req.query.categorie === 'string' ? req.query.categorie : '';
     const skip  = (page - 1) * limite;
 
-    // ── Boutiques premium actives uniquement ──────────────────────────────────
     const shopsActifs = await Shop.find({
       planType: 'premium',
       subscriptionStatus: { $in: ['active', 'trial'] },
@@ -453,7 +455,6 @@ router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
     const shopsMap = new Map(shopsActifs.map((s) => [String(s._id), s]));
     const shopIds  = shopsActifs.map((s) => s._id);
 
-    // ── Filtre produits ────────────────────────────────────────────────────────
     const filtre: any = {
       shopId: { $in: shopIds },
       status: 'active',
@@ -472,7 +473,6 @@ router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
       Product.countDocuments(filtre),
     ]);
 
-    // ── Attache la boutique a chaque produit ──────────────────────────────────
     const produitsAvecBoutique = produits.map((p) => ({
       ...p,
       boutique: shopsMap.get(String(p.shopId)) || null,
@@ -505,7 +505,6 @@ router.get('/populaires', async (req: Request, res: Response): Promise<void> => 
 
     const shopIds = shopsActifs.map((s) => s._id);
 
-    // ── Compte les commandes par boutique ─────────────────────────────────────
     const commandesParBoutique = await Order.aggregate([
       { $match: { shopId: { $in: shopIds } } },
       { $group: { _id: '$shopId', totalCommandes: { $sum: 1 } } },
@@ -513,13 +512,17 @@ router.get('/populaires', async (req: Request, res: Response): Promise<void> => 
       { $limit: limite },
     ]);
 
-    const compteMap = new Map(
+    const compteMap = new Map<string, number>(
       commandesParBoutique.map((c) => [String(c._id), c.totalCommandes])
     );
 
     const boutiquesPopulaires = shopsActifs
       .filter((s) => compteMap.has(String(s._id)))
-      .map((s) => ({ ...s, totalCommandes: compteMap.get(String(s._id)) }))
+      .map((s) => ({
+        ...s,
+        // Valeur par defaut a 0 pour eviter number | undefined
+        totalCommandes: compteMap.get(String(s._id)) ?? 0,
+      }))
       .sort((a, b) => b.totalCommandes - a.totalCommandes)
       .slice(0, limite);
 
@@ -529,7 +532,6 @@ router.get('/populaires', async (req: Request, res: Response): Promise<void> => 
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
-
 // ─── GET /shops/:slug — DOIT etre en dernier ──────────────────────────────────
 
 router.get('/:slug', async (req: Request, res: Response) => {
