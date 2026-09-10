@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
-import { Eye, EyeOff, Loader2, Mail } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Mail, Check } from 'lucide-react';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,12 +17,12 @@ const connexionSchema = z.object({
 type ConnexionForm = z.infer<typeof connexionSchema>;
 
 export default function ConnexionPage() {
-  const { login }                                     = useAuth();
-  const [showPassword,    setShowPassword]            = useState(false);
-  const [erreurServeur,   setErreurServeur]           = useState('');
-  const [emailNonVerifie, setEmailNonVerifie]         = useState('');
-  const [renvoyeSucces,   setRenvoyeSucces]           = useState(false);
-  const [renvoyeLoading,  setRenvoyeLoading]          = useState(false);
+  const { login }                             = useAuth();
+  const [showPassword,    setShowPassword]    = useState(false);
+  const [erreurServeur,   setErreurServeur]   = useState('');
+  const [emailNonVerifie, setEmailNonVerifie] = useState('');
+  const [renvoyeSucces,   setRenvoyeSucces]   = useState(false);
+  const [renvoyeLoading,  setRenvoyeLoading]  = useState(false);
 
   const {
     register,
@@ -67,14 +67,15 @@ export default function ConnexionPage() {
       login(result.data.token, result.data.user, result.data.shop ?? undefined);
       await new Promise(resolve => setTimeout(resolve, 100));
 
+      // ── Redirection selon le role ──────────────────────────────────────────
       const role = result.data.user.role;
       if (role === 'admin')         window.location.href = '/admin';
       else if (role === 'merchant') window.location.href = '/dashboard';
       else if (result.data.shop)    window.location.href = '/dashboard';
-      else                          window.location.href = '/mes-commandes';
+      else                          window.location.href = '/boutiques';
 
     } catch {
-      setErreurServeur('Erreur réseau — vérifiez votre connexion');
+      setErreurServeur('Erreur reseau — verifiez votre connexion');
     }
   };
 
@@ -102,10 +103,10 @@ export default function ConnexionPage() {
             <Image src="/Shop.png" alt="ShopEasy CI" width={150} height={55} className="object-contain" />
           </Link>
           <h1 className="text-white font-bold text-2xl mt-6">Bon retour !</h1>
-          <p className="text-muted mt-2">Connectez-vous à votre compte</p>
+          <p className="text-muted mt-2">Connectez-vous a votre compte</p>
         </div>
 
-        {/* Bandeau email non vérifié */}
+        {/* Bandeau email non verifie */}
         {emailNonVerifie && (
           <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-5 mb-5 space-y-3">
             <div className="flex items-center gap-3">
@@ -120,8 +121,8 @@ export default function ConnexionPage() {
               </div>
             </div>
             {renvoyeSucces ? (
-              <p className="text-green-400 text-xs text-center py-1">
-                ✅ Nouveau lien envoye a {emailNonVerifie}
+              <p className="flex items-center justify-center gap-1.5 text-green-400 text-xs text-center py-1">
+                <Check size={14} /> Nouveau lien envoye a {emailNonVerifie}
               </p>
             ) : (
               <button onClick={renvoyer} disabled={renvoyeLoading}
@@ -184,13 +185,13 @@ export default function ConnexionPage() {
             <p className="text-muted text-sm">
               Vendeur ?{' '}
               <Link href="/inscription" className="text-primary hover:underline font-medium">
-                Créer une boutique
+                Creer une boutique
               </Link>
             </p>
             <p className="text-muted text-sm">
               Client ?{' '}
               <Link href="/inscription-client" className="text-primary hover:underline font-medium">
-                Créer un compte client
+                Creer un compte client
               </Link>
             </p>
           </div>

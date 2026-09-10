@@ -377,6 +377,66 @@ router.get('/annuaire', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+// ─── GET /shops/recherche-globale — Recherche boutiques + produits ────────────
+router.get('/recherche-globale', async (req, res) => {
+    try {
+        const q = (req.query.q || '').trim();
+        if (!q) {
+            res.json({ boutiques: [], produits: [] });
+            return;
+        }
+
+        const regex = { $regex: q, $options: 'i' };
+
+        // ── Recherche boutiques par nom ──────────────────────────────────────
+        const boutiquesTrouvees = await Shop_1.Shop.find({
+            planType: 'premium',
+            subscriptionStatus: { $in: ['active', 'trial'] },
+            name: regex,
+        })
+            .select('slug name about isVerified selectedTheme heroImage logo')
+            .limit(6)
+            .lean();
+
+        // ── Recherche produits par nom, dans les boutiques premium actives ───
+        const shopsActifsIds = await Shop_1.Shop.find({
+            planType: 'premium',
+            subscriptionStatus: { $in: ['active', 'trial'] },
+        }).select('_id').lean();
+
+        const produitsTrouves = await Product_1.Product.find({
+            shopId: { $in: shopsActifsIds.map((s) => s._id) },
+            status: 'active',
+            name: regex,
+        })
+            .select('name price images shopId')
+            .limit(12)
+            .lean();
+
+        // ── Attache le nom + slug de la boutique a chaque produit ────────────
+        const shopsMap = new Map(
+            (await Shop_1.Shop.find({ _id: { $in: produitsTrouves.map((p) => p.shopId) } })
+                .select('slug name')
+                .lean()
+            ).map((s) => [String(s._id), s])
+        );
+
+        const produitsAvecBoutique = produitsTrouves.map((p) => ({
+            ...p,
+            boutique: shopsMap.get(String(p.shopId)) || null,
+        }));
+
+        res.json({
+            boutiques: boutiquesTrouvees,
+            produits: produitsAvecBoutique,
+        });
+    }
+    catch (error) {
+        console.error('Erreur GET /shops/recherche-globale :', error);
+        res.status(500).json({ message: 'Erreur serveur' });
+    }
+});
+
 // ─── GET /shops/:slug — DOIT etre en dernier ──────────────────────────────────
 
 router.get('/:slug', async (req: Request, res: Response) => {

@@ -131,7 +131,7 @@ export default function MesFavorisPage() {
             </div>
             <h2 className="text-white font-semibold mb-2">Aucun favori</h2>
             <p className="text-muted text-sm mb-6">
-              Clique sur ❤️ sur un produit pour le sauvegarder ici
+              Clique sur  sur un produit pour le sauvegarder ici
             </p>
             <Link href="/"
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">

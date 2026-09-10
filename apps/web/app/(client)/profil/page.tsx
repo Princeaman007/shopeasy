@@ -54,7 +54,7 @@ export default function ProfilPage() {
 
       // Met à jour le contexte auth
       login(token!, { ...user!, name: formInfos.name });
-      setSucces('Profil mis à jour ✅');
+      setSucces('Profil mis à jour ');
       setEditInfos(false);
       setTimeout(() => setSucces(''), 3000);
     } catch {
@@ -96,7 +96,7 @@ export default function ProfilPage() {
       const data = await res.json();
       if (!res.ok) { setErreur(data.message || 'Erreur'); return; }
 
-      setSucces('Mot de passe modifié ✅');
+      setSucces('Mot de passe modifié ');
       setEditMdp(false);
       setFormMdp({ actuel: '', nouveau: '', confirmation: '' });
       setTimeout(() => setSucces(''), 3000);

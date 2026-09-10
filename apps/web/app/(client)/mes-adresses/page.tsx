@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MapPin, ArrowLeft, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
+import BottomNavBar from '@/components/client/BottomNavBar';
 
 interface Adresse {
   _id?: string;
@@ -11,8 +12,6 @@ interface Adresse {
   city: string;
   phone: string;
 }
-
-const fmt = (s: string) => s.trim();
 
 export default function MesAdressesPage() {
   const [adresses, setAdresses]         = useState<Adresse[]>([]);
@@ -31,7 +30,6 @@ export default function MesAdressesPage() {
     Authorization: `Bearer ${token}`,
   };
 
-  // ── Chargement ──────────────────────────────────────────────
   useEffect(() => {
     const fetch_ = async () => {
       try {
@@ -50,7 +48,6 @@ export default function MesAdressesPage() {
     fetch_();
   }, []);
 
-  // ── Ajouter / Modifier ──────────────────────────────────────
   const sauvegarder = async () => {
     if (!form.label || !form.address || !form.city || !form.phone) {
       setErreur('Tous les champs sont obligatoires');
@@ -81,7 +78,6 @@ export default function MesAdressesPage() {
     }
   };
 
-  // ── Supprimer ───────────────────────────────────────────────
   const supprimer = async (id: string) => {
     try {
       const res = await fetch(
@@ -95,7 +91,6 @@ export default function MesAdressesPage() {
     }
   };
 
-  // ── Ouvrir édition ──────────────────────────────────────────
   const ouvrirEdition = (adresse: Adresse) => {
     setForm(adresse);
     setEnEdition(adresse._id || null);
@@ -111,7 +106,7 @@ export default function MesAdressesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-20 md:pb-0">
       {/* Header */}
       <div className="border-b border-border">
         <div className="max-w-3xl mx-auto px-4 py-6">
@@ -257,6 +252,8 @@ export default function MesAdressesPage() {
           </div>
         ))}
       </div>
+
+      <BottomNavBar />
     </div>
   );
 }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ShoppingBag, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useClientOrders, StatutCommande } from '@/hooks/useClientOrders';
 import StatutBadge from '@/components/client/StatutBadge';
+import BottomNavBar from '@/components/client/BottomNavBar';
 
 const ETAPES: StatutCommande[] = ['new', 'confirmed', 'shipping', 'delivered'];
 const LABELS_ETAPES = ['Reçue', 'Confirmée', 'En route', 'Livrée'];
@@ -29,7 +30,7 @@ export default function MesCommandesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-20 md:pb-0">
       {/* Header */}
       <div className="border-b border-border">
         <div className="max-w-3xl mx-auto px-4 py-6">
@@ -62,7 +63,7 @@ export default function MesCommandesPage() {
             </div>
             <h2 className="text-white font-semibold mb-2">Aucune commande</h2>
             <p className="text-muted text-sm mb-6">Vos prochaines commandes apparaîtront ici</p>
-            <Link href="/" className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
+            <Link href="/boutiques" className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
               Découvrir les boutiques
             </Link>
           </div>
@@ -199,6 +200,8 @@ export default function MesCommandesPage() {
           })}
         </div>
       </div>
+
+      <BottomNavBar />
     </div>
   );
 }
