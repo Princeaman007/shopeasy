@@ -8,6 +8,7 @@ import {
   ShoppingBag, ChevronRight, TrendingUp, Shield, Truck, RotateCcw,
 } from 'lucide-react';
 import BottomNavBar from '@/components/client/BottomNavBar';
+import ClientNavbar from '@/components/client/ClientNavbar';
 
 interface Boutique {
   _id:        string;
@@ -207,6 +208,8 @@ export default function BoutiquesPage() {
 
   return (
     <div className="min-h-screen bg-bg pb-20 md:pb-0">
+
+      <ClientNavbar />
 
       {/* ── BANDEAU URGENCE ── */}
       <div style={{ backgroundColor: '#ef444412', borderBottom: '1px solid #ef444428' }}>
