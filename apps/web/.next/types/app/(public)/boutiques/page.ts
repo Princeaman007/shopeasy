@@ -1,8 +1,8 @@
 // File: C:\Users\princ\mes_projets\rest-api\shopeasyci\shopeasy-ci\apps\web\app\(public)\boutiques\page.tsx
-import * as entry from '../../../../../app/(public)/boutiques/page.js'
+import * as entry from '../../../../../app/(client)/boutiques/page.jsx'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../../app/(public)/boutiques/page.js')
+type TEntry = typeof import('../../../../../app/(client)/boutiques/page.jsx')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{
