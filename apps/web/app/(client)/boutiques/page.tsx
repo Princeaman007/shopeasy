@@ -457,7 +457,7 @@ export default function BoutiquesPage() {
 
       {/* ── TOAST NOTIFICATION ── */}
       {toast && (
-        <div className={`fixed left-4 bottom-6 z-50 transition-all duration-500 ${
+        <div className={`fixed left-4 bottom-20 md:bottom-6 z-[60] transition-all duration-500 ${
           toastVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'
         }`}>
           <div className="flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl max-w-[270px] bg-surface border border-border"
