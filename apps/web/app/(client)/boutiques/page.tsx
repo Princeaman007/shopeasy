@@ -294,16 +294,16 @@ export default function BoutiquesPage() {
 
         {/* ── BOUTIQUES POPULAIRES ── */}
         {boutiquesPop.length > 0 && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
+          <div className="space-y-4">
+            <div className="flex items-center justify-center gap-2">
               <TrendingUp size={16} className="text-primary" />
               <h2 className="text-white font-bold">Boutiques les plus actives</h2>
             </div>
-            <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1">
+            <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:flex-wrap sm:justify-center pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory sm:snap-none">
               {boutiquesPop.map((boutique) => (
                 <Link key={boutique._id} href={`https://${boutique.slug}.shopeasyci.store`}
-                  className="flex-shrink-0 w-32 bg-surface border border-border rounded-2xl p-3 text-center hover:border-primary/40 transition-colors">
-                  <div className="w-14 h-14 rounded-2xl mx-auto mb-2 overflow-hidden relative bg-elevated">
+                  className="flex-shrink-0 snap-start w-32 sm:w-36 bg-surface border border-border rounded-2xl p-4 text-center hover:border-primary/40 hover:shadow-lg transition-all">
+                  <div className="w-16 h-16 rounded-2xl mx-auto mb-2.5 overflow-hidden relative bg-elevated ring-1 ring-border">
                     {boutique.logo ? (
                       <Image src={boutique.logo} alt={boutique.name} fill className="object-cover" />
                     ) : (
@@ -316,8 +316,8 @@ export default function BoutiquesPage() {
                   </div>
                   <p className="text-white text-xs font-semibold truncate">{boutique.name}</p>
                   <div className="flex items-center justify-center gap-1 mt-1">
-                    {boutique.isVerified && <BadgeCheck size={10} className="text-primary" />}
-                    <span className="text-muted text-[10px]">
+                    {boutique.isVerified && <BadgeCheck size={10} className="text-primary flex-shrink-0" />}
+                    <span className="text-muted text-[10px] truncate">
                       {boutique.totalCommandes}+ commandes
                     </span>
                   </div>
