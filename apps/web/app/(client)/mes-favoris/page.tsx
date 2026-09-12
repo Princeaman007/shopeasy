@@ -167,7 +167,7 @@ export default function MesFavorisPage() {
 
                 {/* Infos */}
                 <div className="p-3 space-y-2">
-                  <Link href={`https://${produit.shopSlug}.shopeasyci.store/produits/${produit._id}`}
+                  <Link href={`https://${produit.shopSlug}.shopeasyci.store/produits/${produit._id}?ref=vitrine`}
                     className="text-white text-sm font-medium hover:text-primary transition-colors line-clamp-2 block">
                     {produit.nom}
                   </Link>

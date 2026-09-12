@@ -154,7 +154,7 @@ export default function RecherchePage() {
             <div className="space-y-2">
               {produits.map((produit) => (
                 <Link key={produit._id}
-                  href={produit.boutique ? `https://${produit.boutique.slug}.shopeasyci.store/produits/${produit._id}` : '#'}
+                  href={produit.boutique ? `https://${produit.boutique.slug}.shopeasyci.store/produits/${produit._id}?ref=vitrine` : '#'}
                   className="flex items-center gap-3 p-3 bg-surface border border-border rounded-2xl hover:border-primary/40 transition-colors">
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-elevated flex-shrink-0 relative">
                     {produit.images?.[0] ? (

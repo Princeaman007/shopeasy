@@ -364,7 +364,7 @@ export default function BoutiquesPage() {
                   return (
                     <Link
                       key={produit._id}
-                      href={produit.boutique ? `https://${produit.boutique.slug}.shopeasyci.store/produits/${produit._id}` : '#'}
+                      href={produit.boutique ? `https://${produit.boutique.slug}.shopeasyci.store/produits/${produit._id}?ref=vitrine` : '#'}
                       className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 hover:shadow-xl transition-all flex flex-col"
                     >
                       <div className="aspect-square relative overflow-hidden bg-elevated">

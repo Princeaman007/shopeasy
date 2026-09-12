@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   ChevronLeft, ChevronRight, ShoppingCart,
   MessageCircle, Check, Minus, Plus, Share2,
@@ -117,10 +118,14 @@ function useSwipe(onGauche: () => void, onDroite: () => void) {
 }
 
 export default function ProduitClient({ shop, produit, similaires }: Props) {
-  const t         = getThemeConfig(shop.selectedTheme);
-  const temps     = useCompteur();
-  const visiteurs = useVisiteurs();
-  const commandes = useCommandes();
+  const t             = getThemeConfig(shop.selectedTheme);
+  const temps         = useCompteur();
+  const visiteurs     = useVisiteurs();
+  const commandes     = useCommandes();
+  const searchParams  = useSearchParams();
+  // Client arrive depuis la vitrine globale /boutiques plutot que directement
+  // sur cette boutique — le lien retour doit alors pointer vers /boutiques
+  const vientDeVitrine = searchParams.get('ref') === 'vitrine';
   const { toast, visible: toastVisible } = useToastAchat(t.accent);
 
   const [onglet,            setOnglet]            = useState<'photos' | 'video'>('photos');
@@ -268,9 +273,16 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
       {/* ── NAVBAR ── */}
       <nav style={{ backgroundColor: t.surface, borderBottom: `1px solid ${t.border}` }} className="sticky top-0 z-40">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/catalogue" className="flex items-center gap-2 text-sm font-medium hover:opacity-70" style={{ color: t.muted }}>
-            <ChevronLeft size={18} /> Retour au catalogue
-          </Link>
+          {vientDeVitrine ? (
+            <Link href="https://www.shopeasyci.store/boutiques"
+              className="flex items-center gap-2 text-sm font-medium hover:opacity-70" style={{ color: t.muted }}>
+              <ChevronLeft size={18} /> Retour aux produits
+            </Link>
+          ) : (
+            <Link href="/catalogue" className="flex items-center gap-2 text-sm font-medium hover:opacity-70" style={{ color: t.muted }}>
+              <ChevronLeft size={18} /> Retour au catalogue
+            </Link>
+          )}
           <div className="flex items-center gap-2">
             <button onClick={partager} className="p-2 rounded-xl" style={{ backgroundColor: t.elevated }}>
               <Share2 size={18} style={{ color: t.muted }} />
