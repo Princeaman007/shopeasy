@@ -30,12 +30,12 @@ export default function ClientNavbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-40 bg-black/90 backdrop-blur-md border-b border-border">
-      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+    <nav className="sticky top-0 z-40 bg-surface border-b border-border shadow-sm">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
 
         {/* Logo — mene vers l'espace boutiques, jamais vers la landing marketing */}
-        <Link href="/boutiques" className="flex items-center">
-          <Image src="/Shop.png" alt="ShopEasy CI" width={120} height={52} className="object-contain" priority />
+        <Link href="/boutiques" className="flex items-center gap-2 flex-shrink-0">
+          <Image src="/Shop.png" alt="ShopEasy CI" width={140} height={60} className="object-contain" priority />
         </Link>
 
         {/* Compte */}
@@ -43,20 +43,20 @@ export default function ClientNavbar() {
           <div className="relative" ref={refMenuClient}>
             <button
               onClick={() => setMenuClient(!menuClient)}
-              className="flex items-center gap-2 text-muted hover:text-white transition-colors text-sm font-medium"
+              className="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl border border-border bg-elevated hover:border-primary/40 transition-colors text-sm font-medium text-white"
             >
-              <div className="w-7 h-7 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center">
+              <div className="w-7 h-7 rounded-lg bg-primary/20 border border-primary/30 flex items-center justify-center flex-shrink-0">
                 <span className="text-primary font-bold text-xs">
                   {user.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <span className="hidden sm:inline">{user.name}</span>
-              <ChevronDown size={14} className={`transition-transform ${menuClient ? 'rotate-180' : ''}`} />
+              <span className="hidden sm:inline max-w-[120px] truncate">{user.name}</span>
+              <ChevronDown size={14} className={`text-muted transition-transform ${menuClient ? 'rotate-180' : ''}`} />
             </button>
 
             {menuClient && (
-              <div className="absolute right-0 top-full mt-2 w-52 bg-surface border border-border rounded-2xl shadow-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-border">
+              <div className="absolute right-0 top-full mt-2 w-56 bg-surface border border-border rounded-2xl shadow-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-border bg-elevated">
                   <p className="text-white text-sm font-semibold truncate">{user.name}</p>
                   <p className="text-muted text-xs truncate">{user.email}</p>
                 </div>
@@ -86,13 +86,15 @@ export default function ClientNavbar() {
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-3">
-            <Link href="/connexion" className="text-muted hover:text-white transition-colors text-sm font-medium">
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/connexion"
+              className="text-muted hover:text-white transition-colors text-sm font-medium whitespace-nowrap">
               Connexion
             </Link>
+            {/* Compte CLIENT — jamais marchand */}
             <Link href="/inscription-client"
-              className="bg-primary hover:bg-primary-hover text-black font-semibold text-sm px-4 py-2 rounded-lg transition-colors">
-              Creer mon compte
+              className="bg-primary hover:bg-primary-hover text-black font-semibold text-sm px-4 py-2 rounded-xl transition-colors whitespace-nowrap">
+              Creer mon compte client
             </Link>
           </div>
         )}
