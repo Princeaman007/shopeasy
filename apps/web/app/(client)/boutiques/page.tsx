@@ -45,10 +45,12 @@ const CATEGORIES = [
   { label: 'Mode homme',    slug: 'mode-homme'         },
   { label: 'Chaussures',    slug: 'chaussures'         },
   { label: 'Accessoires',   slug: 'accessoires'        },
+  { label: 'Lunettes',      slug: 'lunettes'           },
   { label: 'Beaute',        slug: 'beaute-cosmetiques' },
   { label: 'Enfants',       slug: 'enfants'            },
   { label: 'Maison & Deco', slug: 'maison-deco'        },
   { label: 'Alimentation',  slug: 'alimentation'       },
+  { label: 'Autre',         slug: 'autre'              },
 ];
 
 const PRENOMS = [
