@@ -126,6 +126,15 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
   // Client arrive depuis la vitrine globale /boutiques plutot que directement
   // sur cette boutique — le lien retour doit alors pointer vers /boutiques
   const vientDeVitrine = searchParams.get('ref') === 'vitrine';
+
+  // Memorise ce parcours pour les pages suivantes (catalogue, autres produits)
+  // meme si le parametre ?ref=vitrine disparait de l'URL en navigant plus loin
+  useEffect(() => {
+    if (vientDeVitrine) {
+      sessionStorage.setItem('viaVitrine', 'true');
+    }
+  }, [vientDeVitrine]);
+
   const { toast, visible: toastVisible } = useToastAchat(t.accent);
 
   const [onglet,            setOnglet]            = useState<'photos' | 'video'>('photos');
