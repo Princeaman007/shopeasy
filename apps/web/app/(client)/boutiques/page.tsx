@@ -6,6 +6,7 @@ import Image from 'next/image';
 import {
   Search, BadgeCheck, Loader2, Tag, Flame, Users, Zap,
   ShoppingBag, ChevronRight, TrendingUp, Shield, Truck, RotateCcw,
+  Sparkles, Percent, Clock,
 } from 'lucide-react';
 import BottomNavBar from '@/components/client/BottomNavBar';
 import ClientNavbar from '@/components/client/ClientNavbar';
@@ -53,6 +54,14 @@ const CATEGORIES = [
   { label: 'Autre',         slug: 'autre'              },
 ];
 
+// ── Rayons mis en avant sur la page d'accueil (comme les rangees Amazon) ──────
+const RAYONS = [
+  { titre: 'Mode femme',       slug: 'mode-femme'  },
+  { titre: 'Mode homme',       slug: 'mode-homme'  },
+  { titre: 'Chaussures',       slug: 'chaussures'  },
+  { titre: 'Beaute & Cosmetiques', slug: 'beaute-cosmetiques' },
+];
+
 const PRENOMS = [
   'Konan', 'Awa', 'Adjoua', 'Koffi', 'Aminata', 'Yao', 'Fatou',
   'Brice', 'Mariama', 'Seydou', 'Aicha', 'Kouadio', 'Natacha',
@@ -80,7 +89,6 @@ function useCompteurFlash() {
   return temps;
 }
 
-// ── Visiteurs actifs simules ───────────────────────────────────────────────────
 function useVisiteursActifs() {
   const [nb, setNb] = useState(Math.floor(Math.random() * 40) + 20);
   useEffect(() => {
@@ -92,7 +100,6 @@ function useVisiteursActifs() {
   return nb;
 }
 
-// ── Toast notification — achat recent simule ──────────────────────────────────
 function useToastAchat(boutiquesNoms: string[]) {
   const [toast, setToast]     = useState<{ prenom: string; boutique: string; minutes: number } | null>(null);
   const [visible, setVisible] = useState(false);
@@ -120,11 +127,143 @@ function useToastAchat(boutiquesNoms: string[]) {
 
 function SkeletonProduit() {
   return (
-    <div className="bg-surface border border-border rounded-2xl overflow-hidden animate-pulse">
+    <div className="bg-surface border border-border rounded-2xl overflow-hidden animate-pulse flex-shrink-0 w-40 sm:w-auto">
       <div className="aspect-square bg-elevated" />
       <div className="p-3 space-y-2">
         <div className="h-3 bg-elevated rounded-full w-3/4" />
         <div className="h-3 bg-elevated rounded-full w-1/3" />
+      </div>
+    </div>
+  );
+}
+
+// ── Carte produit reutilisable — grille ET rayons horizontaux ────────────────
+function CarteProduit({
+  produit, achats, estTopVendeur, compact = false,
+}: {
+  produit: Produit; achats: number; estTopVendeur: boolean; compact?: boolean;
+}) {
+  const aReduction = produit.comparePrice > produit.price;
+  const pct        = aReduction ? Math.round((1 - produit.price / produit.comparePrice) * 100) : 0;
+  const economie   = aReduction ? produit.comparePrice - produit.price : 0;
+
+  return (
+    <Link
+      href={produit.boutique ? `https://${produit.boutique.slug}.shopeasyci.store/produits/${produit._id}?ref=vitrine` : '#'}
+      className={`group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 hover:shadow-xl transition-all flex flex-col ${
+        compact ? 'flex-shrink-0 w-40 sm:w-44 snap-start' : ''
+      }`}
+    >
+      <div className="aspect-square relative overflow-hidden bg-elevated">
+        {produit.images?.[0] ? (
+          <Image src={produit.images[0]} alt={produit.name} fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <ShoppingBag size={24} className="text-muted" />
+          </div>
+        )}
+
+        {aReduction && (
+          <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
+            style={{ backgroundColor: '#ef4444' }}>
+            -{pct}%
+          </div>
+        )}
+
+        {estTopVendeur && !aReduction && (
+          <div className="absolute top-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full text-white"
+            style={{ backgroundColor: '#f59e0b' }}>
+            <TrendingUp size={10} />
+            Top vente
+          </div>
+        )}
+      </div>
+
+      <div className="p-3 space-y-1.5 flex-1 flex flex-col justify-between">
+        <p className="text-white text-sm font-medium line-clamp-2">{produit.name}</p>
+
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-primary font-bold text-sm">
+              {formatFcfa(produit.price)}
+            </span>
+            {aReduction && (
+              <span className="text-muted text-xs line-through">
+                {formatFcfa(produit.comparePrice)}
+              </span>
+            )}
+          </div>
+          {aReduction && economie > 0 && (
+            <div className="flex items-center gap-1 text-xs font-medium" style={{ color: '#10b981' }}>
+              <Tag size={9} />
+              Economisez {formatFcfa(economie)}
+            </div>
+          )}
+        </div>
+
+        {!compact && (
+          <div className="flex items-center gap-1 text-xs text-muted">
+            <Zap size={10} className="text-primary" />
+            <span><strong className="text-white">{achats}</strong> vendus cette semaine</span>
+          </div>
+        )}
+
+        {produit.boutique && (
+          <p className="text-muted text-xs truncate pt-0.5 border-t border-border mt-1">
+            {produit.boutique.name}
+          </p>
+        )}
+      </div>
+    </Link>
+  );
+}
+
+// ── Un rayon horizontal — comme "Mode et accessoires pour hommes" sur Amazon ──
+function RayonCategorie({ titre, slug }: { titre: string; slug: string }) {
+  const [produits,   setProduits]   = useState<Produit[]>([]);
+  const [chargement, setChargement] = useState(true);
+
+  useEffect(() => {
+    const charger = async () => {
+      try {
+        const params = new URLSearchParams({ page: '1', categorie: slug });
+        const res  = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/shops/vitrine?${params}`);
+        const data = await res.json();
+        setProduits((data.produits || []).slice(0, 8));
+      } catch {
+        setProduits([]);
+      } finally {
+        setChargement(false);
+      }
+    };
+    charger();
+  }, [slug]);
+
+  const achatsSim = useMemo(() => {
+    const map: Record<string, number> = {};
+    produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 35) + 5; });
+    return map;
+  }, [produits]);
+
+  if (!chargement && produits.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h2 className="text-white font-bold">{titre}</h2>
+        <Link href={`/boutiques?categorie=${slug}`}
+          className="text-primary text-xs font-semibold flex items-center gap-1 hover:underline flex-shrink-0">
+          Tout voir <ChevronRight size={12} />
+        </Link>
+      </div>
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory">
+        {chargement
+          ? [1, 2, 3, 4].map(i => <SkeletonProduit key={i} />)
+          : produits.map(p => (
+              <CarteProduit key={p._id} produit={p} achats={achatsSim[p._id] ?? 5} estTopVendeur={false} compact />
+            ))
+        }
       </div>
     </div>
   );
@@ -148,7 +287,6 @@ export default function BoutiquesPage() {
   );
   const { toast, visible: toastVisible } = useToastAchat(nomsBoutiques);
 
-  // ── Achats simules + top vendeurs par produit ───────────────────────────────
   const achatsSim = useMemo(() => {
     const map: Record<string, number> = {};
     produits.forEach(p => { map[p._id] = Math.floor(Math.random() * 35) + 5; });
@@ -164,7 +302,6 @@ export default function BoutiquesPage() {
     );
   }, [achatsSim]);
 
-  // ── Boutiques populaires ─────────────────────────────────────────────────────
   useEffect(() => {
     const chargerPopulaires = async () => {
       try {
@@ -178,7 +315,6 @@ export default function BoutiquesPage() {
     chargerPopulaires();
   }, []);
 
-  // ── Produits — vitrine multi-boutiques ──────────────────────────────────────
   const fetchProduits = useCallback(async (cat: string, p: number, append = false) => {
     append ? setChargementPlus(true) : setChargement(true);
     try {
@@ -213,15 +349,14 @@ export default function BoutiquesPage() {
 
       <ClientNavbar />
 
-      {/* ── BANDEAU URGENCE ── */}
+      {/* ── BANDEAU URGENCE — compact, style barre d'info Amazon ── */}
       <div style={{ backgroundColor: '#ef444412', borderBottom: '1px solid #ef444428' }}>
-        <div className="max-w-6xl mx-auto px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+        <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <Flame size={14} className="text-red-400" />
+              <Flame size={13} className="text-red-400" />
               <span className="text-xs font-bold text-red-400">PRIX SPECIAUX</span>
             </div>
-            <span className="text-xs hidden sm:inline text-muted">— Offre valable encore</span>
             <div className="flex items-center gap-1 text-xs font-mono font-bold text-white">
               {[temps.h, temps.m, temps.s].map((v, i) => (
                 <span key={i} className="flex items-center gap-1">
@@ -240,27 +375,16 @@ export default function BoutiquesPage() {
         </div>
       </div>
 
-      {/* ── HEADER ── */}
+      {/* ── HEADER RECHERCHE + CATEGORIES ── */}
       <div className="border-b border-border bg-surface sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 py-4 space-y-4">
 
-          <div className="text-center space-y-1 pb-1">
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white">
-              Des milliers de produits, livres chez vous
-            </h1>
-            <p className="text-muted text-sm">
-              Paiement uniquement a la livraison — partout en Cote d'Ivoire
-            </p>
-          </div>
-
-          {/* Recherche — mene vers /recherche */}
           <Link href="/recherche"
             className="flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-primary/40 bg-elevated w-full shadow-sm">
             <Search size={18} className="text-primary" />
             <span className="text-sm text-muted">Rechercher un produit ou une boutique...</span>
           </Link>
 
-          {/* Filtres categorie */}
           <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
             {CATEGORIES.map((cat) => (
               <button key={cat.slug}
@@ -280,22 +404,29 @@ export default function BoutiquesPage() {
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-10">
 
-        {/* ── BLOC CONFIANCE ── */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { icone: <Shield    size={16} />, label: 'Paiement a la reception'  },
-            { icone: <Truck     size={16} />, label: 'Livraison partout en CI'  },
-            { icone: <RotateCcw size={16} />, label: 'Retour sans questions'    },
-          ].map((g, i) => (
-            <div key={i} className="flex flex-col items-center text-center gap-1.5 p-3 rounded-2xl border border-border bg-surface">
-              <span className="text-primary">{g.icone}</span>
-              <p className="text-muted text-xs leading-tight">{g.label}</p>
-            </div>
-          ))}
-        </div>
+        {/* ── BANNIERES PROMO — style tuiles Amazon ── */}
+        {!categorie && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { icone: <Truck   size={22} />, titre: 'Livraison', sous: 'Partout en CI',        couleur: '#06C167' },
+              { icone: <Shield  size={22} />, titre: 'Securise',  sous: 'Paiement a reception',  couleur: '#3b82f6' },
+              { icone: <Percent size={22} />, titre: 'Promos',    sous: 'Jusqu\u2019a -50%',     couleur: '#ef4444' },
+              { icone: <Sparkles size={22} />, titre: 'Nouveaute', sous: 'Chaque semaine',        couleur: '#f59e0b' },
+            ].map((b, i) => (
+              <div key={i} className="rounded-2xl p-4 flex flex-col gap-2"
+                style={{ backgroundColor: `${b.couleur}15`, border: `1px solid ${b.couleur}30` }}>
+                <span style={{ color: b.couleur }}>{b.icone}</span>
+                <div>
+                  <p className="text-white font-bold text-sm">{b.titre}</p>
+                  <p className="text-muted text-xs">{b.sous}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* ── BOUTIQUES POPULAIRES ── */}
-        {boutiquesPop.length > 0 && (
+        {!categorie && boutiquesPop.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-center gap-2">
               <TrendingUp size={16} className="text-primary" />
@@ -329,10 +460,15 @@ export default function BoutiquesPage() {
           </div>
         )}
 
-        {/* ── GRILLE PRODUITS ── */}
+        {/* ── RAYONS PAR CATEGORIE — uniquement sur la vue "Tout" ── */}
+        {!categorie && RAYONS.map((rayon) => (
+          <RayonCategorie key={rayon.slug} titre={rayon.titre} slug={rayon.slug} />
+        ))}
+
+        {/* ── GRILLE PRODUITS PRINCIPALE ── */}
         <div className="space-y-4">
           <h2 className="text-white font-bold text-lg">
-            {categorie ? CATEGORIES.find(c => c.slug === categorie)?.label : 'Decouvrez nos produits'}
+            {categorie ? CATEGORIES.find(c => c.slug === categorie)?.label : 'Tous nos produits'}
           </h2>
 
           {chargement && (
@@ -354,83 +490,14 @@ export default function BoutiquesPage() {
           {!chargement && produits.length > 0 && (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {produits.map((produit) => {
-                  const aReduction    = produit.comparePrice > produit.price;
-                  const pct           = aReduction
-                    ? Math.round((1 - produit.price / produit.comparePrice) * 100)
-                    : 0;
-                  const economie      = aReduction ? produit.comparePrice - produit.price : 0;
-                  const achats        = achatsSim[produit._id] ?? 5;
-                  const estTopVendeur = topVendeurs.has(produit._id);
-
-                  return (
-                    <Link
-                      key={produit._id}
-                      href={produit.boutique ? `https://${produit.boutique.slug}.shopeasyci.store/produits/${produit._id}?ref=vitrine` : '#'}
-                      className="group bg-surface border border-border rounded-2xl overflow-hidden hover:border-primary/40 hover:shadow-xl transition-all flex flex-col"
-                    >
-                      <div className="aspect-square relative overflow-hidden bg-elevated">
-                        {produit.images?.[0] ? (
-                          <Image src={produit.images[0]} alt={produit.name} fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-300" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag size={24} className="text-muted" />
-                          </div>
-                        )}
-
-                        {aReduction && (
-                          <div className="absolute top-2 left-2 text-xs font-bold px-2 py-1 rounded-full text-white"
-                            style={{ backgroundColor: '#ef4444' }}>
-                            -{pct}%
-                          </div>
-                        )}
-
-                        {estTopVendeur && !aReduction && (
-                          <div className="absolute top-2 left-2 flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full text-white"
-                            style={{ backgroundColor: '#f59e0b' }}>
-                            <TrendingUp size={10} />
-                            Top vente
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="p-3 space-y-1.5 flex-1 flex flex-col justify-between">
-                        <p className="text-white text-sm font-medium line-clamp-2">{produit.name}</p>
-
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-primary font-bold text-sm">
-                              {formatFcfa(produit.price)}
-                            </span>
-                            {aReduction && (
-                              <span className="text-muted text-xs line-through">
-                                {formatFcfa(produit.comparePrice)}
-                              </span>
-                            )}
-                          </div>
-                          {aReduction && economie > 0 && (
-                            <div className="flex items-center gap-1 text-xs font-medium" style={{ color: '#10b981' }}>
-                              <Tag size={9} />
-                              Economisez {formatFcfa(economie)}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1 text-xs text-muted">
-                          <Zap size={10} className="text-primary" />
-                          <span><strong className="text-white">{achats}</strong> vendus cette semaine</span>
-                        </div>
-
-                        {produit.boutique && (
-                          <p className="text-muted text-xs truncate pt-0.5 border-t border-border mt-1">
-                            Vendu par {produit.boutique.name}
-                          </p>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })}
+                {produits.map((produit) => (
+                  <CarteProduit
+                    key={produit._id}
+                    produit={produit}
+                    achats={achatsSim[produit._id] ?? 5}
+                    estTopVendeur={topVendeurs.has(produit._id)}
+                  />
+                ))}
               </div>
 
               {pagination && page < pagination.pages && (
