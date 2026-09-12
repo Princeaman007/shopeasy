@@ -34,6 +34,11 @@ export interface IShop extends Document {
   subscriptionExpiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
+   rappelsEnvoyes: {
+    j7: boolean;
+    j3: boolean;
+    j0: boolean;
+  };
 }
 
 const AboutSchema = new Schema<IAbout>(
@@ -131,6 +136,11 @@ const ShopSchema = new Schema<IShop>(
       type: Date,
       // 37 jours par défaut (7 essai + 30 premier mois)
       default: () => new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
+    },
+    rappelsEnvoyes: {
+      j7: { type: Boolean, default: false },
+      j3: { type: Boolean, default: false },
+      j0: { type: Boolean, default: false },
     },
   },
   {

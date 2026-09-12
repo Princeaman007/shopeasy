@@ -452,45 +452,105 @@ export const sendPasswordResetEmail = async (
 export const sendSubscriptionReminderEmail = async (
   email: string,
   name: string,
-  shopName: string,
-  expiresAt: Date
+  info: {
+    shopName:      string;
+    shopSlug:      string;
+    planType:      string;
+    joursRestants: number;
+    expiresAt:     Date;
+    destinataire:  'marchand' | 'admin';
+    merchantEmail?: string;
+    merchantName?:  string;
+  }
 ): Promise<void> => {
-  const dateExpiration = expiresAt.toLocaleDateString('fr-FR', {
+  const dateExpiration = info.expiresAt.toLocaleDateString('fr-FR', {
     day: 'numeric', month: 'long', year: 'numeric',
   });
-
+ 
+  const dejaExpire = info.joursRestants <= 0;
+ 
+  const delaiTexte = dejaExpire
+    ? `a expiré le <strong>${dateExpiration}</strong>`
+    : `expirera dans <strong>${info.joursRestants} jour${info.joursRestants > 1 ? 's' : ''}</strong>, le <strong>${dateExpiration}</strong>`;
+ 
+  const planLabel = info.planType === 'premium' ? 'Premium' : 'Basic';
+ 
+  // ── Version MARCHAND ─────────────────────────────────────────────────────
+  if (info.destinataire === 'marchand') {
+    const contenu = `
+      <h2>${dejaExpire ? 'Votre abonnement a expiré' : 'Votre abonnement arrive à expiration'}</h2>
+      <p>Bonjour <strong>${name}</strong>,</p>
+      <p>
+        L'abonnement <span class="badge">${planLabel}</span> de votre boutique
+        <strong>${info.shopName}</strong> ${delaiTexte}.
+      </p>
+      <p>
+        Pour assurer la continuité de votre activité sans interruption,
+        contactez-nous dès maintenant pour renouveler votre abonnement.
+      </p>
+      <a href="${env.FRONTEND_URL}/dashboard/parametres/abonnement" class="btn">
+        Voir mon abonnement
+      </a>
+      <hr class="divider" />
+      ${dejaExpire ? `
+        <div class="warning-box">
+          Votre boutique est actuellement suspendue et vos clients ne peuvent
+          plus passer de commandes. Renouvelez rapidement pour la réactiver.
+        </div>
+      ` : `
+        <div class="warning-box">
+          Passé la date d'expiration, votre boutique sera temporairement suspendue
+          et vos clients ne pourront plus passer de commandes.
+        </div>
+      `}
+      <p class="note">
+        Pour toute question concernant votre abonnement, contactez notre équipe.
+      </p>
+    `;
+ 
+    await transporter.sendMail({
+      from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
+      to:      email,
+      subject: dejaExpire
+        ? `Votre boutique ${info.shopName} — Abonnement expiré`
+        : `Votre boutique ${info.shopName} — Expire dans ${info.joursRestants} jour${info.joursRestants > 1 ? 's' : ''}`,
+      html:    baseTemplate(contenu),
+    });
+    return;
+  }
+ 
+  // ── Version ADMIN ────────────────────────────────────────────────────────
   const contenu = `
-    <h2>Votre abonnement arrive à expiration</h2>
-    <p>Bonjour <strong>${name}</strong>,</p>
+    <h2>${dejaExpire ? 'Abonnement expiré' : 'Abonnement bientôt expiré'}</h2>
+    <p>Bonjour,</p>
     <p>
-      Nous vous informons que l'abonnement de votre boutique
-      <strong>${shopName}</strong> expirera le <strong>${dateExpiration}</strong>.
+      La boutique <strong>${info.shopName}</strong> (<span class="badge">${planLabel}</span>)
+      ${delaiTexte}.
     </p>
-    <p>
-      Pour assurer la continuité de votre activité sans interruption,
-      nous vous invitons à renouveler votre abonnement dès maintenant.
-    </p>
-    <a href="${env.FRONTEND_URL}/dashboard/parametres/abonnement" class="btn">
-      Renouveler mon abonnement
-    </a>
-    <hr class="divider" />
-    <div class="warning-box">
-      Passé la date d'expiration, votre boutique sera temporairement suspendue
-      et vos clients ne pourront plus passer de commandes.
+ 
+    <div class="info-box">
+      <strong>Boutique :</strong> ${info.shopName}<br/>
+      <strong>Lien :</strong> ${info.shopSlug}.shopeasyci.store<br/>
+      <strong>Marchand :</strong> ${info.merchantName ?? ''}<br/>
+      <strong>Email marchand :</strong> ${info.merchantEmail ?? ''}
     </div>
+ 
     <p class="note">
-      Pour toute question concernant votre abonnement, n'hésitez pas
-      à contacter notre équipe.
+      Le marchand a également reçu une notification. Pensez à le relancer
+      manuellement si nécessaire pour confirmer le paiement du renouvellement.
     </p>
   `;
-
+ 
   await transporter.sendMail({
     from:    `"ShopEasy CI" <${env.SMTP_USER}>`,
     to:      email,
-    subject: `Votre boutique ${shopName} — Abonnement expirant le ${dateExpiration}`,
+    subject: dejaExpire
+      ? `[Admin] ${info.shopName} — Abonnement expiré`
+      : `[Admin] ${info.shopName} — Expire dans ${info.joursRestants}j`,
     html:    baseTemplate(contenu),
   });
 };
+ 
 
 /**
  * Email de notification admin — nouveau lead Koffi

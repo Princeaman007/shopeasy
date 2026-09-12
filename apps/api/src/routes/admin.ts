@@ -6,6 +6,7 @@ import { Order }   from '../models/Order';
 import { Lead }    from '../models/Lead';
 import { Product } from '../models/Product';
 import { authenticate, requireAdmin } from '../middleware/auth';
+import { expirerAbonnementsPerimes, envoyerRappelsExpiration } from '../services/SubscriptionCheck';
 
 const router = Router();
 
@@ -117,6 +118,25 @@ router.get('/stats', authenticate, requireAdmin, async (req: Request, res: Respo
     });
   } catch (error) {
     console.error('Erreur GET /admin/stats :', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
+router.post('/verifier-abonnements', authenticate, requireAdmin, async (req: Request, res: Response) => {
+  try {
+    const nombreExpires = await expirerAbonnementsPerimes();
+    const rappels       = await envoyerRappelsExpiration();
+ 
+    res.json({
+      success: true,
+      data: {
+        boutiquesExpirees: nombreExpires,
+        rappelsEnvoyes:    rappels,
+      },
+      message: 'Verification terminee',
+    });
+  } catch (error) {
+    console.error('Erreur POST /admin/verifier-abonnements :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 });
@@ -239,25 +259,28 @@ router.patch('/shops/:id/subscription', authenticate, requireAdmin, async (req: 
     }
 
     const { status, planType, expiresAt } = parsed.data;
-
+ 
     shop.subscriptionStatus = status;
     if (planType) shop.planType = planType;
-
+ 
     if (status === 'active') {
       if (expiresAt) {
         shop.subscriptionExpiresAt = new Date(expiresAt);
       } else {
-        // ✅ Si déjà actif avec date future, ajoute 30j à la date existante
+        
         const base = shop.subscriptionExpiresAt && shop.subscriptionExpiresAt > new Date()
           ? shop.subscriptionExpiresAt
           : new Date();
         shop.subscriptionExpiresAt = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
       }
+  
+      shop.rappelsEnvoyes = { j7: false, j3: false, j0: false };
     }
-
+ 
     await shop.save();
-
+ 
     res.json({ success: true, data: shop, message: `Abonnement → ${status}` });
+
   } catch (error) {
     console.error('Erreur PATCH /admin/shops/:id/subscription :', error);
     res.status(500).json({ success: false, message: 'Erreur serveur' });
