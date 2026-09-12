@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import {
   Crown, Zap, Clock, Loader2, RefreshCw,
-  Search, X, AlertTriangle, CreditCard,
+  Search, X, AlertTriangle, CreditCard, ShieldCheck, Mail,
 } from 'lucide-react';
 
 // ---------------------------------------------------------------------------
@@ -50,6 +50,11 @@ interface Boutique {
   };
 }
 
+interface ResultatVerification {
+  boutiquesExpirees: number;
+  rappelsEnvoyes: { j7: number; j3: number; j0: number };
+}
+
 // ---------------------------------------------------------------------------
 export default function PageAbonnementsAdmin() {
   const [boutiques,    setBoutiques]    = useState<Boutique[]>([]);
@@ -62,6 +67,11 @@ export default function PageAbonnementsAdmin() {
   const [total,        setTotal]        = useState(0);
   const [actionId,     setActionId]     = useState<string | null>(null);
   const [stats,        setStats]        = useState<any>(null);
+
+  // -- Verification abonnements (expiration + rappels) --
+  const [verification,       setVerification]       = useState(false);
+  const [resultatVerif,      setResultatVerif]      = useState<ResultatVerification | null>(null);
+  const [erreurVerif,        setErreurVerif]        = useState('');
 
   // -- Chargement --
   const charger = async () => {
@@ -116,17 +126,81 @@ export default function PageAbonnementsAdmin() {
     }
   };
 
+  // -- Verifier les abonnements — expire les depasses + envoie les rappels --
+  const verifierAbonnements = async () => {
+    setVerification(true);
+    setErreurVerif('');
+    setResultatVerif(null);
+    try {
+      const res  = await authFetch(`${API}/admin/verifier-abonnements`, {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || 'Erreur');
+      setResultatVerif(data.data);
+      // Recharge la liste pour refleter les statuts mis a jour
+      charger();
+      setTimeout(() => setResultatVerif(null), 8000);
+    } catch (err: any) {
+      setErreurVerif(err.message || 'Erreur lors de la verification');
+      setTimeout(() => setErreurVerif(''), 5000);
+    } finally {
+      setVerification(false);
+    }
+  };
+
   // ---------------------------------------------------------------------------
   return (
     <div className="space-y-6">
 
       {/* En-tête */}
-      <div>
-        <h1 className="text-white text-2xl font-bold">Abonnements</h1>
-        <p className="text-muted text-sm mt-1">
-          Gestion des plans et renouvellements
-        </p>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-white text-2xl font-bold">Abonnements</h1>
+          <p className="text-muted text-sm mt-1">
+            Gestion des plans et renouvellements
+          </p>
+        </div>
+
+        {/* Bouton verification manuelle */}
+        <button
+          onClick={verifierAbonnements}
+          disabled={verification}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
+                     bg-primary/10 text-primary hover:bg-primary/20 border border-primary/30
+                     transition-colors disabled:opacity-50"
+        >
+          {verification
+            ? <><Loader2 size={15} className="animate-spin" /> Verification en cours...</>
+            : <><ShieldCheck size={15} /> Verifier les abonnements</>
+          }
+        </button>
       </div>
+
+      {/* -- Resultat verification -- */}
+      {resultatVerif && (
+        <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex items-start gap-3">
+          <ShieldCheck size={18} className="text-primary flex-shrink-0 mt-0.5" />
+          <div className="text-sm space-y-1">
+            <p className="text-white font-medium">Verification terminee</p>
+            <p className="text-muted">
+              <strong className="text-white">{resultatVerif.boutiquesExpirees}</strong> boutique{resultatVerif.boutiquesExpirees > 1 ? 's' : ''} passee{resultatVerif.boutiquesExpirees > 1 ? 's' : ''} en statut expire.
+            </p>
+            <p className="text-muted flex items-center gap-1.5">
+              <Mail size={13} className="text-muted" />
+              Rappels envoyes — J-7 : <strong className="text-white">{resultatVerif.rappelsEnvoyes.j7}</strong>,
+              J-3 : <strong className="text-white">{resultatVerif.rappelsEnvoyes.j3}</strong>,
+              J-0 : <strong className="text-white">{resultatVerif.rappelsEnvoyes.j0}</strong>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {erreurVerif && (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 text-red-400 text-sm">
+          {erreurVerif}
+        </div>
+      )}
 
       {/* ── KPIs ── */}
       {stats && (
