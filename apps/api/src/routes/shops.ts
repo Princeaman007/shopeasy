@@ -9,6 +9,7 @@ import { authenticate, requireMerchant } from '../middleware/auth';
 import { ShopService } from '../services/ShopService';
 import { Order } from '../models/Order';
 
+
 // ─── Multer ───────────────────────────────────────────────────────────────────
 
 const upload = multer({
@@ -439,30 +440,38 @@ router.get('/recherche-globale', async (req: Request, res: Response): Promise<vo
 // ─── A ajouter en haut de shops.ts, avec les autres imports ───────────────────
 // import { Order } from '../models/Order';
 
-// ─── GET /shops/vitrine — Flux de produits multi-boutiques pour la page /boutiques ──
 router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
   try {
     const page  = parseInt(req.query.page as string) || 1;
     const limite = 20;
-    const categorie = typeof req.query.categorie === 'string' ? req.query.categorie : '';
+    const categorieSlug = typeof req.query.categorie === 'string' ? req.query.categorie : '';
     const skip  = (page - 1) * limite;
-
+ 
     const shopsActifs = await Shop.find({
       planType: 'premium',
       subscriptionStatus: { $in: ['active', 'trial'] },
     }).select('_id slug name isVerified').lean();
-
+ 
     const shopsMap = new Map(shopsActifs.map((s) => [String(s._id), s]));
     const shopIds  = shopsActifs.map((s) => s._id);
-
+ 
     const filtre: any = {
       shopId: { $in: shopIds },
       status: 'active',
     };
-    if (categorie.trim()) {
-      filtre.categorySlug = categorie.trim();
+ 
+    // ── Filtre categorie — passe par le vrai modele Category, pas un champ ──
+    // ── texte inexistant sur Product. Une categorie "predefinie" existe en ──
+    // ── un exemplaire par boutique (meme slug, _id different) ────────────────
+    if (categorieSlug.trim()) {
+      const categoriesMatch = await Category.find({
+        slug: categorieSlug.trim(),
+        shopId: { $in: shopIds },
+      }).select('_id').lean();
+ 
+      filtre.categoryId = { $in: categoriesMatch.map((c) => c._id) };
     }
-
+ 
     const [produits, total] = await Promise.all([
       Product.find(filtre)
         .select('name price comparePrice images shopId categoryId createdAt')
@@ -472,12 +481,12 @@ router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
         .lean(),
       Product.countDocuments(filtre),
     ]);
-
+ 
     const produitsAvecBoutique = produits.map((p) => ({
       ...p,
       boutique: shopsMap.get(String(p.shopId)) || null,
     }));
-
+ 
     res.json({
       produits: produitsAvecBoutique,
       pagination: {
@@ -492,40 +501,39 @@ router.get('/vitrine', async (req: Request, res: Response): Promise<void> => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
-
+ 
 // ─── GET /shops/populaires — Boutiques les plus actives (par nombre de commandes) ──
 router.get('/populaires', async (req: Request, res: Response): Promise<void> => {
   try {
     const limite = parseInt(req.query.limite as string) || 8;
-
+ 
     const shopsActifs = await Shop.find({
       planType: 'premium',
       subscriptionStatus: { $in: ['active', 'trial'] },
     }).select('_id slug name isVerified logo').lean();
-
+ 
     const shopIds = shopsActifs.map((s) => s._id);
-
+ 
     const commandesParBoutique = await Order.aggregate([
       { $match: { shopId: { $in: shopIds } } },
       { $group: { _id: '$shopId', totalCommandes: { $sum: 1 } } },
       { $sort: { totalCommandes: -1 } },
       { $limit: limite },
     ]);
-
+ 
     const compteMap = new Map<string, number>(
       commandesParBoutique.map((c) => [String(c._id), c.totalCommandes])
     );
-
+ 
     const boutiquesPopulaires = shopsActifs
       .filter((s) => compteMap.has(String(s._id)))
       .map((s) => ({
         ...s,
-        // Valeur par defaut a 0 pour eviter number | undefined
         totalCommandes: compteMap.get(String(s._id)) ?? 0,
       }))
       .sort((a, b) => b.totalCommandes - a.totalCommandes)
       .slice(0, limite);
-
+ 
     res.json({ boutiques: boutiquesPopulaires });
   } catch (error) {
     console.error('Erreur GET /shops/populaires :', error);
