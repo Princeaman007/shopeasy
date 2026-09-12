@@ -35,7 +35,7 @@ export default function ClientNavbar() {
 
         {/* Logo — mene vers l'espace boutiques, jamais vers la landing marketing */}
         <Link href="/boutiques" className="flex items-center gap-2 flex-shrink-0">
-          <Image src="/Shop.png" alt="ShopEasy CI" width={140} height={60} className="object-contain" priority />
+          <Image src="/Shop.png" alt="ShopEasy CI" width={140} height={60} className="object-contain w-24 sm:w-[140px] h-auto" priority />
         </Link>
 
         {/* Compte */}
@@ -86,15 +86,16 @@ export default function ClientNavbar() {
             )}
           </div>
         ) : (
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <Link href="/connexion"
-              className="text-muted hover:text-white transition-colors text-sm font-medium whitespace-nowrap">
+              className="text-muted hover:text-white transition-colors text-xs sm:text-sm font-medium whitespace-nowrap">
               Connexion
             </Link>
             {/* Compte CLIENT — jamais marchand */}
             <Link href="/inscription-client"
-              className="bg-primary hover:bg-primary-hover text-black font-semibold text-sm px-4 py-2 rounded-xl transition-colors whitespace-nowrap">
-              Creer mon compte client
+              className="bg-primary hover:bg-primary-hover text-black font-semibold text-xs sm:text-sm px-2.5 sm:px-4 py-2 rounded-xl transition-colors whitespace-nowrap">
+              <span className="sm:hidden">S'inscrire</span>
+              <span className="hidden sm:inline">Creer mon compte client</span>
             </Link>
           </div>
         )}
