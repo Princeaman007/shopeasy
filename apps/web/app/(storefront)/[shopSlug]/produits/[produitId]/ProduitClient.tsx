@@ -384,10 +384,16 @@ export default function ProduitClient({ shop, produit, similaires }: Props) {
               </div>
             )}
 
-            {/* Vendu et livre par — clarte pour le client sur qui gere la commande */}
-            <p className="text-xs" style={{ color: t.muted }}>
-              Vendu et livré par <span style={{ color: t.accent, fontWeight: 600 }}>{shop.name}</span>
-            </p>
+            {/* Vendu et livre par — clarte + lien vers les autres produits de la boutique */}
+            <div className="flex items-center gap-2 flex-wrap text-xs" style={{ color: t.muted }}>
+              <span>
+                Vendu et livré par <span style={{ color: t.accent, fontWeight: 600 }}>{shop.name}</span>
+              </span>
+              <span style={{ color: t.border }}>•</span>
+              <Link href="/catalogue" className="font-semibold hover:underline" style={{ color: t.accent }}>
+                Voir tous ses produits
+              </Link>
+            </div>
 
             <div className="flex items-start justify-between gap-3">
               <h1 className="text-2xl font-bold leading-tight" style={{ color: t.text }}>{produit.name}</h1>
