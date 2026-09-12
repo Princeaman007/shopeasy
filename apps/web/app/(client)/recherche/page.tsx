@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, ArrowLeft, Store, BadgeCheck, ShoppingBag, MapPin } from 'lucide-react';
 import BottomNavBar from '@/components/client/BottomNavBar';
+import ClientNavbar from '@/components/client/ClientNavbar';
 
 interface Boutique {
   _id:        string;
@@ -79,6 +80,8 @@ export default function RecherchePage() {
   return (
     <div className="min-h-screen bg-bg pb-20 md:pb-0">
 
+      <ClientNavbar />
+
       {/* Header */}
       <div className="border-b border-border bg-surface sticky top-0 z-30">
         <div className="max-w-3xl mx-auto px-4 py-5">
@@ -151,7 +154,7 @@ export default function RecherchePage() {
             <div className="space-y-2">
               {produits.map((produit) => (
                 <Link key={produit._id}
-                  href={produit.boutique ? `/${produit.boutique.slug}/produits/${produit._id}` : '#'}
+                  href={produit.boutique ? `https://${produit.boutique.slug}.shopeasyci.store/produits/${produit._id}` : '#'}
                   className="flex items-center gap-3 p-3 bg-surface border border-border rounded-2xl hover:border-primary/40 transition-colors">
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-elevated flex-shrink-0 relative">
                     {produit.images?.[0] ? (

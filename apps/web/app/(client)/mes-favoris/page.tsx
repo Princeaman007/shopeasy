@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link  from 'next/link';
 import { Heart, ArrowLeft, ShoppingBag, Trash2, ShoppingCart } from 'lucide-react';
+import BottomNavBar from '@/components/client/BottomNavBar';
 
 interface FavoriItem {
   _id:   string;
@@ -20,7 +21,6 @@ export default function MesFavorisPage() {
   const [chargement, setChargement] = useState(true);
 
   useEffect(() => {
-    // Recupere tous les favoris de toutes les boutiques
     const tous: FavoriItem[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const cle = localStorage.key(i);
@@ -99,7 +99,7 @@ export default function MesFavorisPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-20 md:pb-0">
 
       {/* Header */}
       <div className="border-b border-border">
@@ -131,7 +131,7 @@ export default function MesFavorisPage() {
             </div>
             <h2 className="text-white font-semibold mb-2">Aucun favori</h2>
             <p className="text-muted text-sm mb-6">
-              Clique sur  sur un produit pour le sauvegarder ici
+              Cliquez sur le coeur d'un produit pour le sauvegarder ici
             </p>
             <Link href="/"
               className="inline-flex items-center gap-2 bg-primary hover:bg-primary-hover text-black font-semibold px-5 py-2.5 rounded-xl transition-colors text-sm">
@@ -167,7 +167,7 @@ export default function MesFavorisPage() {
 
                 {/* Infos */}
                 <div className="p-3 space-y-2">
-                  <Link href={`/${produit.shopSlug}/produits/${produit._id}`}
+                  <Link href={`https://${produit.shopSlug}.shopeasyci.store/produits/${produit._id}`}
                     className="text-white text-sm font-medium hover:text-primary transition-colors line-clamp-2 block">
                     {produit.nom}
                   </Link>
@@ -185,6 +185,8 @@ export default function MesFavorisPage() {
           </div>
         )}
       </div>
+
+      <BottomNavBar />
     </div>
   );
 }
