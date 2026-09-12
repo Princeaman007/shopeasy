@@ -9,12 +9,17 @@ export async function rattacherCommandesInvite(
   email: string
 ): Promise<number> {
   try {
-    // Cherche toutes les commandes invité avec cet email sans customerId
+    // Cherche toutes les commandes invite avec cet email et sans customerId
+    // reel (customerId absent OU explicitement null — les deux cas sont
+    // possibles selon comment la commande a ete creee)
     const result = await Order.updateMany(
       {
         'customer.email': email.toLowerCase(),
         'customer.isGuest': true,
-        customerId: { $exists: false },
+        $or: [
+          { customerId: null },
+          { customerId: { $exists: false } },
+        ],
       },
       {
         $set: {
@@ -23,15 +28,16 @@ export async function rattacherCommandesInvite(
         },
       }
     );
-
+ 
     const count = result.modifiedCount;
     if (count > 0) {
-      console.log(`✅ ${count} commande(s) rattachée(s) à l'utilisateur ${userId}`);
+      console.log(`${count} commande(s) rattachee(s) a l'utilisateur ${userId}`);
     }
-
+ 
     return count;
   } catch (error) {
     console.error('Erreur rattachement commandes :', error);
     return 0;
   }
 }
+ 

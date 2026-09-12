@@ -187,7 +187,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
     const clientAdr    = adresse   ?? customer?.address ?? '';
     const clientVille  = ville     ?? customer?.city    ?? '';
 
-    const order = await Order.create({
+     const order = await Order.create({
       shopId,
       customerId:    req.user?.userId ?? null,
       orderNumber,
@@ -205,6 +205,8 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       customer: {
         name:    clientNom,
         phone:   clientTel,
+        // ── AJOUT — l'email etait manquant, rattachement impossible sans lui ──
+        email:   customer?.email ? customer.email.toLowerCase() : undefined,
         address: clientAdr,
         city:    clientVille,
         isGuest: !req.user,
@@ -214,6 +216,7 @@ router.post('/', optionalAuth, async (req: Request, res: Response) => {
       smsSent:     false,
       waNotifSent: false,
     });
+ 
 
     // Email au marchand
     try {
