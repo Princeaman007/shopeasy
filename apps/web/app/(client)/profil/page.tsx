@@ -2,11 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { User, ArrowLeft, Pencil, Check, X, Lock, Loader2 } from 'lucide-react';
+import { User, ArrowLeft, Pencil, Check, X, Lock, Loader2, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import BottomNavBar from '@/components/client/BottomNavBar';
 
 export default function ProfilPage() {
-  const { user, login, token } = useAuth();
+  const { user, login, token, logout } = useAuth();
 
   // ── État formulaire infos ───────────────────────────────────
   const [editInfos, setEditInfos]   = useState(false);
@@ -54,7 +55,7 @@ export default function ProfilPage() {
 
       // Met à jour le contexte auth
       login(token!, { ...user!, name: formInfos.name });
-      setSucces('Profil mis à jour ');
+      setSucces('Profil mis à jour');
       setEditInfos(false);
       setTimeout(() => setSucces(''), 3000);
     } catch {
@@ -96,7 +97,7 @@ export default function ProfilPage() {
       const data = await res.json();
       if (!res.ok) { setErreur(data.message || 'Erreur'); return; }
 
-      setSucces('Mot de passe modifié ');
+      setSucces('Mot de passe modifié');
       setEditMdp(false);
       setFormMdp({ actuel: '', nouveau: '', confirmation: '' });
       setTimeout(() => setSucces(''), 3000);
@@ -108,12 +109,12 @@ export default function ProfilPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg pb-20 md:pb-0">
       {/* Header */}
       <div className="border-b border-border">
         <div className="max-w-3xl mx-auto px-4 py-6">
-          <Link href="/" className="inline-flex items-center gap-2 text-muted hover:text-white text-sm mb-4 transition-colors">
-            <ArrowLeft size={16} /> Accueil
+          <Link href="/boutiques" className="inline-flex items-center gap-2 text-muted hover:text-white text-sm mb-4 transition-colors">
+            <ArrowLeft size={16} /> Boutiques
           </Link>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
@@ -275,7 +276,18 @@ export default function ProfilPage() {
             ))}
           </div>
         </div>
+
+        {/* ── Deconnexion — seul acces sur mobile puisque ClientNavbar est cachee ── */}
+        <button
+          onClick={logout}
+          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-red-500/25 text-red-400 text-sm font-semibold hover:bg-red-500/5 transition-colors"
+        >
+          <LogOut size={16} />
+          Se deconnecter
+        </button>
       </div>
+
+      <BottomNavBar />
     </div>
   );
 }
