@@ -30,7 +30,7 @@ export default function ClientNavbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-40 bg-surface border-b border-border shadow-sm">
+    <nav className="hidden md:block sticky top-0 z-40 bg-surface border-b border-border shadow-sm">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
 
         {/* Logo — mene vers l'espace boutiques, jamais vers la landing marketing */}
